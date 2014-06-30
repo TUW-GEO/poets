@@ -23,12 +23,15 @@ Description of module.
 
 import os.path
 import numpy as np
-from pytesmo.grid.netcdf import save_lonlat
+from pytesmo.grid.netcdf import save_grid
 from poets.constants import Settings as settings
+from poets.grid import grids
 from netCDF4 import Dataset
 
 
-def save_image(image, lon, lat, country, gpis=None):
+def save_image(image, lon, lat, country):
+
+    c_grid = grids.CountryGrid(country)
 
     path = settings.out_path
 
@@ -36,23 +39,24 @@ def save_image(image, lon, lat, country, gpis=None):
 
     nc_name = os.path.join(path, filename)
 
-    if not os.path.isfile(nc_name):
-        save_lonlat(nc_name, lon, lat, gpis)
+    #===========================================================================
+    # if not os.path.isfile(nc_name):
+    #     save_grid(nc_name, c_grid)
+    #===========================================================================
+
+    save_grid(nc_name, c_grid)
 
     with Dataset(nc_name, 'a', format='NETCDF4') as ncfile:
 
-        rd = ncfile.createGroup("raw_data")
-        rd.createDimension("raw_data", lon.size)
+        dim = ncfile.dimensions.keys()
 
         for key in image.keys():
-            var = rd.createVariable(key, np.dtype('int32').char,
-                                                   ('raw_data',))
-            var[:] = image[key].flatten()
-            setattr(var, 'long_name', 'Rainfall Estimates')
+
+            var = ncfile.createVariable(key, np.dtype('int32').char, dim,
+                                        fill_value=-99)
+            var[:] = np.copy(image[key])
+            setattr(var, 'long_name', key)
             setattr(var, 'units', 'millimeters')
-            # setattr(var, 'standard_name', 'rfe')
-            # setattr(var, 'valid_range', [0, 240])
-            # setattr(var, '_FillValue', '-99S')
 
 if __name__ == "__main__":
     pass

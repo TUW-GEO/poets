@@ -41,7 +41,9 @@ def _create_grid():
         regular grid
     """
 
-    if settings.sp_res == 0.1:
+    if settings.sp_res == 0.01:
+        grid = gr.HundredthDegGrid(setup_kdTree=False)
+    elif settings.sp_res == 0.1:
         grid = gr.TenthDegGrid(setup_kdTree=False)
     elif settings.sp_res == 0.25:
         grid = gr.TenthDegGrid(setup_kdTree=False)
@@ -74,39 +76,40 @@ def resample_to_shape(source_file, country):
 
     shp = Country(country)
 
-    data, lon, lat = clip_netcdf_bbox(source_file, shp.bbox[0], shp.bbox[1],
-                                     shp.bbox[2], shp.bbox[3], country=country)
+    data, src_lon, src_lat = clip_netcdf_bbox(source_file, shp.bbox[0],
+                                              shp.bbox[1], shp.bbox[2],
+                                              shp.bbox[3], country=country)
 
-    grid = _create_grid()
-    pts = gr.getCountryPoints(grid, country)
+    src_lon, src_lat = np.meshgrid(src_lon, src_lat)
+    grid = gr.CountryGrid(country)
 
-    londim = np.arange(pts.lon.min(), pts.lon.max(), settings.sp_res)
-    latdim = np.arange(pts.lat.max(), pts.lat.min(), -settings.sp_res)
+    dest_lon, dest_lat = np.meshgrid(np.unique(grid.arrlon),
+                                     np.unique(grid.arrlat)[::-1])
 
-    gpis = grid.get_bbox_grid_points(latdim.min(), latdim.max(), londim.min(),
-                                     londim.max())
+    gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),
+                                     grid.arrlon.min(), grid.arrlon.max())
 
-    lon, lat = np.meshgrid(lon, lat)
-    lons, lats = np.meshgrid(londim, latdim)
+    data = resample.resample_to_grid(data, src_lon, src_lat, dest_lon, dest_lat)
 
-    data = resample.resample_to_grid(data, lon, lat, lons, lats)
-
-    mask = np.zeros(shape=lons.shape, dtype=np.bool)
+    mask = np.zeros(shape=grid.shape, dtype=np.bool)
 
     poly = Polygon(shp.polygon)
 
-    for i in range(0, lons.shape[0]):
-        for j in range(0, lons.shape[1]):
-            p = Point(lons[i][j], lats[i][j])
+    for i in range(0, grid.shape[0]):
+        for j in range(0, grid.shape[1]):
+            p = Point(dest_lon[i][j], dest_lat[i][j])
             if p.within(poly) == False:
                 mask[i][j] = True
             if data[data.keys()[0]].mask[i][j] == True:
                 mask[i][j] = True
 
     for key in data.keys():
-        data[key] = np.ma.masked_array(data[key], mask=mask)
+        data[key] = np.ma.masked_array(data[key], mask=mask, fill_value=-99)
+        x = np.copy(data[key].data)
+        x[data[key].mask == True] = -99
+        data[key] = np.ma.masked_array(x, mask=mask, fill_falue=-99)
 
-    return data, lons, lats, gpis
+    return data, dest_lon, dest_lat, gpis
 
 
 def resample_to_gridpoints(source_file, country):

@@ -22,11 +22,12 @@ Created on May 21, 2014
 
 
 class Settings():
-    sp_res = 1  # Possible values: 0.1, 0.25, 1
-    temp_res = 'dekad'
-    tmp_path = '/media/sf_D/PROJECTS/SATIDA/tmp'
-    out_path = '/media/sf_D/PROJECTS/SATIDA/DATA'
-    regions = ['ET']  # using FIPS country code
+    sp_res = 0.25  # Possible values: 0.1, 0.25, 1
+    temp_res = ''
+    tmp_path = ''
+    out_path = ''
+    regions = ['']  # using FIPS country code
+    nan_value = -99
 
 
 class Database():
