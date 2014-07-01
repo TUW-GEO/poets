@@ -21,10 +21,26 @@ Created on May 27, 2014
 '''
 
 import pandas as pd
+import calendar
 from datetime import date
 
 
 def dekad_index(begin, end=None):
+    """
+    Creates a pandas datetime index on a decadal basis
+
+    Parameters
+    ----------
+    begin : datetime.date
+        datetime index start date
+    end : datetime.date
+        optional, datetime index end date, set to current date if None
+
+    Returns
+    -------
+    dtindex : pandas.tseries.index.DatetimeIndex
+        decadal datetime index
+    """
 
     if end == None:
         end = date.today()
@@ -37,20 +53,21 @@ def dekad_index(begin, end=None):
     dates = []
 
     for i, dat in enumerate(daterange):
+        lday = calendar.monthrange(dat.year, dat.month)[1]
         if i == 0 and begin.day > 1:
             if begin.day < 11:
-                dekads = [1, 11, 21]
+                dekads = [10, 20, lday]
             elif begin.day >= 11 and begin.day < 21:
-                dekads = [11, 21]
+                dekads = [20, lday]
             else:
-                dekads = [21]
+                dekads = [lday]
         elif i == (len(daterange) - 1) and end.day < 21:
             if end.day < 11:
-                dekads = [1]
+                dekads = [10]
             else:
-                dekads = [1, 11]
+                dekads = [10, 20]
         else:
-            dekads = [1, 11, 21]
+            dekads = [10, 20, lday]
 
         for j in dekads:
             dates.append(pd.datetime(dat.year, dat.month, j))

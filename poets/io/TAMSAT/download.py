@@ -1,18 +1,18 @@
-# Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
-# of Geodesy and Geoinformation (GEO).
+# Copyright (c) 2014,Vienna University of Technology
+# Department of Geodesy and Geoinformation
 # All rights reserved.
 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 # ARE DISCLAIMED. IN NO EVENT SHALL VIENNA UNIVERSITY OF TECHNOLOGY,
-# DEPARTMENT OF GEODESY AND GEOINFORMATION BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# DEPARTMENT OF GEODESY AND GEOINFORMATION BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 '''
 Created on 23.05.2014
@@ -38,7 +38,8 @@ def _get_current_file(download_path, date_from, date_to):
     """
     helper method to get the date of the last downloaded file in the local
     repository. Changes the date_from value to the date of the latest local
-    file if newer. Also sets the end-date of the download request if none given.
+    file if newer. Also sets the end-date of the download request if none 
+    given.
 
     Parameters
     ----------
@@ -140,6 +141,8 @@ def download(url, download_path=None, date_from=None, date_to=None):
         path = url + year + '/' + month + '/'
         fname = filename.replace('{YYYY}', year).replace('{MM}', month)
 
+        dekads = range(3)
+
         # get dekad of first and last interval based on input dates
         if i == 0 and date_from.day > 1:
             if date_from.day < 11:
@@ -153,8 +156,6 @@ def download(url, download_path=None, date_from=None, date_to=None):
                 dekads = [0]
             else:
                 dekads = [0, 1]
-        else:
-            dekads = range(3)
 
         # loop through dekads
         for j in dekads:
@@ -188,5 +189,4 @@ if __name__ == '__main__':
     # download_path = os.path.join(root.d, 'TAMSAT', 'test_download', '')
     path = os.path.join('/home', 'thomas', 'Downloads', 'TAMSAT', '')
 
-    # download(url, download_path, date_from, date_to)
-    download(url, download_path=path, date_from=beginn)
+    download(url)

@@ -24,8 +24,8 @@ import numpy as np
 import pandas as pd
 import pyresample as pr
 import poets.grid.grids as gr
+import poets.image.netcdf as nc
 from poets.grid.shapes import Country
-from netCDF4 import Dataset
 from poets.constants import Settings as settings
 from pytesmo.grid import resample
 from shapely.geometry import Polygon, Point
@@ -59,9 +59,9 @@ def resample_to_shape(source_file, country):
 
     Parameters
     ----------
-    source_file : string
+    source_file : str
         path to source file
-    country : string
+    country : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
 
     Returns
@@ -72,13 +72,20 @@ def resample_to_shape(source_file, country):
         longitudes of the points in the resampled image
     lats : numpy.array
         latgitudes of the points in the resampled image
+    gpis : numpy.array
+        grid point indices
+    timestamp : datetime.date
+        date of the image
     """
 
     shp = Country(country)
 
-    data, src_lon, src_lat = clip_netcdf_bbox(source_file, shp.bbox[0],
-                                              shp.bbox[1], shp.bbox[2],
-                                              shp.bbox[3], country=country)
+    data, src_lon, src_lat, timestamp = nc.clip_bbox(source_file,
+                                                     shp.bbox[0],
+                                                     shp.bbox[1],
+                                                     shp.bbox[2],
+                                                     shp.bbox[3],
+                                                     country=country)
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
@@ -89,7 +96,8 @@ def resample_to_shape(source_file, country):
     gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),
                                      grid.arrlon.min(), grid.arrlon.max())
 
-    data = resample.resample_to_grid(data, src_lon, src_lat, dest_lon, dest_lat)
+    data = resample.resample_to_grid(data, src_lon, src_lat, dest_lon,
+                                     dest_lat)
 
     mask = np.zeros(shape=grid.shape, dtype=np.bool)
 
@@ -109,7 +117,7 @@ def resample_to_shape(source_file, country):
         x[data[key].mask == True] = -99
         data[key] = np.ma.masked_array(x, mask=mask, fill_falue=-99)
 
-    return data, dest_lon, dest_lat, gpis
+    return data, dest_lon, dest_lat, gpis, timestamp
 
 
 def resample_to_gridpoints(source_file, country):
@@ -118,9 +126,9 @@ def resample_to_gridpoints(source_file, country):
 
     Parameters
     ----------
-    source_file : string
+    source_file : str
         path to source file
-    country : numpy.ndarray
+    country : str
         latitudes of source image
 
     Returns
@@ -134,8 +142,8 @@ def resample_to_gridpoints(source_file, country):
     gridpoints = gr.getCountryPoints(grid, country)
     shp = Country(country)
 
-    data, lon, lat = clip_netcdf_bbox(source_file, shp.bbox[0], shp.bbox[1],
-                                 shp.bbox[2], shp.bbox[3])
+    data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
+                                  shp.bbox[2], shp.bbox[3])
 
     lon, lat = np.meshgrid(lon, lat)
 
@@ -153,56 +161,4 @@ def resample_to_gridpoints(source_file, country):
                                                   des_swath, 20000)
 
     return dframe
-
-
-def clip_netcdf_bbox(source_file, lon_min, lat_min, lon_max, lat_max,
-                     country=None):
-    """
-    Clips bounding box out of an image
-
-    Parameters
-    ----------
-    source_file : string
-        path to source file
-    lon_min : float
-        min longitude of bounding box
-    lat_min : float
-        min latitude of bounding box
-    lon_max : float
-        max longitude of bounding box
-    lat_max : float
-        max latitude of bounding box
-
-    Returns
-    -------
-    data : dict of numpy.arrays
-        clipped image
-    lon_new : numpy.array
-        longitudes of the clipped image
-    lat_new : numpy.array
-        latgitudes of the clipped image
-    """
-
-    nc = Dataset(source_file)
-
-    lon = np.copy(nc.variables['lon'])
-    lat = np.copy(nc.variables['lat'])
-
-    variables = nc.variables.keys()[3:]
-
-    lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
-    lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
-
-    lon_new = lon[lons.min():lons.max()]
-    lat_new = lat[lats.min():lats.max()]
-
-    data = {}
-
-    for var in variables:
-        dat = nc.variables[var][:][0]
-        data[var] = dat[lats.min():lats.max(), lons.min():lons.max()]
-
-    nc.close()
-
-    return data, lon_new, lat_new
 

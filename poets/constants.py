@@ -20,14 +20,17 @@ Created on May 21, 2014
 @author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 '''
 
+import datetime
+
 
 class Settings():
-    sp_res = 0.25  # Possible values: 0.1, 0.25, 1
-    temp_res = ''
+    sp_res = 0.25  # Possible values: 0.01, 0.1, 0.25, 1
+    temp_res = 'dekad'
     tmp_path = ''
     out_path = ''
-    regions = ['']  # using FIPS country code
+    regions = ['ET']  # using FIPS country code
     nan_value = -99
+    start_date = datetime.date(1978, 1, 1)
 
 
 class Database():
