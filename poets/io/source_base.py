@@ -22,10 +22,13 @@ Base Class for data sources.
 """
 
 import os
-import datetime
+from poets.settings import Settings
+from netCDF4 import Dataset, num2date
+from poets.image.resampling import resample_to_shape
+from poets.image.netcdf import save_image
 
 
-class Source(object):
+class BasicSource(object):
     """
     Base Class for data sources.
 
@@ -40,41 +43,63 @@ class Source(object):
     ----------
     """
 
-    def __init__(self, source_path, begin_date, filename, dirstruct):
+    def __init__(self, name, source_path, filename, dirstruct, begin_date,
+                 variables):
         """
         init method
         """
 
+        self.name = name
         self.source_path = source_path
         self.begin_date = begin_date
         self.filename = filename
         self.dirstruct = dirstruct
+        self.variables = variables
 
-    def download(self):
-        """
-        Downloads data from source
-        """
+    def _check_current_date(self):
 
-        # check path type:
-        if ':' in self.source_path:
-            prefix = self.source_path[:self.source_path.find(':')]
-        else:
-            if os.path.exists(self.source_path):
-                prefix = 'local'
+        dates = {}
 
-        return True
+        for region in Settings.regions:
+            nc_name = os.path.join(Settings.data_path, region + '_'
+                                  + str(Settings.sp_res) + '.nc')
+            if os.path.exists(nc_name):
+                dates[region] = {}
+                for var in self.variables:
+                    dates[region][var] = None
+                    with Dataset(nc_name, 'r', format='NETCDF4') as ncfile:
+                        for i in range(ncfile.variables['time'].size - 1, -1, -1):
+                            if ncfile.variables[var][i].mask.min() == True:
+                                continue
+                            else:
+                                times = ncfile.variables['time']
+                                dat = num2date(ncfile.variables['time'][i],
+                                               units=times.units,
+                                               calendar=times.calendar)
+                                dates[region][var] = dat
+                                break
+            else:
+                dates = None
+                break
+
+        return dates
+
+    def resample(self, delete_rawdata=False):
+
+        for region in Settings.regions:
+
+            tmp_path = os.path.join(Settings.tmp_path, self.name)
+
+            dirList = os.listdir(tmp_path)
+
+            for item in dirList:
+                src_file = os.path.join(tmp_path, item)
+                image, lon, lat, gpis, timestamp = resample_to_shape(src_file,
+                                                                     region)
+                save_image(image, lon, lat, timestamp, region)
+
+                if delete_rawdata is True:
+                    os.unlink(src_file)
 
 if __name__ == "__main__":
-
-    url = "http://www.met.reading.ac.uk/~tamsat/public_data"
-    # date_from = date(1983, 01, 01)
-    begin = datetime.date(2014, 05, 02)
-    filename = 'rfe{YYYY}_{MM}-dk{P}.nc'
-
-    x = Source(url, begin, filename)
-    x.download()
-
-#===============================================================================
-# if __name__ == "__main__":
-#     pass
-#===============================================================================
+    pass

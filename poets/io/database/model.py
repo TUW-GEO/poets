@@ -26,7 +26,7 @@ import pandas as pd
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from poets.constants import Database as dbconst
+from poets.settings import Database as dbconst
 from poets.timedate.dateindex import dekad_index
 
 engine = create_engine('postgresql://' + dbconst.user + ':' + dbconst.password

@@ -22,7 +22,7 @@ Created on May 21, 2014
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from poets.constants import Database as dbconst
+from poets.settings import Database as dbconst
 
 engine = create_engine('postgresql://' + dbconst.user + ':' + dbconst.password
                        + '@' + dbconst.server + '/' + dbconst.database,

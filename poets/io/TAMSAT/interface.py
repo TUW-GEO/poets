@@ -1,98 +1,130 @@
-# Copyright (c) 2014,Vienna University of Technology, Department of Geodesy and Geoinformation
+# Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
+# of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL VIENNA UNIVERSITY OF TECHNOLOGY,
-# DEPARTMENT OF GEODESY AND GEOINFORMATION BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL VIENNA UNIVERSITY OF TECHNOLOGY,
+# DEPARTMENT OF GEODESY AND GEOINFORMATION BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-Created on 23.05.2014
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-06-13
 
-@author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-'''
-
+import datetime
+import pandas as pd
+import requests
 import os
-import glob
-import numpy as np
-import netCDF4 as nc
-
-import RS.dataspecific.dataset_base as dataset_base
-import general.root_path as root
-
-filename = 'rfe{YYYY}_{MM}-dk{P}.nc'
+from poets.settings import Settings
+from poets.io.source_base import BasicSource
 
 
-class RFE10Img(dataset_base.DatasetImgBase):
-    """
-    Class for the dekadal TAMSAT rainfall estimates produkt
-    """
-    def __init__(self):
-        path = os.path.join(root.r, 'Datapool_raw', 'TAMSAT', 'datasets',
-                            'TAMSAT_rfe_dekadal')
-        super(RFE10Img, self).__init__(path, grid=None)
+class TAMSAT(BasicSource):
 
-    def _read_spec_img(self, timestamp):
+    def __init__(self, **kwargs):
+
+        name = 'TAMSAT'
+        source_path = "http://www.met.reading.ac.uk/~tamsat/public_data"
+        dirstruct = ['YYYY', 'MM']
+        filename = "rfe{YYYY}_{MM}-dk{P}.nc"
+
+        begin_date = datetime.date(1983, 01, 01)
+        variables = ['rfe']
+
+        if source_path[-1] != '/':
+            source_path += '/'
+
+        super(TAMSAT, self).__init__(name, source_path, filename, dirstruct,
+                                     begin_date, variables)
+
+    def download(self, download_path=None, begin=None, end=None):
         """
-        Read specific image for given datetime date.
+        Download latest TAMSAT RFE dekadal data
 
         Parameters
         ----------
-        timestamp : datetime.date
-            exact observation timestamp of the image that should be read
-
-        Returns
-        -------
-        data : dict
-            dictionary of numpy arrays that hold the image data for each
-            variable of the dataset
-        metadata : dict
-            dictionary of numpy arrays that hold the metadata
-        timestamp : datetime.datetime
-            exact timestamp of the image
-        lon : numpy.array or None
-            array of longitudes, if None self.grid will be assumed
-        lat : numpy.array or None
-            array of latitudes, if None self.grid will be assumed
-        time_var : string or None
-            variable name of observation times in the data dict, if None all
-            observations have the same timestamp
+        download_path : str
+            Path where to save the downloaded files.
+        begin : datetime.date
+            Optional, set either to first date of remote repository or date of
+            last file in local repository
+        end : datetime.date
+            Optional, set to today if none given
         """
 
-        if timestamp.day >= 1 and timestamp.day < 11:
-            dekad = 1
-        elif timestamp.day >= 11 and timestamp.day < 21:
-            dekad = 2
-        else:
-            dekad = 3
+        if begin == None:
+            dates = self._check_current_date()
+            if dates is not None:
+                begin = datetime.datetime.now()
+                for region in Settings.regions:
+                    for var in self.variables:
+                        if dates[region][var] < begin:
+                            begin = dates[region][var]
+            else:
+                begin = self.begin_date
 
-        filen = (filename.replace('{YYYY}', '%Y').replace('{MM}', '%m')
-                 .replace('{P}', str(dekad)))
+        if download_path == None:
+            download_path = os.path.join(Settings.tmp_path, self.name)
 
-        month = str("%02d" % (timestamp.month,))
+        if end == None:
+            end = datetime.date.today()
 
-        files = glob.glob(os.path.join(self.path, str(timestamp.year), month,
-                                       timestamp.strftime(filen)))
-        if len(files) != 1:
-            raise ValueError("There must be exactly one file for given "
-                             "timestamp %s" % timestamp.isoformat())
+        print('[INFO] downloading data from ' + str(begin) + ' - '
+              + str(end))
 
-        dataset = nc.Dataset(files[0], 'r', format='NETCDF4')
+        # create daterange on monthly basis
+        mon_from = datetime.date(begin.year, begin.month, 1)
+        mon_to = datetime.date(end.year, end.month, 1)
+        daterange = pd.date_range(start=mon_from, end=mon_to, freq='MS')
 
-        rfe = dataset.variables['rfe'][:]
+        # loop through daterange
+        for i, dat in enumerate(daterange):
+            year = str(dat.year)
+            month = str("%02d" % (dat.month,))
+            path = self.source_path + year + '/' + month + '/'
+            fname = self.filename.replace('{YYYY}', year).replace('{MM}',
+                                                                  month)
 
-        lons = dataset.variables['lon']
-        lats = dataset.variables['lat']
+            dekads = range(3)
 
-        lons, lats = np.meshgrid(lons, lats)
+            # get dekad of first and last interval based on input dates
+            if i == 0 and begin.day > 1:
+                if begin.day < 11:
+                    dekads = [0, 1, 2]
+                elif begin.day >= 11 and begin.day < 21:
+                    dekads = [1, 2]
+                elif begin.day == 21:
+                    dekads = [2]
+            elif i == (len(daterange) - 1) and end.day < 21:
+                if end.day < 11:
+                    dekads = [0]
+                else:
+                    dekads = [0, 1]
 
-        data = {'rfe': rfe}
+            # loop through dekads
+            for j in dekads:
+                filepath = path + fname.replace('{P}', str(j + 1))
+                r = requests.get(filepath)
+                if r.status_code == 200:
+                    # check if year folder is existing
+                    if not os.path.exists(download_path):
+                        print('[INFO] output path does not exist...'
+                              'creating path')
+                        os.makedirs(download_path)
 
-        return data, {}, timestamp, lons, lats, None
+                    # download file
+                    newfile = os.path.join(download_path, filepath.split('/')[-1])
+                    if not os.path.exists(newfile):
+                        r = requests.get(filepath, stream=True)
+                        with open(newfile, 'wb') as f:
+                            f.write(r.content)
+                            print '[INFO] downloading file ' + filepath
+                    else:
+                        print('[INFO] file ' + filepath.split('/')[-1] +
+                              ' already exists - nothing to download')

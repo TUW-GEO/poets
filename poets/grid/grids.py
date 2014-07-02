@@ -28,7 +28,7 @@ import pandas as pd
 import math
 from shapely.geometry import Polygon, Point
 from poets.grid.shapes import Country
-from poets.constants import Settings
+from poets.settings import Settings
 
 
 class HundredthDegGrid(grids.BasicGrid):
@@ -41,7 +41,7 @@ class HundredthDegGrid(grids.BasicGrid):
         londim = np.arange(-179.995, 180, 0.01)
         latdim = np.arange(-89.995, 90, 0.01)
         lon, lat = np.meshgrid(londim, latdim)
-        super(TenthDegGrid, self).__init__(lon.flatten(), lat.flatten(),
+        super(HundredthDegGrid, self).__init__(lon.flatten(), lat.flatten(),
                                          shape=lon.shape, **kwargs)
 
 
@@ -196,18 +196,11 @@ def getCountryPoints(grid, country):
 
 def _minmaxcoord(min_threshold, max_threshold):
 
-    digits = str(Settings.sp_res).split('.')
-    if len(digits) == 1:
-        dp = 0
-    else:
-        dp = int(len(digits[1]))
-
     res = float(Settings.sp_res)
 
     minval = int(math.ceil(min_threshold / res)) * res
     maxval = int(math.floor(max_threshold / res)) * res
 
-    # minval = (math.ceil(threshold * (10 ** dp))) / (10 ** dp)
     if minval - (res / 2) < min_threshold:
         minval += res / 2
     else:

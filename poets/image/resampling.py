@@ -14,11 +14,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-Created on May 27, 2014
-
-@author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-'''
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-06-13
 
 import numpy as np
 import pandas as pd
@@ -26,7 +23,7 @@ import pyresample as pr
 import poets.grid.grids as gr
 import poets.image.netcdf as nc
 from poets.grid.shapes import Country
-from poets.constants import Settings as settings
+from poets.settings import Settings
 from pytesmo.grid import resample
 from shapely.geometry import Polygon, Point
 
@@ -41,13 +38,13 @@ def _create_grid():
         regular grid
     """
 
-    if settings.sp_res == 0.01:
+    if Settings.sp_res == 0.01:
         grid = gr.HundredthDegGrid(setup_kdTree=False)
-    elif settings.sp_res == 0.1:
+    elif Settings.sp_res == 0.1:
         grid = gr.TenthDegGrid(setup_kdTree=False)
-    elif settings.sp_res == 0.25:
+    elif Settings.sp_res == 0.25:
         grid = gr.TenthDegGrid(setup_kdTree=False)
-    elif settings.sp_res == 1:
+    elif Settings.sp_res == 1:
         grid = gr.OneDegGrid(setup_kdTree=False)
 
     return grid

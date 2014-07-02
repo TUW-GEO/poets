@@ -24,7 +24,7 @@ Functions for loading from and writing to netCDF4 files
 import os.path
 import numpy as np
 from pytesmo.grid.netcdf import save_grid
-from poets.constants import Settings as settings
+from poets.settings import Settings
 from poets.grid import grids
 from poets.timedate.dateindex import dekad_index
 from netCDF4 import Dataset, date2num, num2date
@@ -50,16 +50,16 @@ def save_image(image, lon, lat, timestamp, country):
 
     c_grid = grids.CountryGrid(country)
 
-    path = settings.out_path
+    path = Settings.data_path
 
-    filename = country + '_' + str(settings.sp_res) + '.nc'
+    filename = country + '_' + str(Settings.sp_res) + '.nc'
 
     nc_name = os.path.join(path, filename)
 
     if not os.path.isfile(nc_name):
         save_grid(nc_name, c_grid)
 
-    dt = dekad_index(settings.start_date)
+    dt = dekad_index(Settings.start_date)
 
     with Dataset(nc_name, 'r+', format='NETCDF4') as ncfile:
 
@@ -72,7 +72,7 @@ def save_image(image, lon, lat, timestamp, country):
             dim = dim[::-1]
 
             times = ncfile.createVariable('time', 'uint16', ('time',))
-            times.units = 'days since ' + str(settings.start_date)
+            times.units = 'days since ' + str(Settings.start_date)
             times.calendar = 'standard'
             times[:] = date2num(dt.tolist(), units=times.units,
                                 calendar=times.calendar)
