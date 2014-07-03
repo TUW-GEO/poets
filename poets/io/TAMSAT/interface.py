@@ -26,6 +26,26 @@ from poets.io.source_base import BasicSource
 
 
 class TAMSAT(BasicSource):
+    """
+    Source Class for TAMSAT data.
+    http://www.met.reading.ac.uk/~tamsat/
+
+    Attributes
+    ----------
+    name : str
+        Name of the data source
+    source_path : str
+        Link to data source
+    filename : str
+        Structure/convention of the file name
+    dirstruct : list of strings
+        Structure of source directory
+        Each list item represents a subdirectory
+    begin_date : datetime.date
+        Date, from which on data is available
+    variables : list of strings
+        Variables used from data source
+    """
 
     def __init__(self, **kwargs):
 
@@ -119,7 +139,8 @@ class TAMSAT(BasicSource):
                         os.makedirs(download_path)
 
                     # download file
-                    newfile = os.path.join(download_path, filepath.split('/')[-1])
+                    newfile = os.path.join(download_path,
+                                           filepath.split('/')[-1])
                     if not os.path.exists(newfile):
                         r = requests.get(filepath, stream=True)
                         with open(newfile, 'wb') as f:

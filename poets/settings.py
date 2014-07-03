@@ -14,11 +14,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-Created on May 21, 2014
-
-@author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-'''
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-05-21
 
 import datetime
 
@@ -26,8 +23,8 @@ import datetime
 class Settings():
     sp_res = 0.25  # Possible values: 0.1, 0.25, 1
     temp_res = 'dekad'
-    tmp_path = '/media/sf_D/PROJECTS/SATIDA/tmp'
-    data_path = '/media/sf_D/PROJECTS/SATIDA/DATA'
+    tmp_path = '/home/thomas/Downloads/SATIDA/tmp'
+    data_path = '/home/thomas/Downloads/SATIDA/DATA'
     regions = ['ET', 'MO']  # using FIPS country code
     nan_value = -99
     start_date = datetime.date(1978, 1, 1)
