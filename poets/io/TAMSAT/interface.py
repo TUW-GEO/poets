@@ -79,13 +79,16 @@ class TAMSAT(BasicSource):
         """
 
         if begin == None:
-            dates = self._check_current_date()
+            dates = self._check_current_date(begin=False)
             if dates is not None:
                 begin = datetime.datetime.now()
                 for region in Settings.regions:
                     for var in self.variables:
-                        if dates[region][var] < begin:
-                            begin = dates[region][var]
+                        if dates[region][var][1] is not None:
+                            if dates[region][var][1] < begin:
+                                begin = dates[region][var][1]
+                        else:
+                            begin = self.begin_date
             else:
                 begin = self.begin_date
 

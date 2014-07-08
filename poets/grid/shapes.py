@@ -14,11 +14,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-Created on Jun 4, 2014
-
-@author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-'''
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-06-04
 
 import os
 import shapefile
@@ -28,9 +25,10 @@ class FipsError(Exception):
     pass
 
 
-class Country(object):
+class Shape(object):
     """
-    Class that provides geography information of a country
+    Class that provides geography information of a region/country given as 
+    shapefile
 
     Parameters
     ----------
@@ -43,7 +41,7 @@ class Country(object):
         FIPS country code
     shpfile : string
         Path to the source shapefile
-    bbox : list
+    bbox : tuple
         Bounding box of the country
     polygon : list
         Country boundary polygon
@@ -57,7 +55,7 @@ class Country(object):
                                     'with_fips_codes')
         rec, bbox, polygon = self._get_shape()
         self.name = rec[1]
-        self.bbox = list(bbox)
+        self.bbox = tuple(bbox)
         self.polygon = polygon
 
     def _get_shape(self):
@@ -94,5 +92,4 @@ class Country(object):
         return sh.record, sh.shape.bbox, sh.shape.points
 
 if __name__ == '__main__':
-
-    ctr = Country('ET')
+    pass

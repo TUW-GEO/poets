@@ -15,24 +15,32 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-21
+# Creation date: 2014-07-08
 
-import datetime
-
-
-class Settings():
-    sp_res = 0.25  # Possible values: 0.1, 0.25, 1
-    temp_res = 'dekad'
-    tmp_path = '/media/sf_D/PROJECTS/SATIDA/tmp'
-    data_path = '/media/sf_D/PROJECTS/SATIDA/DATA'
-    regions = ['ET', 'MO']  # using FIPS country code
-    nan_value = -99
-    start_date = datetime.date(1978, 1, 1)
+import unittest
+from poets.grid.shapes import Shape
 
 
-class Database():
-    user = ''
-    password = ''
-    database = ''
-    server = ''
-    grid = ''
+class Test(unittest.TestCase):
+
+    def setUp(self):
+        self.region = 'AU'
+        self.name = 'Austria'
+
+    def tearDown(self):
+        pass
+
+    def test_Shape(self):
+
+        bbox = (9.5335693359375, 46.407493591308594, 17.166385650634766,
+                49.01874542236328)
+
+        shp = Shape(self.region)
+
+        assert shp.fips == self.region
+        assert shp.name == self.name
+        assert shp.bbox == bbox
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

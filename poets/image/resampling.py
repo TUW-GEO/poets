@@ -22,7 +22,7 @@ import pandas as pd
 import pyresample as pr
 import poets.grid.grids as gr
 import poets.image.netcdf as nc
-from poets.grid.shapes import Country
+from poets.grid.shapes import Shape
 from poets.settings import Settings
 from pytesmo.grid import resample
 from shapely.geometry import Polygon, Point
@@ -75,7 +75,7 @@ def resample_to_shape(source_file, country):
         date of the image
     """
 
-    shp = Country(country)
+    shp = Shape(country)
 
     data, src_lon, src_lat, timestamp = nc.clip_bbox(source_file,
                                                      shp.bbox[0],
@@ -137,7 +137,7 @@ def resample_to_gridpoints(source_file, country):
     grid = _create_grid()
 
     gridpoints = gr.getCountryPoints(grid, country)
-    shp = Country(country)
+    shp = Shape(country)
 
     data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
                                   shp.bbox[2], shp.bbox[3])

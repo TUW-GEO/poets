@@ -15,24 +15,43 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-21
+# Creation date: 2014-07-07
 
-import datetime
+"""
+Description of module.
+"""
 
-
-class Settings():
-    sp_res = 0.25  # Possible values: 0.1, 0.25, 1
-    temp_res = 'dekad'
-    tmp_path = '/media/sf_D/PROJECTS/SATIDA/tmp'
-    data_path = '/media/sf_D/PROJECTS/SATIDA/DATA'
-    regions = ['ET', 'MO']  # using FIPS country code
-    nan_value = -99
-    start_date = datetime.date(1978, 1, 1)
+import unittest
+from poets.grid.grids import CountryGrid
 
 
-class Database():
-    user = ''
-    password = ''
-    database = ''
-    server = ''
-    grid = ''
+class Test(unittest.TestCase):
+
+    def setUp(self):
+        self.region = 'AU'
+        self.sp_res = 0.25
+
+    def tearDown(self):
+        pass
+
+    def test_CountryGrid(self):
+        points_number = 290
+        bbox = (46.625, 48.875, 9.875, 16.875)
+        cpoints_shape = (158, 2)
+
+        cgrid = CountryGrid(self.region, resolution=self.sp_res)
+        grid_bbox = (cgrid.arrlat.min(), cgrid.arrlat.max(),
+                     cgrid.arrlon.min(), cgrid.arrlon.max())
+
+        grid_points_number = cgrid.get_grid_points()[0].size
+
+        country_points_shape = cgrid.get_country_gridpoints().shape
+
+        assert points_number == grid_points_number
+        assert bbox == grid_bbox
+        assert cpoints_shape == country_points_shape
+
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

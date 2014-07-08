@@ -60,7 +60,7 @@ class BasicSource(object):
         self.dirstruct = dirstruct
         self.variables = variables
 
-    def _check_current_date(self):
+    def _check_current_date(self, begin=True, end=True):
         """
         Helper method that checks the current date of individual variables in
         the netCDF data file.
@@ -79,19 +79,40 @@ class BasicSource(object):
             if os.path.exists(nc_name):
                 dates[region] = {}
                 for var in self.variables:
-                    dates[region][var] = None
+                    dates[region][var] = []
                     with Dataset(nc_name, 'r', format='NETCDF4') as ncfile:
-                        for i in range(ncfile.variables['time'].size - 1, -1,
-                                       - 1):
-                            if ncfile.variables[var][i].mask.min() == True:
-                                continue
-                            else:
-                                times = ncfile.variables['time']
-                                dat = num2date(ncfile.variables['time'][i],
-                                               units=times.units,
-                                               calendar=times.calendar)
-                                dates[region][var] = dat
-                                break
+                        if begin is True:
+                        # check first date of data
+                            for i in range(0,
+                                            ncfile.variables['time'].size - 1):
+                                if ncfile.variables[var][i].mask.min() == True:
+                                    continue
+                                else:
+                                    times = ncfile.variables['time']
+                                    dat = num2date(ncfile.variables['time'][i],
+                                                   units=times.units,
+                                                   calendar=times.calendar)
+                                    dates[region][var].append(dat)
+                                    break
+                        else:
+                            dates[region][var].append(None)
+
+                        if end is True:
+                            # check last date of data
+                            for i in range(ncfile.variables['time'].size - 1,
+                                           - 1, -1):
+                                if ncfile.variables[var][i].mask.min() == True:
+                                    continue
+                                else:
+                                    times = ncfile.variables['time']
+                                    dat = num2date(ncfile.variables['time'][i],
+                                                   units=times.units,
+                                                   calendar=times.calendar)
+                                    dates[region][var].append(dat)
+                                    break
+                        else:
+                            dates[region][var].append(None)
+
             else:
                 dates = None
                 break
@@ -115,18 +136,29 @@ class BasicSource(object):
 
         for region in Settings.regions:
 
-            print '[INFO] resampling to region ' + region
+            print '[INFO] resampling to region ' + region + ' ['
 
             dirList = os.listdir(tmp_path)
+
+            year = {'old': None, 'new': None}
 
             for item in dirList:
                 src_file = os.path.join(tmp_path, item)
                 image, lon, lat, gpis, timestamp = resample_to_shape(src_file,
                                                                      region)
+                year['new'] = timestamp.year()
+                if year['old']  is None:
+                    print '  [' + str(year['new']),
+                else:
+                    if year['old'] != year['new']:
+                        print ', ' + str(year['new']),
+                year['old'] = year['new']
                 save_image(image, lon, lat, timestamp, region)
                 raw_files.append(src_file)
+            print ']'
 
         if delete_rawdata is True:
+            print '[INFO] delete rawdata'
             for f in raw_files:
                 os.unlink(f)
 
@@ -198,6 +230,8 @@ class BasicSource(object):
                                    region + '_' + str(Settings.sp_res)
                                    + '.nc')
 
+        var_dates = self._check_current_date()
+
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
             time = nc.variables['time']
             dates = num2date(time[:], units=time.units, calendar=time.calendar)
@@ -206,8 +240,10 @@ class BasicSource(object):
             lon_pos = position[1][0]
             df = pd.DataFrame(index=pd.DatetimeIndex(dates))
             for var in variable:
-                df[var] = nc.variables[var][:, lat_pos, lon_pos]
-
+                var_begin = np.where(dates == var_dates[region][var][0])[0][0]
+                var_end = np.where(dates == var_dates[region][var][1])[0][0]
+                df[var] = np.NAN
+                df[var][var_begin:var_end + 1] = nc.variables[var][var_begin:var_end + 1, lat_pos, lon_pos]
         return df
 
 if __name__ == "__main__":
