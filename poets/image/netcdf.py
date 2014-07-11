@@ -37,13 +37,13 @@ Saves numpy.ndarray images as multidimensional netCDF4 file.
 Parameters
 ----------
 image : dict of numpy.ndarrays
-input image
+    input image
 lon : numpy.ndarray
-longitudes of image
+    longitudes of image
 lat : numpy.ndarray
-latitudes of image
+    latitudes of image
 timestamp : datetime.datetime
-timestamp of image
+    timestamp of image
 country : str
 FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
 """
