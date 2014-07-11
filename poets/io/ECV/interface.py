@@ -28,7 +28,6 @@ from poets.io.source_base import BasicSource
 import paramiko
 
 
-
 class ECV(BasicSource):
     """
 
@@ -72,12 +71,15 @@ class ECV(BasicSource):
         if download_path == None:
             download_path = os.path.join(Settings.tmp_path, self.name)
 
+        if not os.path.exists(download_path):
+            print('[INFO] output path does not exist... creating path')
+            os.makedirs(download_path)
+
         if begin == None:
             begin = self.begin_date
 
         if end == None:
             end = datetime.datetime.now()
-
 
         print('[INFO] downloading data from ' + str(begin) + ' - '
               + str(end) + '-12-31')
@@ -97,16 +99,17 @@ class ECV(BasicSource):
         for year in sftp.listdir(remotepath):
             # if not os.path.exists(localpath + str(year)):
                 # os.makedirs(localpath + str(year))
+
+            if int(year) == end.year:
+                break
+
             files = sftp.listdir(os.path.join(remotepath, str(year)))
             files.sort()
             for filename in files:
-                if not os.path.isfile(filename):
+                if os.path.isfile(os.path.join(localpath, filename)) is False:
                     sftp.get(remotepath + str(year) + '/' + filename,
-                             localpath + '/' + filename)
+                             os.path.join(localpath, filename))
                     sftp.close
-
-            if int(year) == end:
-                break
 
 if __name__ == "__main__":
     pass
