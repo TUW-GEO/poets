@@ -28,11 +28,3 @@ class Settings():
     regions = ['ET']  # using FIPS country code
     nan_value = -99
     start_date = datetime.date(1978, 11, 1)
-
-
-class Database():
-    user = ''
-    password = ''
-    database = ''
-    server = ''
-    grid = ''
