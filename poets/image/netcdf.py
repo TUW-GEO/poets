@@ -96,6 +96,92 @@ def save_image(image, lon, lat, timestamp, country):
             setattr(var, 'units', 'millimeters')
 
 
+def write_tmp_file(image, lon, lat, timestamp, country):
+    """
+    Saves numpy.ndarray images as multidimensional netCDF4 file.
+
+    Parameters
+    ----------
+    image : dict of numpy.ndarrays
+        input image
+    lon : numpy.ndarray
+        longitudes of image
+    lat : numpy.ndarray
+        latitudes of image
+    timestamp : datetime.datetime
+        timestamp of image
+    country : str
+        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    """
+
+    c_grid = grids.CountryGrid(country)
+
+    path = Settings.data_path
+
+    filename = country + '_' + str(Settings.sp_res) + '.nc'
+
+    nc_name = os.path.join(path, filename)
+
+    if not os.path.isfile(nc_name):
+        save_grid(nc_name, c_grid)
+
+    dt = dekad_index(Settings.start_date)
+
+    with Dataset(nc_name, 'r+', format='NETCDF4') as ncfile:
+
+        dim = ncfile.dimensions.keys()
+
+        if 'time' not in ncfile.dimensions.keys():
+            ncfile.createDimension("time", None)
+            dim = dim[::-1]
+            dim.append('time')
+            dim = dim[::-1]
+
+            times = ncfile.createVariable('time', 'uint16', ('time',))
+            times.units = 'days since ' + str(Settings.start_date)
+            times.calendar = 'standard'
+            #===================================================================
+            # times[:] = date2num(dt.tolist(), units=times.units,
+            #                     calendar=times.calendar)
+            #===================================================================
+
+        else:
+            times = ncfile.variables['time']
+
+        numdate = date2num(timestamp, units=times.units,
+                           calendar=times.calendar)
+
+        for key in image.keys():
+
+            print key + ' ' + str(numdate)
+
+            if key not in ncfile.variables.keys():
+                var = ncfile.createVariable(key, np.dtype('int32').char, dim,
+                                            fill_value=-99)
+            else:
+                var = ncfile.variables[key]
+
+            if np.where(times[:] == numdate)[0].size > 0:
+                t_index = np.where(times[:] == numdate)[0][0]
+                var_index = t_index
+                # var[t_index] = image[key]
+            else:
+                if times[:].size == 0:
+                    times[0] = numdate
+                    var_index = 0
+                else:
+                    # print 'adding date'
+                    # print times[:].size
+                    times[times[:].size] = numdate
+                    var_index = times[:].size - 1
+
+
+            var[var_index] = image[key]
+            # var[np.where(times[:] == numdate)[0][0]] = image[key]
+            setattr(var, 'long_name', key)
+            setattr(var, 'units', 'millimeters')
+
+
 def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
     """
     Clips bounding box out of netCDF file and returns data as numpy.ndarray
