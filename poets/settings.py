@@ -22,9 +22,9 @@ import datetime
 
 class Settings():
     sp_res = 0.25  # Possible values: 0.1, 0.25, 1
-    temp_res = 'dekad'
-    tmp_path = '/media/sf_H/tmp/'
-    data_path = '/media/sf_H/data/'
-    regions = ['ET']  # using FIPS country code
+    temp_res = ''
+    tmp_path = ''
+    data_path = ''
+    regions = ['']  # using FIPS country code
     nan_value = -99
     start_date = datetime.date(1978, 11, 1)
