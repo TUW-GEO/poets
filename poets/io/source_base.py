@@ -21,9 +21,10 @@ import os
 import pandas as pd
 import numpy as np
 from poets.settings import Settings
-from netCDF4 import Dataset, num2date
+from poets.timedate.dateindex import check_dekad
+from netCDF4 import Dataset, num2date, date2num
 from poets.image.resampling import resample_to_shape
-from poets.image.netcdf import save_image
+from poets.image.netcdf import save_image, write_tmp_file
 
 
 class BasicSource(object):
@@ -47,8 +48,8 @@ class BasicSource(object):
         Variables used from data source
     """
 
-    def __init__(self, name, source_path, filename, dirstruct, begin_date,
-                 variables):
+    def __init__(self, name, source_path, filename, temp_res, dirstruct,
+                 begin_date, variables):
         """
         init method
         """
@@ -57,6 +58,7 @@ class BasicSource(object):
         self.source_path = source_path
         self.begin_date = begin_date
         self.filename = filename
+        self.temp_res = temp_res
         self.dirstruct = dirstruct
         self.variables = variables
 
@@ -79,13 +81,14 @@ class BasicSource(object):
             if os.path.exists(nc_name):
                 dates[region] = {}
                 for var in self.variables:
+                    ncvar = self.name + '_' + var
                     dates[region][var] = []
                     with Dataset(nc_name, 'r', format='NETCDF4') as ncfile:
                         if begin is True:
                         # check first date of data
                             for i in range(0,
                                             ncfile.variables['time'].size - 1):
-                                if ncfile.variables[var][i].mask.min() == True:
+                                if ncfile.variables[ncvar][i].mask.min() == True:
                                     continue
                                 else:
                                     times = ncfile.variables['time']
@@ -101,7 +104,7 @@ class BasicSource(object):
                             # check last date of data
                             for i in range(ncfile.variables['time'].size - 1,
                                            - 1, -1):
-                                if ncfile.variables[var][i].mask.min() == True:
+                                if ncfile.variables[ncvar][i].mask.min() == True:
                                     continue
                                 else:
                                     times = ncfile.variables['time']
@@ -131,12 +134,21 @@ class BasicSource(object):
             Original files will be deleted from tmp_path if set 'True'
         """
 
+        # tmp_path = os.path.join(Settings.tmp_path, self.name)
+
+        #======================================================================
+        # if self.temp_res != 'dekadal':
+        #     temp_path = os.path.join(Settings.tmp_path, self.name, 'temp')
+        #     resample_temporal(temp_path,)
+        #     tmp_path = temp_path
+        #======================================================================
+
         raw_files = []
         tmp_path = os.path.join(Settings.tmp_path, self.name)
 
         for region in Settings.regions:
 
-            print '[INFO] resampling to region ' + region + ' ['
+            print '[INFO] resampling to region ' + region
 
             dirList = os.listdir(tmp_path)
             dirList.sort()
@@ -146,16 +158,29 @@ class BasicSource(object):
             for item in dirList:
                 src_file = os.path.join(tmp_path, item)
                 image, lon, lat, gpis, timestamp = resample_to_shape(src_file,
-                                                                     region)
+                                                                     region,
+                                                                     self.name)
                 year['new'] = timestamp.year
                 if year['old']  is None:
-                    print '  [' + str(year['new']),
+                    print '  ' + str(year['new']) + ' [',
                 else:
                     if year['old'] != year['new']:
-                        print ', ' + str(year['new']),
+                        print ']'
+                        print '  ' + str(year['new']) + ' [',
                 year['old'] = year['new']
-                save_image(image, lon, lat, timestamp, region)
+
+                print '.',
+
+                path = Settings.data_path
+                filename = region + '_' + str(Settings.sp_res) + '.nc'
+                nc_name = os.path.join(path, filename)
+
+                filepath = os.path.join(Settings.tmp_path, filename)
+
+                write_tmp_file(image, lon, lat, timestamp, region, filepath)
+                # save_image(image, lon, lat, timestamp, region, nc_name)
                 raw_files.append(src_file)
+
             print ']'
 
         if delete_rawdata is True:
@@ -200,7 +225,7 @@ class BasicSource(object):
         self.download(download_path, begin, end)
         self.resample(delete_rawdata)
 
-    def get_timeseries(self, gp, region=None, variable=None):
+    def read_ts(self, gp, region=None, variable=None):
         """
         Gets timeseries from netCDF file for certain gridpoint
 
@@ -234,18 +259,72 @@ class BasicSource(object):
         var_dates = self._check_current_date()
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
+
             time = nc.variables['time']
             dates = num2date(time[:], units=time.units, calendar=time.calendar)
             position = np.where(nc.variables['gpi'][:] == gp)
             lat_pos = position[0][0]
             lon_pos = position[1][0]
             df = pd.DataFrame(index=pd.DatetimeIndex(dates))
+
             for var in variable:
-                var_begin = np.where(dates == var_dates[region][var][0])[0][0]
-                var_end = np.where(dates == var_dates[region][var][1])[0][0]
-                df[var] = np.NAN
-                df[var][var_begin:var_end + 1] = nc.variables[var][var_begin:var_end + 1, lat_pos, lon_pos]
+                begin = np.where(dates == var_dates[region][var][0])[0][0]
+                end = np.where(dates == var_dates[region][var][1])[0][0]
+
+                # Renames variable name to SOURCE_variable
+                ncvar = self.name + '_' + var
+                df[ncvar] = np.NAN
+                values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
+                df[ncvar][begin:end + 1] = values
+
+                # Replaces NAN value with np.NAN
+                df[ncvar][df[ncvar] == Settings.nan_value] = np.NAN
+                df[ncvar]
+
         return df
+
+    def read_img(self, date, region=None, variable=None):
+        """
+        Gets images from netCDF file for certain date
+
+        Parameters
+        ----------
+        date : datetime.datetime
+            Date of the image
+        region : str
+            Region of interest, set to first defined region if not set
+        variable : str
+            Variable to display, selects first available variables if None
+
+        Returns
+        -------
+        img : numpy.ndarray
+            Image of selected date
+        """
+
+        if region is None:
+            region = Settings.regions[0]
+
+        if variable is None:
+            variable = self.variables[0]
+
+        source_file = os.path.join(Settings.data_path,
+                                   region + '_' + str(Settings.sp_res)
+                                   + '.nc')
+
+        # get dekad of date:
+        date = check_dekad(date)
+
+        with Dataset(source_file, 'r', format='NETCDF4') as nc:
+            time = nc.variables['time']
+
+            datenum = date2num(date, units=time.units, calendar=time.calendar)
+
+            position = np.where(time[:] == datenum)[0][0]
+
+            img = nc.variables[variable][position]
+
+        return img
 
 if __name__ == "__main__":
     pass

@@ -22,7 +22,7 @@ Created on May 27, 2014
 
 import pandas as pd
 import calendar
-from datetime import date
+import datetime
 
 
 def dekad_index(begin, end=None):
@@ -43,10 +43,10 @@ def dekad_index(begin, end=None):
     """
 
     if end == None:
-        end = date.today()
+        end = datetime.date.today()
 
-    mon_begin = date(begin.year, begin.month, 1)
-    mon_end = date(end.year, end.month, 1)
+    mon_begin = datetime.date(begin.year, begin.month, 1)
+    mon_end = datetime.date(end.year, end.month, 1)
 
     daterange = pd.date_range(mon_begin, mon_end, freq='MS')
 
@@ -75,3 +75,17 @@ def dekad_index(begin, end=None):
     dtindex = pd.DatetimeIndex(dates)
 
     return dtindex
+
+
+def check_dekad(date):
+
+    if date.day < 11:
+        dekad = 10
+    elif date.day > 10 and date.day < 21:
+        dekad = 20
+    else:
+        dekad = calendar.monthrange(date.year, date.month)[1]
+
+    new_date = datetime.datetime(date.year, date.month, dekad)
+
+    return new_date

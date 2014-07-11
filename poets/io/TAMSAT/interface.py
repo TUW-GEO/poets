@@ -53,15 +53,15 @@ class TAMSAT(BasicSource):
         source_path = "http://www.met.reading.ac.uk/~tamsat/public_data"
         dirstruct = ['YYYY', 'MM']
         filename = "rfe{YYYY}_{MM}-dk{P}.nc"
-
+        temp_res = 'dekad'
         begin_date = datetime.date(1983, 01, 01)
         variables = ['rfe']
 
         if source_path[-1] != '/':
             source_path += '/'
 
-        super(TAMSAT, self).__init__(name, source_path, filename, dirstruct,
-                                     begin_date, variables)
+        super(TAMSAT, self).__init__(name, source_path, filename, temp_res,
+                                     dirstruct, begin_date, variables)
 
     def download(self, download_path=None, begin=None, end=None):
         """
