@@ -17,10 +17,6 @@
 # Author: Isabella Pfeil, isy.pfeil@gmx.at
 # Creation date: 2014-07-09
 
-"""
-Description of module.
-"""
-
 import datetime
 import os
 from poets.settings import Settings
@@ -30,6 +26,9 @@ import paramiko
 
 class ECV(BasicSource):
     """
+
+    Source Class for ECV data.
+    ftp.ipf.tuwien.ac.at
 
     Attributes
     ----------
@@ -66,7 +65,21 @@ class ECV(BasicSource):
 
     def download(self, download_path=None, begin=None, end=None):
 
-        # download to Settings.tmp_path
+        """
+        Download latest ECV dekadal data
+
+        Parameters
+        ----------
+        download_path : str
+            Path where to save the downloaded files.
+        begin : datetime.date
+            Optional, set either to first date of remote repository or date of
+            last file in local repository
+        end : datetime.date
+            Entered in [years]. End year is not downloaded anymore.
+            Optional, set to today if none given
+        """
+
 
         if download_path == None:
             download_path = os.path.join(Settings.tmp_path, self.name)
@@ -87,6 +100,7 @@ class ECV(BasicSource):
         remotepath = '/_down/daily_files/COMBINED/'
         localpath = download_path
 
+        # connect to ftp server
         host = 'ftp.ipf.tuwien.ac.at'
         port = 22
         transport = paramiko.Transport((host, port))
@@ -96,13 +110,10 @@ class ECV(BasicSource):
 
         sftp = paramiko.SFTPClient.from_transport(transport)
 
+        # download files to temporary path
         for year in sftp.listdir(remotepath):
-            # if not os.path.exists(localpath + str(year)):
-                # os.makedirs(localpath + str(year))
-
             if int(year) == end.year:
                 break
-
             files = sftp.listdir(os.path.join(remotepath, str(year)))
             files.sort()
             for filename in files:
@@ -110,6 +121,7 @@ class ECV(BasicSource):
                     sftp.get(remotepath + str(year) + '/' + filename,
                              os.path.join(localpath, filename))
                     sftp.close
+
 
 if __name__ == "__main__":
     pass
