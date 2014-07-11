@@ -23,7 +23,7 @@ import numpy as np
 from poets.settings import Settings
 from poets.timedate.dateindex import check_dekad
 from netCDF4 import Dataset, num2date, date2num
-from poets.image.resampling import resample_to_shape, resample_temporal
+from poets.image.resampling import resample_to_shape
 from poets.image.netcdf import save_image, write_tmp_file
 
 
