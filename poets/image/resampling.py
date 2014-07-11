@@ -50,7 +50,7 @@ def _create_grid():
     return grid
 
 
-def resample_to_shape(source_file, country):
+def resample_to_shape(source_file, country, prefix=None):
     """
     Resamples images and clips country boundaries
 
@@ -74,6 +74,9 @@ def resample_to_shape(source_file, country):
     timestamp : datetime.date
         date of the image
     """
+
+    if prefix is not None:
+        prefix += '_'
 
     shp = Shape(country)
 
@@ -109,10 +112,12 @@ def resample_to_shape(source_file, country):
                 mask[i][j] = True
 
     for key in data.keys():
-        data[key] = np.ma.masked_array(data[key], mask=mask, fill_value=-99)
-        x = np.copy(data[key].data)
-        x[data[key].mask == True] = -99
-        data[key] = np.ma.masked_array(x, mask=mask, fill_falue=-99)
+        var = prefix + key
+        data[var] = np.ma.masked_array(data[key], mask=mask, fill_value=-99)
+        dat = np.copy(data[var].data)
+        dat[data[var].mask == True] = -99
+        data[var] = np.ma.masked_array(dat, mask=mask, fill_falue=-99)
+        del data[key]
 
     return data, dest_lon, dest_lat, gpis, timestamp
 
