@@ -32,21 +32,21 @@ from netCDF4 import Dataset, date2num, num2date
 
 def save_image(image, lon, lat, timestamp, country):
     """
-    Saves numpy.ndarray images as multidimensional netCDF4 file.
+Saves numpy.ndarray images as multidimensional netCDF4 file.
 
-    Parameters
-    ----------
-    image : dict of numpy.ndarrays
-        input image
-    lon : numpy.ndarray
-        longitudes of image
-    lat : numpy.ndarray
-        latitudes of image
-    timestamp : datetime.datetime
-        timestamp of image
-    country : str
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
-    """
+Parameters
+----------
+image : dict of numpy.ndarrays
+input image
+lon : numpy.ndarray
+longitudes of image
+lat : numpy.ndarray
+latitudes of image
+timestamp : datetime.datetime
+timestamp of image
+country : str
+FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+"""
 
     c_grid = grids.CountryGrid(country)
 
@@ -98,32 +98,32 @@ def save_image(image, lon, lat, timestamp, country):
 
 def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
     """
-    Clips bounding box out of netCDF file and returns data as numpy.ndarray
+Clips bounding box out of netCDF file and returns data as numpy.ndarray
 
-    Parameters
-    ----------
-    source_file : str
-        path to source file
-    lon_min : float
-        min longitude of bounding box
-    lat_min : float
-        min latitude of bounding box
-    lon_max : float
-        max longitude of bounding box
-    lat_max : float
-        max latitude of bounding box
+Parameters
+----------
+source_file : str
+path to source file
+lon_min : float
+min longitude of bounding box
+lat_min : float
+min latitude of bounding box
+lon_max : float
+max longitude of bounding box
+lat_max : float
+max latitude of bounding box
 
-    Returns
-    -------
-    data : dict of numpy.arrays
-        clipped image
-    lon_new : numpy.array
-        longitudes of the clipped image
-    lat_new : numpy.array
-        latgitudes of the clipped image
-    timestamp : datetime.date
-        timestamp of image
-    """
+Returns
+-------
+data : dict of numpy.arrays
+clipped image
+lon_new : numpy.array
+longitudes of the clipped image
+lat_new : numpy.array
+latgitudes of the clipped image
+timestamp : datetime.date
+timestamp of image
+"""
 
     nc = Dataset(source_file)
 

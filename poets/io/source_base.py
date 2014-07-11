@@ -139,6 +139,7 @@ class BasicSource(object):
             print '[INFO] resampling to region ' + region + ' ['
 
             dirList = os.listdir(tmp_path)
+            dirList.sort()
 
             year = {'old': None, 'new': None}
 
@@ -146,7 +147,7 @@ class BasicSource(object):
                 src_file = os.path.join(tmp_path, item)
                 image, lon, lat, gpis, timestamp = resample_to_shape(src_file,
                                                                      region)
-                year['new'] = timestamp.year()
+                year['new'] = timestamp.year
                 if year['old']  is None:
                     print '  [' + str(year['new']),
                 else:
