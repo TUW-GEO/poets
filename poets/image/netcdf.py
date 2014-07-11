@@ -32,21 +32,21 @@ from netCDF4 import Dataset, date2num, num2date
 
 def save_image(image, lon, lat, timestamp, country):
     """
-Saves numpy.ndarray images as multidimensional netCDF4 file.
-
-Parameters
-----------
-image : dict of numpy.ndarrays
-    input image
-lon : numpy.ndarray
-    longitudes of image
-lat : numpy.ndarray
-    latitudes of image
-timestamp : datetime.datetime
-    timestamp of image
-country : str
-FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
-"""
+    Saves numpy.ndarray images as multidimensional netCDF4 file.
+    
+    Parameters
+    ----------
+    image : dict of numpy.ndarrays
+        input image
+    lon : numpy.ndarray
+        longitudes of image
+    lat : numpy.ndarray
+        latitudes of image
+    timestamp : datetime.datetime
+        timestamp of image
+    country : str
+        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    """
 
     c_grid = grids.CountryGrid(country)
 
