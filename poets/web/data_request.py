@@ -15,30 +15,42 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-26
+# Creation date: 2014-07-09
 
-from flask import Flask, jsonify, render_template
-from poets.settings import Settings
+"""
+Description of module.
+"""
+
+import numpy as np
+import pandas as pd
 from poets.io.TAMSAT.interface import TAMSAT
-from data_request import read_ts
-
-app = Flask(__name__, template_folder="templates")
 
 
-@app.route('/')
-def index():
+def to_dygraph_format(self):
+    labels = ['date']
+    labels.extend(self.columns.values.tolist())
+    data_values = np.hsplit(self.values, self.columns.values.size)
+    data_index = self.index.values.astype('M8[s]').tolist()
+    data_index = [x.strftime("%Y/%m/%d %H:%M:%S") for x in data_index]
+    data_index = np.reshape(data_index, (len(data_index), 1))
+    data_values.insert(0, data_index)
+    data_values = np.column_stack(data_values)
 
-    data = read_ts(500, region='ET')
+    return labels, data_values.tolist()
 
-    return render_template('index.html', regions=Settings.regions, ts=data)
+pd.DataFrame.to_dygraph_format = to_dygraph_format
 
 
-@app.route('/create_json')
-def create_json():
+def read_ts(gp, region=None, variable=None):
 
-    data = read_ts(500, region='ET')
+    tamsat = TAMSAT()
+    dat = tamsat.read_ts(gp, region, variable)
+    print(type(dat))
 
-    return jsonify(data)
+    labels, values = dat.to_dygraph_format()
+    ts = {'labels': labels, 'data': values}
+
+    return ts
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    pass

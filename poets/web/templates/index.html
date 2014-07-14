@@ -1,8 +1,21 @@
-<!DOCTYPE html>
-    <html>
-    <head>
-    </head>
-    <body>
-        <h1>Web Template</h1>
-    </body>
-</html>
+{% extends "layout.html" %}
+
+{% block body %}
+
+<h1>Regions</h1>
+<p>
+    {{ regions }}
+</p>
+
+<div class="row">
+	<div id='graph1' class="col-md-12" style="height:250px;">
+	</div>
+</div>
+
+<script type="text/javascript">
+ts = new poetsViewer();
+ts.loadTS();
+
+</script>
+
+{% endblock %}
