@@ -30,18 +30,14 @@ from poets.timedate.dateindex import dekad_index
 from netCDF4 import Dataset, date2num, num2date
 
 
-def save_image(image, lon, lat, timestamp, country):
+def save_image(image, timestamp, country, metadata, dest_file=None):
     """
     Saves numpy.ndarray images as multidimensional netCDF4 file.
-    
+
     Parameters
     ----------
     image : dict of numpy.ndarrays
         input image
-    lon : numpy.ndarray
-        longitudes of image
-    lat : numpy.ndarray
-        latitudes of image
     timestamp : datetime.datetime
         timestamp of image
     country : str
@@ -52,9 +48,13 @@ def save_image(image, lon, lat, timestamp, country):
 
     path = Settings.data_path
 
-    filename = country + '_' + str(Settings.sp_res) + '.nc'
+    if dest_file is None:
 
-    nc_name = os.path.join(path, filename)
+        filename = country + '_' + str(Settings.sp_res) + '.nc'
+        nc_name = os.path.join(path, filename)
+
+    else:
+        nc_name = dest_file
 
     if not os.path.isfile(nc_name):
         save_grid(nc_name, c_grid)
@@ -63,14 +63,8 @@ def save_image(image, lon, lat, timestamp, country):
 
     with Dataset(nc_name, 'r+', format='NETCDF4') as ncfile:
 
-        dim = ncfile.dimensions.keys()
-
         if 'time' not in ncfile.dimensions.keys():
             ncfile.createDimension("time", None)
-            dim = dim[::-1]
-            dim.append('time')
-            dim = dim[::-1]
-
             times = ncfile.createVariable('time', 'uint16', ('time',))
             times.units = 'days since ' + str(Settings.start_date)
             times.calendar = 'standard'
@@ -80,23 +74,25 @@ def save_image(image, lon, lat, timestamp, country):
         else:
             times = ncfile.variables['time']
 
+        dim = ('time', 'lat', 'lon')
+
         numdate = date2num(timestamp, units=times.units,
                            calendar=times.calendar)
 
         for key in image.keys():
 
             if key not in ncfile.variables.keys():
-                var = ncfile.createVariable(key, np.dtype('int32').char, dim,
-                                            fill_value=-99)
+                var = ncfile.createVariable(key, image[key].dtype.char, dim,
+                                            fill_value=Settings.nan_value)
             else:
                 var = ncfile.variables[key]
 
             var[np.where(times[:] == numdate)[0][0]] = image[key]
-            setattr(var, 'long_name', key)
-            setattr(var, 'units', 'millimeters')
+            for attr in metadata[key].keys():
+                setattr(var, attr, metadata[key][attr])
 
 
-def write_tmp_file(image, lon, lat, timestamp, country):
+def write_tmp_file(image, timestamp, country, metadata, filepath):
     """
     Saves numpy.ndarray images as multidimensional netCDF4 file.
 
@@ -104,10 +100,6 @@ def write_tmp_file(image, lon, lat, timestamp, country):
     ----------
     image : dict of numpy.ndarrays
         input image
-    lon : numpy.ndarray
-        longitudes of image
-    lat : numpy.ndarray
-        latitudes of image
     timestamp : datetime.datetime
         timestamp of image
     country : str
@@ -116,34 +108,16 @@ def write_tmp_file(image, lon, lat, timestamp, country):
 
     c_grid = grids.CountryGrid(country)
 
-    path = Settings.data_path
+    if not os.path.isfile(filepath):
+        save_grid(filepath, c_grid)
 
-    filename = country + '_' + str(Settings.sp_res) + '.nc'
-
-    nc_name = os.path.join(path, filename)
-
-    if not os.path.isfile(nc_name):
-        save_grid(nc_name, c_grid)
-
-    dt = dekad_index(Settings.start_date)
-
-    with Dataset(nc_name, 'r+', format='NETCDF4') as ncfile:
-
-        dim = ncfile.dimensions.keys()
+    with Dataset(filepath, 'r+', format='NETCDF4') as ncfile:
 
         if 'time' not in ncfile.dimensions.keys():
             ncfile.createDimension("time", None)
-            dim = dim[::-1]
-            dim.append('time')
-            dim = dim[::-1]
-
             times = ncfile.createVariable('time', 'uint16', ('time',))
             times.units = 'days since ' + str(Settings.start_date)
             times.calendar = 'standard'
-            #===================================================================
-            # times[:] = date2num(dt.tolist(), units=times.units,
-            #                     calendar=times.calendar)
-            #===================================================================
 
         else:
             times = ncfile.variables['time']
@@ -151,35 +125,29 @@ def write_tmp_file(image, lon, lat, timestamp, country):
         numdate = date2num(timestamp, units=times.units,
                            calendar=times.calendar)
 
+        dim = ('time', 'lat', 'lon')
+
         for key in image.keys():
 
-            print key + ' ' + str(numdate)
-
             if key not in ncfile.variables.keys():
-                var = ncfile.createVariable(key, np.dtype('int32').char, dim,
-                                            fill_value=-99)
+                var = ncfile.createVariable(key, image[key].dtype.char, dim,
+                                            fill_value=Settings.nan_value)
             else:
                 var = ncfile.variables[key]
 
             if np.where(times[:] == numdate)[0].size > 0:
                 t_index = np.where(times[:] == numdate)[0][0]
                 var_index = t_index
-                # var[t_index] = image[key]
             else:
                 if times[:].size == 0:
                     times[0] = numdate
                     var_index = 0
                 else:
-                    # print 'adding date'
-                    # print times[:].size
                     times[times[:].size] = numdate
                     var_index = times[:].size - 1
 
-
             var[var_index] = image[key]
-            # var[np.where(times[:] == numdate)[0][0]] = image[key]
-            setattr(var, 'long_name', key)
-            setattr(var, 'units', 'millimeters')
+            var.setncatts(metadata[key])
 
 
 def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
@@ -209,36 +177,126 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
         latgitudes of the clipped image
     timestamp : datetime.date
         timestamp of image
+    metadata : dict of strings
+        metadata from source netCDF file
     """
 
-    nc = Dataset(source_file)
+    with Dataset(source_file, 'r', format='NETCDF4') as nc:
 
-    if 'time' in nc.variables.keys():
+        if 'time' in nc.variables.keys():
+            times = nc.variables['time']
+            timestamp = num2date(times[:], units=times.units)[0]
+        else:
+            timestamp = None
+
+        lon = np.copy(nc.variables['lon'])
+        lat = np.copy(nc.variables['lat'])
+
+        variables = nc.variables.keys()[3:]
+
+        lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
+        lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
+
+        lon_new = lon[lons.min():lons.max()]
+        lat_new = lat[lats.min():lats.max()]
+
+        data = {}
+        metadata = {}
+
+        for var in variables:
+            dat = nc.variables[var][:][0]
+            data[var] = dat[lats.min():lats.max(), lons.min():lons.max()]
+            metadata[var] = {}
+            for attr in nc.variables[var].ncattrs():
+                if attr[0] != '_' and attr != 'scale_factor':
+                    metadata[var][attr] = nc.variables[var].getncattr(attr)
+
+    return data, lon_new, lat_new, timestamp, metadata
+
+
+def read_image(source_file, region, variable, date, date_to=None):
+    """
+    Parameters
+    ----------
+    source_file : str
+        path to source file
+    region : str
+        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    variable : str
+        requested variable of image
+    date : datetime.datetime
+        date of the image, start date of data cube if date_to is set
+    date_to : datetime.date, optional
+        end date of data cube to slice from netCDF file
+    Returns
+    -------
+    lon : numpy.array
+        longitudes of the image
+    lat : numpy.array
+        latgitudes of the image
+    metadata : dict of strings
+        metadata from source netCDF file
+    """
+
+    with Dataset(source_file, 'r', format='NETCDF4') as nc:
         times = nc.variables['time']
-        timestamp = num2date(times[:], units=times.units)[0]
-    else:
-        timestamp = None
+        lon = nc.variables['lon'][:]
+        lat = nc.variables['lat'][:]
+        var = nc.variables[variable]
 
-    lon = np.copy(nc.variables['lon'])
-    lat = np.copy(nc.variables['lat'])
+        metadata = {}
+        for attr in var.ncattrs():
+            if attr[0] != '_' and attr != 'scale_factor':
+                metadata[attr] = var.getncattr(attr)
 
-    variables = nc.variables.keys()[3:]
+        numdate = date2num(date, units=times.units, calendar=times.calendar)
+        if date_to is None:
+            image = var[np.where(times[:] == numdate)[0][0]]
+        else:
+            numdate_to = date2num(date_to, units=times.units,
+                                  calendar=times.calendar)
+            subset = np.where((times[:] >= numdate) & (times[:] <= numdate_to))
+            image = var[subset]
 
-    lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
-    lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
-
-    lon_new = lon[lons.min():lons.max()]
-    lat_new = lat[lats.min():lats.max()]
-
-    data = {}
-
-    for var in variables:
-        dat = nc.variables[var][:][0]
-        data[var] = dat[lats.min():lats.max(), lons.min():lons.max()]
-
-    nc.close()
-
-    return data, lon_new, lat_new, timestamp
+    return image, lon, lat, metadata
 
 if __name__ == "__main__":
     pass
+
+
+def get_properties(src_file):
+    """
+    Gets all variables containing image data from netCDF files. Removes Lon,
+    Lat, Time and GPI information
+
+    Parameters
+    ----------
+    src_file : str
+        path to netCDF file
+
+    Returns
+    -------
+    variables : list of str
+        list of variables
+    dimensions : list of str
+        dimensions of the netCDF file
+    period : list of datetime.datetime
+        date of first and last image in source file
+    """
+
+    with Dataset(src_file, 'r+', format='NETCDF4') as nc:
+        variables = nc.variables.keys()
+        dimensions = nc.dimensions.keys()
+        time = nc.variables['time']
+        period = [num2date(time[:].min(), units=time.units,
+                           calendar=time.calendar),
+                  num2date(time[:].max(), units=time.units,
+                           calendar=time.calendar)]
+
+        for dim in dimensions:
+            variables.remove(dim)
+
+    if 'gpi' in variables:
+        variables.remove('gpi')
+
+    return variables, dimensions, period

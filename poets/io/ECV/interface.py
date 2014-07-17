@@ -26,7 +26,6 @@ import paramiko
 
 class ECV(BasicSource):
     """
-
     Source Class for ECV data.
     ftp.ipf.tuwien.ac.at
 
@@ -41,7 +40,7 @@ class ECV(BasicSource):
     dirstruct : list of strings
         Structure of source directory
         Each list item represents a subdirectory
-    begin_date : datetime.date
+    begin_date : datetime.datetime
         Date, from which on data is available
     variables : list of strings
         Variables used from data source
@@ -53,18 +52,19 @@ class ECV(BasicSource):
         source_path = "ftp.ipf.tuwien.ac.at/_down/daily_files/COMBINED"
         dirstruct = ['YYYY']
         filename = "ESACCI-SOILMOISTURE-L3S-SSMV-COMBINED-{YYYY}{MM}{TT}{hh}{mm}{ss}-fv02.0.nc"
+        filedate = {'YYYY': (38, 42), 'MM': (42, 44), 'DD': (44, 46),
+                         'hh': (46, 48), 'mm':(48, 50), 'ss': (50, 52)}
         temp_res = 'daily'
-        begin_date = datetime.date(1978, 11, 01)
+        begin_date = datetime.datetime(1978, 11, 01)
         variables = ['sm']
 
         if source_path[-1] != '/':
             source_path += '/'
 
-        super(ECV, self).__init__(name, source_path, filename, temp_res,
-                                  dirstruct, begin_date, variables)
+        super(ECV, self).__init__(name, source_path, filename, filedate,
+                                  temp_res, dirstruct, begin_date, variables)
 
     def download(self, download_path=None, begin=None, end=None):
-
         """
         Download latest ECV dekadal data
 
@@ -79,7 +79,6 @@ class ECV(BasicSource):
             Entered in [years]. End year is not downloaded anymore.
             Optional, set to today if none given
         """
-
 
         if download_path == None:
             download_path = os.path.join(Settings.tmp_path, self.name)
@@ -112,11 +111,14 @@ class ECV(BasicSource):
 
         # download files to temporary path
         for year in sftp.listdir(remotepath):
-            if int(year) == end.year:
-                break
             files = sftp.listdir(os.path.join(remotepath, str(year)))
             files.sort()
             for filename in files:
+                fdate = self.get_file_date(filename)
+                if fdate < begin:
+                    continue
+                if fdate > end:
+                    return 'download complete'
                 if os.path.isfile(os.path.join(localpath, filename)) is False:
                     sftp.get(remotepath + str(year) + '/' + filename,
                              os.path.join(localpath, filename))

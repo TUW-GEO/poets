@@ -89,3 +89,15 @@ def check_dekad(date):
     new_date = datetime.datetime(date.year, date.month, dekad)
 
     return new_date
+
+
+def dekad2day(year, month, dekad):
+
+    if dekad == 1:
+        day = 10
+    elif dekad == 2:
+        day = 20
+    elif dekad == 3:
+        day = calendar.monthrange(year, month)[1]
+
+    return day

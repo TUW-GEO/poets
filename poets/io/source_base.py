@@ -20,11 +20,12 @@
 import os
 import pandas as pd
 import numpy as np
+import datetime
 from poets.settings import Settings
-from poets.timedate.dateindex import check_dekad
+from poets.timedate.dateindex import check_dekad, dekad_index, dekad2day
 from netCDF4 import Dataset, num2date, date2num
-from poets.image.resampling import resample_to_shape
-from poets.image.netcdf import save_image, write_tmp_file
+from poets.image.resampling import resample_to_shape, average_layers
+from poets.image.netcdf import save_image, write_tmp_file, get_properties, read_image
 
 
 class BasicSource(object):
@@ -48,8 +49,8 @@ class BasicSource(object):
         Variables used from data source
     """
 
-    def __init__(self, name, source_path, filename, temp_res, dirstruct,
-                 begin_date, variables):
+    def __init__(self, name, source_path, filename, filedate, temp_res,
+                 dirstruct, begin_date, variables):
         """
         init method
         """
@@ -58,6 +59,7 @@ class BasicSource(object):
         self.source_path = source_path
         self.begin_date = begin_date
         self.filename = filename
+        self.filedate = filedate
         self.temp_res = temp_res
         self.dirstruct = dirstruct
         self.variables = variables
@@ -122,71 +124,121 @@ class BasicSource(object):
 
         return dates
 
-    def resample(self, delete_rawdata=False):
-        """
-        Resamples source data to predefined spatial and temporal resolution and
-        writes them into the netCDF data file. Deletes original files if flag
-        delete_rawdata is set True.
+    def get_file_date(self, fname):
 
-        Parameters
-        ----------
-        delete_rawdata : bool
-            Original files will be deleted from tmp_path if set 'True'
-        """
+        fname = str(fname)
 
-        # tmp_path = os.path.join(Settings.tmp_path, self.name)
+        if 'YYYY' in self.filedate.keys():
+            year = int(fname[self.filedate['YYYY'][0]:
+                             self.filedate['YYYY'][1]])
 
-        #======================================================================
-        # if self.temp_res != 'dekadal':
-        #     temp_path = os.path.join(Settings.tmp_path, self.name, 'temp')
-        #     resample_temporal(temp_path,)
-        #     tmp_path = temp_path
-        #======================================================================
+        if 'MM' in self.filedate.keys():
+            month = int(fname[self.filedate['MM'][0]:self.filedate['MM'][1]])
+
+        if 'DD' in self.filedate.keys():
+            day = int(fname[self.filedate['DD'][0]:self.filedate['DD'][1]])
+        else:
+            day = 1
+
+        if 'P' in self.filedate.keys():
+            dekad = int(fname[self.filedate['P'][0]:self.filedate['P'][1]])
+            day = dekad2day(year, month, dekad)
+
+        if 'hh' in self.filedate.keys():
+            hour = int(fname[self.filedate['hh'][0]:self.filedate['hh'][1]])
+        else:
+            hour = 0
+
+        if 'mm' in self.filedate.keys():
+            minute = int(fname[self.filedate['mm'][0]:self.filedate['mm'][1]])
+        else:
+            minute = 0
+
+        if 'ss' in self.filedate.keys():
+            second = int(fname[self.filedate['ss'][0]:self.filedate['ss'][1]])
+        else:
+            second = 0
+
+        return datetime.datetime(year, month, day, hour, minute, second)
+
+    def _get_tmp_filepath(self, prefix, region):
+        tmp_path = os.path.join(Settings.tmp_path, self.name)
+        filename = ('_' + prefix + '_' + region + '_' + str(Settings.sp_res)
+                    + '.nc')
+        return os.path.join(tmp_path, filename)
+
+    def _resample_spatial(self, region, begin, end, delete_rawdata):
 
         raw_files = []
         tmp_path = os.path.join(Settings.tmp_path, self.name)
 
-        for region in Settings.regions:
+        # filename if tmp file is used
+        dest_file = self._get_tmp_filepath('spatial', region)
 
-            print '[INFO] resampling to region ' + region
+        dirList = os.listdir(tmp_path)
+        dirList.sort()
 
-            dirList = os.listdir(tmp_path)
-            dirList.sort()
+        for item in dirList:
 
-            year = {'old': None, 'new': None}
+            src_file = os.path.join(tmp_path, item)
+            raw_files.append(src_file)
 
-            for item in dirList:
-                src_file = os.path.join(tmp_path, item)
-                image, lon, lat, gpis, timestamp = resample_to_shape(src_file,
-                                                                     region,
-                                                                     self.name)
-                year['new'] = timestamp.year
-                if year['old']  is None:
-                    print '  ' + str(year['new']) + ' [',
-                else:
-                    if year['old'] != year['new']:
-                        print ']'
-                        print '  ' + str(year['new']) + ' [',
-                year['old'] = year['new']
+            fdate = self.get_file_date(item)
 
-                print '.',
+            if begin is not None:
+                if fdate < begin:
+                    continue
+            if end is not None:
+                if fdate > end:
+                    continue
 
-                path = Settings.data_path
-                filename = region + '_' + str(Settings.sp_res) + '.nc'
-                nc_name = os.path.join(path, filename)
+            print '    ' + item
 
-                filepath = os.path.join(Settings.tmp_path, filename)
+            image, _, _, _, timestamp, metadata = \
+                resample_to_shape(src_file, region, self.name)
 
-                write_tmp_file(image, lon, lat, timestamp, region, filepath)
-                # save_image(image, lon, lat, timestamp, region, nc_name)
-                raw_files.append(src_file)
+            if self.temp_res is 'dekad':
+                save_image(image, timestamp, region, metadata)
+            else:
+                write_tmp_file(image, timestamp, region, metadata, dest_file)
 
-            print ']'
+            if delete_rawdata is True:
+                print '[INFO] delete source files'
+                os.unlink(src_file)
 
-        if delete_rawdata is True:
-            print '[INFO] delete rawdata'
-            for f in raw_files:
-                os.unlink(f)
+    def _resample_temporal(self, region):
+
+        src_file = self._get_tmp_filepath('spatial', region)
+
+        data = {}
+        variables, _, period = get_properties(src_file)
+
+        if Settings.temp_res is 'dekad':
+            dtindex = dekad_index(period[0], end=period[1])
+
+        for date in dtindex:
+            if date.day < 21:
+                begin = datetime.datetime(date.year, date.month,
+                                          date.day - 10 + 1)
+            else:
+                begin = datetime.datetime(date.year, date.month, 21)
+            end = date
+
+            data = {}
+            metadata = {}
+
+            for var in variables:
+                img, lon, lat, meta = \
+                    read_image(src_file, region, var, begin, end)
+
+                metadata[var] = meta
+                data[var] = average_layers(img)
+
+            save_image(data, date, region, metadata)
+
+        # delete intermediate netCDF file
+        print '[INFO] delete source files'
+        os.unlink(src_file)
 
     def download(self):
         """"
@@ -198,6 +250,31 @@ class BasicSource(object):
             Raised if not overriden by childs
         """
         raise NotImplementedError()
+
+    def resample(self, begin=None, end=None, delete_rawdata=False):
+        """
+        Resamples source data to predefined spatial and temporal resolution and
+        writes them into the netCDF data file. Deletes original files if flag
+        delete_rawdata is set True.
+
+        Parameters
+        ----------
+        delete_rawdata : bool
+            Original files will be deleted from tmp_path if set 'True'
+        """
+
+        for region in Settings.regions:
+
+            print '[INFO] resampling to region ' + region
+            print '  performing spatial resampling'
+
+            self._resample_spatial(region, begin, end, delete_rawdata)
+
+            if self.temp_res is 'dekad':
+                print '  skipping temporal resampling'
+            else:
+                print '  performing temporal resampling'
+                self._resample_temporal(region)
 
     def download_and_resample(self, download_path=None, begin=None, end=None,
                               delete_rawdata=False):
@@ -223,7 +300,7 @@ class BasicSource(object):
         """
 
         self.download(download_path, begin, end)
-        self.resample(delete_rawdata)
+        self.resample(begin=begin, end=end, delete_rawdata=delete_rawdata)
 
     def read_ts(self, gp, region=None, variable=None):
         """

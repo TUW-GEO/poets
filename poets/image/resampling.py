@@ -80,12 +80,9 @@ def resample_to_shape(source_file, country, prefix=None):
 
     shp = Shape(country)
 
-    data, src_lon, src_lat, timestamp = nc.clip_bbox(source_file,
-                                                     shp.bbox[0],
-                                                     shp.bbox[1],
-                                                     shp.bbox[2],
-                                                     shp.bbox[3],
-                                                     country=country)
+    data, src_lon, src_lat, timestamp, metadata = \
+        nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
+                     shp.bbox[3], country=country)
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
@@ -113,13 +110,17 @@ def resample_to_shape(source_file, country, prefix=None):
 
     for key in data.keys():
         var = prefix + key
-        data[var] = np.ma.masked_array(data[key], mask=mask, fill_value=-99)
+        metadata[prefix + key] = metadata[key]
+        del metadata[key]
+        data[var] = np.ma.masked_array(data[key], mask=mask,
+                                       fill_value=Settings.nan_value)
         dat = np.copy(data[var].data)
-        dat[data[var].mask == True] = -99
-        data[var] = np.ma.masked_array(dat, mask=mask, fill_falue=-99)
+        dat[data[var].mask == True] = Settings.nan_value
+        data[var] = np.ma.masked_array(dat, mask=mask,
+                                       fill_value=Settings.nan_value)
         del data[key]
 
-    return data, dest_lon, dest_lat, gpis, timestamp
+    return data, dest_lon, dest_lat, gpis, timestamp, metadata
 
 
 def resample_to_gridpoints(source_file, country):
@@ -164,3 +165,45 @@ def resample_to_gridpoints(source_file, country):
 
     return dframe
 
+
+def resample_temporal(src_file, temp_res=Settings.temp_res):
+    """
+    Resamples image-cubes to a specific temporal resolution.
+
+    Parameters
+    ----------
+    src_file : str
+        path to source file
+    temp_res : str, optional
+        temporal resolution of output images
+
+    Returns
+    -------
+
+    """
+    print 'test'
+
+
+def average_layers(image):
+    """
+    Averages image layers, given as ndimensional masked arrays to one image
+
+    Parameters
+    ----------
+    image : numpy.ma.MaskedArray
+        input image to average
+
+    Returns
+    -------
+    avg_img : numpy.ma.MaskedArray
+        averaged image
+    """
+
+    img = np.ma.masked_array(image.mean(0), fill_value=Settings.nan_value)
+    mask = img.mask
+    data = np.copy(img.data)
+    data[img.mask == True] = Settings.nan_value
+    avg_img = np.ma.masked_array(data, mask=mask,
+                                 fill_value=Settings.nan_value)
+
+    return avg_img

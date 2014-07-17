@@ -41,7 +41,7 @@ class TAMSAT(BasicSource):
     dirstruct : list of strings
         Structure of source directory
         Each list item represents a subdirectory
-    begin_date : datetime.date
+    begin_date : datetime.datetime
         Date, from which on data is available
     variables : list of strings
         Variables used from data source
@@ -53,15 +53,16 @@ class TAMSAT(BasicSource):
         source_path = "http://www.met.reading.ac.uk/~tamsat/public_data"
         dirstruct = ['YYYY', 'MM']
         filename = "rfe{YYYY}_{MM}-dk{P}.nc"
+        filedate = {'YYYY': (3, 7), 'MM': (8, 10), 'P': (13, 14)}
         temp_res = 'dekad'
-        begin_date = datetime.date(1983, 01, 01)
+        begin_date = datetime.datetime(1983, 01, 01)
         variables = ['rfe']
 
         if source_path[-1] != '/':
             source_path += '/'
 
-        super(TAMSAT, self).__init__(name, source_path, filename, temp_res,
-                                     dirstruct, begin_date, variables)
+        super(TAMSAT, self).__init__(name, source_path, filename, filedate,
+                                     temp_res, dirstruct, begin_date, variables)
 
     def download(self, download_path=None, begin=None, end=None):
         """
@@ -96,7 +97,7 @@ class TAMSAT(BasicSource):
             download_path = os.path.join(Settings.tmp_path, self.name)
 
         if end == None:
-            end = datetime.date.today()
+            end = datetime.datetime.now()
 
         print('[INFO] downloading data from ' + str(begin) + ' - '
               + str(end))
@@ -133,22 +134,23 @@ class TAMSAT(BasicSource):
             # loop through dekads
             for j in dekads:
                 filepath = path + fname.replace('{P}', str(j + 1))
-                r = requests.get(filepath)
-                if r.status_code == 200:
-                    # check if year folder is existing
-                    if not os.path.exists(download_path):
-                        print('[INFO] output path does not exist...'
-                              'creating path')
-                        os.makedirs(download_path)
+                newfile = os.path.join(download_path, filepath.split('/')[-1])
+                if os.path.exists(newfile):
+                    print('[INFO] file ' + filepath.split('/')[-1] +
+                          ' already exists - nothing to download')
+                else:
+                    r = requests.get(filepath)
+                    if r.status_code == 200:
+                        # check if year folder is existing
+                        if not os.path.exists(download_path):
+                            print('[INFO] output path does not exist...'
+                                  'creating path')
+                            os.makedirs(download_path)
 
-                    # download file
-                    newfile = os.path.join(download_path,
-                                           filepath.split('/')[-1])
-                    if not os.path.exists(newfile):
+                        # download file
+                        newfile = os.path.join(download_path,
+                                               filepath.split('/')[-1])
                         r = requests.get(filepath, stream=True)
                         with open(newfile, 'wb') as f:
                             f.write(r.content)
                             print '[INFO] downloading file ' + filepath
-                    else:
-                        print('[INFO] file ' + filepath.split('/')[-1] +
-                              ' already exists - nothing to download')
