@@ -31,8 +31,9 @@ from netCDF4 import Dataset, date2num, num2date
 
 
 def save_image(image, timestamp, country, metadata, dest_file=None):
-    """
-    Saves numpy.ndarray images as multidimensional netCDF4 file.
+    """Saves numpy.ndarray images as multidimensional netCDF4 file.
+
+    Creates a datetimeindex over the whole period defined in the settings file
 
     Parameters
     ----------
@@ -42,6 +43,10 @@ def save_image(image, timestamp, country, metadata, dest_file=None):
         timestamp of image
     country : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    metadata : dict
+        netCDF metadata from source file
+    dest_file : str, optional
+        Path to the output file
     """
 
     c_grid = grids.CountryGrid(country)
@@ -93,8 +98,7 @@ def save_image(image, timestamp, country, metadata, dest_file=None):
 
 
 def write_tmp_file(image, timestamp, country, metadata, filepath):
-    """
-    Saves numpy.ndarray images as multidimensional netCDF4 file.
+    """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Parameters
     ----------
@@ -104,6 +108,10 @@ def write_tmp_file(image, timestamp, country, metadata, filepath):
         timestamp of image
     country : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    metadata : dict
+        netCDF metadata from source file
+    filepath : str, optional
+        Path to the output file
     """
 
     c_grid = grids.CountryGrid(country)
@@ -151,8 +159,7 @@ def write_tmp_file(image, timestamp, country, metadata, filepath):
 
 
 def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
-    """
-    Clips bounding box out of netCDF file and returns data as numpy.ndarray
+    """Clips bounding box out of netCDF file and returns data as numpy.ndarray
 
     Parameters
     ----------
@@ -166,6 +173,8 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
         max longitude of bounding box
     lat_max : float
         max latitude of bounding box
+    country : str, optional
+        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
 
     Returns
     -------
@@ -215,7 +224,11 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
 
 
 def read_image(source_file, region, variable, date, date_to=None):
-    """
+    """Gets images from a netCDF file.
+
+    Reads the image for a specific date. If date_to is given, it will return
+    multiple images in a multidimensional numpy.ndarray
+
     Parameters
     ----------
     source_file : str
@@ -228,8 +241,11 @@ def read_image(source_file, region, variable, date, date_to=None):
         date of the image, start date of data cube if date_to is set
     date_to : datetime.date, optional
         end date of data cube to slice from netCDF file
+
     Returns
     -------
+    image : numpy.ndarray
+        image for a specific date
     lon : numpy.array
         longitudes of the image
     lat : numpy.array
@@ -265,9 +281,7 @@ if __name__ == "__main__":
 
 
 def get_properties(src_file):
-    """
-    Gets all variables containing image data from netCDF files. Removes Lon,
-    Lat, Time and GPI information
+    """Gets variables, dimensions and time period from a netCDF file.
 
     Parameters
     ----------

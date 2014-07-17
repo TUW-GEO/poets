@@ -22,15 +22,14 @@ import pandas as pd
 import numpy as np
 import datetime
 from poets.settings import Settings
-from poets.timedate.dateindex import check_dekad, dekad_index, dekad2day
+import poets.timedate.dateindex as dt
 from netCDF4 import Dataset, num2date, date2num
 from poets.image.resampling import resample_to_shape, average_layers
-from poets.image.netcdf import save_image, write_tmp_file, get_properties, read_image
+import poets.image.netcdf as net
 
 
 class BasicSource(object):
-    """
-    Base Class for data sources.
+    """Base Class for data sources.
 
     Attributes
     ----------
@@ -38,13 +37,17 @@ class BasicSource(object):
         Name of the data source
     source_path : str
         Link to data source
+    begin_date : datetime.date
+        Date, from which on data is available
     filename : str
         Structure/convention of the file name
+    filedate : dict
+        Position of date fields in filename, given as tuple
+    temp_res : str
+        Temporal resolution of the source
     dirstruct : list of strings
         Structure of source directory
         Each list item represents a subdirectory
-    begin_date : datetime.date
-        Date, from which on data is available
     variables : list of strings
         Variables used from data source
     """
@@ -65,10 +68,15 @@ class BasicSource(object):
         self.variables = variables
 
     def _check_current_date(self, begin=True, end=True):
-        """
-        Helper method that checks the current date of individual variables in
-        the netCDF data file.
+        """Helper method that checks the current date of individual variables
+        in the netCDF data file.
 
+        Parameters
+        ----------
+        begin : bool, optional
+            If set True, begin will be returned as None
+        end : bool, optional
+            If set True, end will be returned as None
         Returns
         -------
         dates : dict of dicts
@@ -85,16 +93,15 @@ class BasicSource(object):
                 for var in self.variables:
                     ncvar = self.name + '_' + var
                     dates[region][var] = []
-                    with Dataset(nc_name, 'r', format='NETCDF4') as ncfile:
+                    with Dataset(nc_name, 'r', format='NETCDF4') as nc:
                         if begin is True:
-                        # check first date of data
-                            for i in range(0,
-                                            ncfile.variables['time'].size - 1):
-                                if ncfile.variables[ncvar][i].mask.min() == True:
+                            # check first date of data
+                            for i in range(0, nc.variables['time'].size - 1):
+                                if nc.variables[ncvar][i].mask.min() == True:
                                     continue
                                 else:
-                                    times = ncfile.variables['time']
-                                    dat = num2date(ncfile.variables['time'][i],
+                                    times = nc.variables['time']
+                                    dat = num2date(nc.variables['time'][i],
                                                    units=times.units,
                                                    calendar=times.calendar)
                                     dates[region][var].append(dat)
@@ -104,13 +111,13 @@ class BasicSource(object):
 
                         if end is True:
                             # check last date of data
-                            for i in range(ncfile.variables['time'].size - 1,
+                            for i in range(nc.variables['time'].size - 1,
                                            - 1, -1):
-                                if ncfile.variables[ncvar][i].mask.min() == True:
+                                if nc.variables[ncvar][i].mask.min() == True:
                                     continue
                                 else:
-                                    times = ncfile.variables['time']
-                                    dat = num2date(ncfile.variables['time'][i],
+                                    times = nc.variables['time']
+                                    dat = num2date(nc.variables['time'][i],
                                                    units=times.units,
                                                    calendar=times.calendar)
                                     dates[region][var].append(dat)
@@ -124,7 +131,43 @@ class BasicSource(object):
 
         return dates
 
+    def _get_download_date(self):
+        """Gets the date from which to start the data download.
+
+        Returns
+        -------
+        begin : datetime.datetime
+            date from which to start the data download.
+        """
+        dates = self._check_current_date(begin=False)
+        if dates is not None:
+            begin = datetime.datetime.now()
+            for region in Settings.regions:
+                for var in self.variables:
+                    if dates[region][var][1] is not None:
+                        if dates[region][var][1] < begin:
+                            begin = dates[region][var][1]
+                            begin += datetime.timedelta(days=1)
+                    else:
+                        begin = self.begin_date
+        else:
+            begin = self.begin_date
+
+        return begin
+
     def get_file_date(self, fname):
+        """Gets the date from a file name.
+
+        Parameters
+        ----------
+        fname : str
+            Filename
+
+        Returns
+        -------
+        datetime.datetime
+            Date and, if given, time from filename
+        """
 
         fname = str(fname)
 
@@ -142,7 +185,7 @@ class BasicSource(object):
 
         if 'P' in self.filedate.keys():
             dekad = int(fname[self.filedate['P'][0]:self.filedate['P'][1]])
-            day = dekad2day(year, month, dekad)
+            day = dt.dekad2day(year, month, dekad)
 
         if 'hh' in self.filedate.keys():
             hour = int(fname[self.filedate['hh'][0]:self.filedate['hh'][1]])
@@ -162,12 +205,31 @@ class BasicSource(object):
         return datetime.datetime(year, month, day, hour, minute, second)
 
     def _get_tmp_filepath(self, prefix, region):
-        tmp_path = os.path.join(Settings.tmp_path, self.name)
+        """Creates path to a temporary directory.
+
+        Returns
+        -------
+        str
+            Path to the temporary direcotry
+        """
         filename = ('_' + prefix + '_' + region + '_' + str(Settings.sp_res)
                     + '.nc')
-        return os.path.join(tmp_path, filename)
+        return os.path.join(Settings.tmp_path, filename)
 
     def _resample_spatial(self, region, begin, end, delete_rawdata):
+        """Helper method that calls spatial resampling routines.
+
+        Parameters:
+        region : str
+            FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        begin : datetime.datetime
+            Start date of resampling
+        end : datetime.datetime
+            End date of resampling
+        delete_rawdata : bool
+            True if original downloaded files should be deleted after
+            resampling
+        """
 
         raw_files = []
         tmp_path = os.path.join(Settings.tmp_path, self.name)
@@ -192,31 +254,39 @@ class BasicSource(object):
                 if fdate > end:
                     continue
 
-            print '    ' + item
+            print '.',
 
             image, _, _, _, timestamp, metadata = \
                 resample_to_shape(src_file, region, self.name)
 
             if self.temp_res is 'dekad':
-                save_image(image, timestamp, region, metadata)
+                net.save_image(image, timestamp, region, metadata)
             else:
-                write_tmp_file(image, timestamp, region, metadata, dest_file)
+                net.write_tmp_file(image, timestamp, region, metadata,
+                                   dest_file)
 
             if delete_rawdata is True:
-                print '[INFO] delete source files'
                 os.unlink(src_file)
+        print ''
 
     def _resample_temporal(self, region):
+        """Helper method that calls temporal resampling routines.
+
+        Parameters:
+        region : str
+            FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        """
 
         src_file = self._get_tmp_filepath('spatial', region)
 
         data = {}
-        variables, _, period = get_properties(src_file)
+        variables, _, period = net.get_properties(src_file)
 
         if Settings.temp_res is 'dekad':
-            dtindex = dekad_index(period[0], end=period[1])
+            dtindex = dt.dekad_index(period[0], end=period[1])
 
         for date in dtindex:
+            print '.',
             if date.day < 21:
                 begin = datetime.datetime(date.year, date.month,
                                           date.day - 10 + 1)
@@ -228,16 +298,16 @@ class BasicSource(object):
             metadata = {}
 
             for var in variables:
-                img, lon, lat, meta = \
-                    read_image(src_file, region, var, begin, end)
+                img, _, _, meta = \
+                    net.read_image(src_file, region, var, begin, end)
 
                 metadata[var] = meta
                 data[var] = average_layers(img)
 
-            save_image(data, date, region, metadata)
+            net.save_image(data, date, region, metadata)
 
         # delete intermediate netCDF file
-        print '[INFO] delete source files'
+        print ''
         os.unlink(src_file)
 
     def download(self):
@@ -252,13 +322,17 @@ class BasicSource(object):
         raise NotImplementedError()
 
     def resample(self, begin=None, end=None, delete_rawdata=False):
-        """
-        Resamples source data to predefined spatial and temporal resolution and
-        writes them into the netCDF data file. Deletes original files if flag
-        delete_rawdata is set True.
+        """Resamples source data to given spatial and temporal resolution.
+
+        Writes resampled images into a netCDF data file. Deletes original 
+        files if flag delete_rawdata is set True.
 
         Parameters
         ----------
+        begin : datetime.datetime
+            Start date of resampling
+        end : datetime.datetime
+            End date of resampling
         delete_rawdata : bool
             Original files will be deleted from tmp_path if set 'True'
         """
@@ -266,53 +340,65 @@ class BasicSource(object):
         for region in Settings.regions:
 
             print '[INFO] resampling to region ' + region
-            print '  performing spatial resampling'
+            print '[INFO] performing spatial resampling ',
 
             self._resample_spatial(region, begin, end, delete_rawdata)
 
             if self.temp_res is 'dekad':
-                print '  skipping temporal resampling'
+                print '[INFO] skipping temporal resampling'
             else:
-                print '  performing temporal resampling'
+                print '[INFO] performing temporal resampling ',
                 self._resample_temporal(region)
 
     def download_and_resample(self, download_path=None, begin=None, end=None,
                               delete_rawdata=False):
-        """
-        Downloads and resamples data
+        """Downloads and resamples data.
 
         Parameters
         ----------
         download_path : str
             Path where to save the downloaded files.
-        begin : datetime.date
-            Optional, set either to first date of remote repository or date of
+        begin : datetime.date, optional
+            set either to first date of remote repository or date of
             last file in local repository
-        end : datetime.date
-            Optional, set to today if none given
-        delete_rawdata : bool
-            Original files will be deleted from tmp_path if set 'True'
-
-        Raises
-        ------
-        NotImplementedError
-            Raised if method is not called from child class
+        end : datetime.date, optional
+            set to today if none given
+        delete_rawdata : bool, optional
+            Original files will be deleted from tmp_path if set True
         """
 
-        self.download(download_path, begin, end)
-        self.resample(begin=begin, end=end, delete_rawdata=delete_rawdata)
+        if begin == None:
+            begin = self._get_download_date()
+
+        if end == None:
+            end = datetime.datetime.now()
+
+        drange = dt.get_dtindex(Settings.temp_res, begin, end)
+
+        for i, date in enumerate(drange):
+            if i == 0:
+                start = begin
+            else:
+                start = drange[i - 1] + datetime.timedelta(days=1)
+            stop = date
+
+            filecheck = self.download(download_path, start, stop)
+            if filecheck is True:
+                self.resample(begin=start, end=stop,
+                              delete_rawdata=delete_rawdata)
+            else:
+                print '[WARNING] no data available for this date'
 
     def read_ts(self, gp, region=None, variable=None):
-        """
-        Gets timeseries from netCDF file for certain gridpoint
+        """Gets timeseries from netCDF file for a gridpoint.
 
         Parameters
         ----------
         gp : int
             Grid point index
-        region : str
+        region : str, optional
             Region of interest, set to first defined region if not set
-        variable : str
+        variable : str, optional
             Variable to display, selects all available variables if None
 
         Returns
@@ -361,16 +447,15 @@ class BasicSource(object):
         return df
 
     def read_img(self, date, region=None, variable=None):
-        """
-        Gets images from netCDF file for certain date
+        """Gets images from netCDF file for certain date
 
         Parameters
         ----------
         date : datetime.datetime
             Date of the image
-        region : str
+        region : str, optional
             Region of interest, set to first defined region if not set
-        variable : str
+        variable : str, optional
             Variable to display, selects first available variables if None
 
         Returns
@@ -383,14 +468,14 @@ class BasicSource(object):
             region = Settings.regions[0]
 
         if variable is None:
-            variable = self.variables[0]
+            variable = self.name + '_' + self.variables[0]
 
         source_file = os.path.join(Settings.data_path,
                                    region + '_' + str(Settings.sp_res)
                                    + '.nc')
 
         # get dekad of date:
-        date = check_dekad(date)
+        date = dt.check_dekad(date)
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
             time = nc.variables['time']
