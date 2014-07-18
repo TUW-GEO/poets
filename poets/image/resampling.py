@@ -17,6 +17,7 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-06-13
 
+import os
 import numpy as np
 import pandas as pd
 import pyresample as pr
@@ -80,9 +81,16 @@ def resample_to_shape(source_file, country, prefix=None):
 
     shp = Shape(country)
 
-    data, src_lon, src_lat, timestamp, metadata = \
-        nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
-                     shp.bbox[3], country=country)
+    _, fileExtension = os.path.splitext(source_file)
+
+    if fileExtension in ['.nc', '.nc3', '.nc4']:
+        data, src_lon, src_lat, timestamp, metadata = \
+            nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
+                         shp.bbox[3], country=country)
+    elif fileExtension in ['.png', '.PNG']:
+        print  # clip bbox from png
+    elif fileExtension in ['.tif', '.tiff']:
+        print  # clip bbox from geotiff
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
