@@ -26,8 +26,8 @@ from poets.io.source_base import BasicSource
 
 
 class TAMSAT(BasicSource):
-    """
-    Source Class for TAMSAT data.
+    """Source Class for TAMSAT data.
+
     http://www.met.reading.ac.uk/~tamsat/
 
     Attributes
@@ -36,14 +36,18 @@ class TAMSAT(BasicSource):
         Name of the data source
     source_path : str
         Link to data source
+    begin_date : datetime.date
+        Date, from which on data is available
     filename : str
         Structure/convention of the file name
-    dirstruct : list of strings
+    filedate : dict
+        Position of date fields in filename, given as tuple
+    temp_res : str
+        Temporal resolution of the source
+    dirstruct : list of str
         Structure of source directory
         Each list item represents a subdirectory
-    begin_date : datetime.datetime
-        Date, from which on data is available
-    variables : list of strings
+    variables : list of str
         Variables used from data source
     """
 
@@ -65,33 +69,26 @@ class TAMSAT(BasicSource):
                                      temp_res, dirstruct, begin_date, variables)
 
     def download(self, download_path=None, begin=None, end=None):
-        """
-        Download latest TAMSAT RFE dekadal data
+        """Download latest TAMSAT RFE dekadal data
 
         Parameters
         ----------
-        download_path : str
+        download_path : str, optional
             Path where to save the downloaded files.
-        begin : datetime.date
-            Optional, set either to first date of remote repository or date of
+        begin : datetime.date, optional
+            set either to first date of remote repository or date of
             last file in local repository
-        end : datetime.date
-            Optional, set to today if none given
+        end : datetime.date, optional
+            set to today if none given
+
+        Returns
+        -------
+        bool
+            true if data is available, false if not
         """
 
         if begin == None:
-            dates = self._check_current_date(begin=False)
-            if dates is not None:
-                begin = datetime.datetime.now()
-                for region in Settings.regions:
-                    for var in self.variables:
-                        if dates[region][var][1] is not None:
-                            if dates[region][var][1] < begin:
-                                begin = dates[region][var][1]
-                        else:
-                            begin = self.begin_date
-            else:
-                begin = self.begin_date
+            begin = self._get_download_date()
 
         if download_path == None:
             download_path = os.path.join(Settings.tmp_path, self.name)
@@ -100,7 +97,7 @@ class TAMSAT(BasicSource):
             end = datetime.datetime.now()
 
         print('[INFO] downloading data from ' + str(begin) + ' - '
-              + str(end))
+              + str(end)),
 
         # create daterange on monthly basis
         mon_from = datetime.date(begin.year, begin.month, 1)
@@ -135,22 +132,20 @@ class TAMSAT(BasicSource):
             for j in dekads:
                 filepath = path + fname.replace('{P}', str(j + 1))
                 newfile = os.path.join(download_path, filepath.split('/')[-1])
-                if os.path.exists(newfile):
-                    print('[INFO] file ' + filepath.split('/')[-1] +
-                          ' already exists - nothing to download')
-                else:
-                    r = requests.get(filepath)
-                    if r.status_code == 200:
-                        # check if year folder is existing
-                        if not os.path.exists(download_path):
-                            print('[INFO] output path does not exist...'
-                                  'creating path')
-                            os.makedirs(download_path)
+                r = requests.get(filepath)
+                if r.status_code == 200:
+                    # check if year folder is existing
+                    if not os.path.exists(download_path):
+                        print('[INFO] output path does not exist...'
+                              'creating path')
+                        os.makedirs(download_path)
 
-                        # download file
-                        newfile = os.path.join(download_path,
-                                               filepath.split('/')[-1])
-                        r = requests.get(filepath, stream=True)
-                        with open(newfile, 'wb') as f:
-                            f.write(r.content)
-                            print '[INFO] downloading file ' + filepath
+                    # download file
+                    newfile = os.path.join(download_path,
+                                           filepath.split('/')[-1])
+                    r = requests.get(filepath, stream=True)
+                    with open(newfile, 'wb') as f:
+                        f.write(r.content)
+                        print '.',
+        print ''
+        return True

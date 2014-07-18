@@ -32,9 +32,7 @@ from poets.settings import Settings
 
 
 class HundredthDegGrid(grids.BasicGrid):
-    """
-    Regular 0.1 degree grid with grid middle points at
-    (-179.95,-89.95), (-179.85,-89.95) etc.
+    """Regular 0.1 degree grid with coordinates as pixel center
     """
     def __init__(self, **kwargs):
 
@@ -46,9 +44,7 @@ class HundredthDegGrid(grids.BasicGrid):
 
 
 class TenthDegGrid(grids.BasicGrid):
-    """
-    Regular 0.1 degree grid with grid middle points at
-    (-179.95,-89.95), (-179.85,-89.95) etc.
+    """Regular 0.1 degree grid with coordinates as pixel center
     """
     def __init__(self, **kwargs):
 
@@ -60,9 +56,7 @@ class TenthDegGrid(grids.BasicGrid):
 
 
 class QuarterDegGrid(grids.BasicGrid):
-    """
-    Regular 0.25 degree grid with grid middle points at
-    (-179.875,-89.875), (-179.875,-89.875) etc.
+    """Regular 0.25 degree grid with coordinates as pixel center.
     """
     def __init__(self, **kwargs):
 
@@ -74,9 +68,7 @@ class QuarterDegGrid(grids.BasicGrid):
 
 
 class OneDegGrid(grids.BasicGrid):
-    """
-    Regular 0.1 degree grid with grid middle points at
-    (-179.5,-89.5), (-179.5,-89.5) etc.
+    """Regular 0.1 degree grid with coordinates as pixel center
     """
     def __init__(self, **kwargs):
 
@@ -88,9 +80,10 @@ class OneDegGrid(grids.BasicGrid):
 
 
 class CountryGrid(grids.BasicGrid):
-    """
-    Regular grid for spedific country, that just has lat,lon coordinates and 
-    can find the nearest neighbour. It can also yield the gpi, lat, lon
+    """Regular grid for spedific country.
+
+    Regular grid for spedific country, that just has lat,lon coordinates
+    and can find the nearest neighbour. It can also yield the gpi, lat, lon
     information in order.
 
     Parameters
@@ -205,9 +198,10 @@ class CountryGrid(grids.BasicGrid):
                                           shape=lon.shape)
 
     def get_country_gridpoints(self):
-        """
-        Gets all points within a country shape. Removes all gridpoints that are
-        within country bounding box, but outside of the country itself.
+        """Gets all points within a country shape.
+
+        Removes all gridpoints that are within country bounding box, but
+        outside of the country border.
 
         Returns
         -------
@@ -236,8 +230,7 @@ class CountryGrid(grids.BasicGrid):
 
 
 def _remove_blank_frame(country, lons, lats):
-    """
-    Removes longitutes and latitudes without points in country shape
+    """Removes longitutes and latitudes without points in country shape.
 
     Parameters
     ----------
@@ -326,9 +319,9 @@ def _remove_blank_frame(country, lons, lats):
 
 
 def _minmaxcoord(min_threshold, max_threshold):
-    """
-    Gets min and max coordinates of a specific grid, based on the frame of a
-    global grid.
+    """Gets min and max coordinates of a specific grid.
+
+    Based on the frame of a global grid.
 
     Parameters
     ----------

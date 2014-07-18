@@ -26,9 +26,7 @@ class FipsError(Exception):
 
 
 class Shape(object):
-    """
-    Class that provides geography information of a region/country given as 
-    shapefile
+    """Provides geography information of a region/country given as shapefile.
 
     Parameters
     ----------
@@ -37,13 +35,13 @@ class Shape(object):
 
     Attributes
     ----------
-    fips : string
+    fips : str
         FIPS country code
-    shpfile : string
+    shpfile : str
         Path to the source shapefile
     bbox : tuple
         Bounding box of the country
-    polygon : list
+    polygon : list of tuples
         Country boundary polygon
     """
 
@@ -59,8 +57,7 @@ class Shape(object):
         self.polygon = polygon
 
     def _get_shape(self):
-        """
-        Fetches shape and record information from shapefile
+        """Fetches shape and record information from shapefile.
 
         Returns
         -------
