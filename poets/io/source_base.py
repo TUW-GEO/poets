@@ -485,8 +485,10 @@ class BasicSource(object):
             position = np.where(time[:] == datenum)[0][0]
 
             img = nc.variables[variable][position]
+            lon = nc.variables['lon'][:]
+            lat = nc.variables['lat'][:]
 
-        return img
+        return img, lon, lat
 
 if __name__ == "__main__":
     pass
