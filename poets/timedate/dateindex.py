@@ -27,8 +27,8 @@ import datetime
 
 def get_dtindex(interval, begin, end=None):
     """Creates a pandas datetime index.
-    
-    Datetime index is based on the temporal resolution given in the settings 
+
+    Datetime index is based on the temporal resolution given in the settings
     file
 
     Parameters

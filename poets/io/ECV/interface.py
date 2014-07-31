@@ -52,6 +52,7 @@ class ECV(BasicSource):
 
         name = 'ECV'
         source_path = "ftp.ipf.tuwien.ac.at/_down/daily_files/COMBINED"
+        source_type = 'SFTP'
         dirstruct = ['YYYY']
         filename = ("ESACCI-SOILMOISTURE-L3S-SSMV-COMBINED-{YYYY}{MM}{TT}{hh}"
                     "{mm}{ss}-fv02.0.nc")
@@ -64,83 +65,86 @@ class ECV(BasicSource):
         if source_path[-1] != '/':
             source_path += '/'
 
-        super(ECV, self).__init__(name, source_path, filename, filedate,
-                                  temp_res, dirstruct, begin_date, variables)
+        super(ECV, self).__init__(name, source_path, source_type, filename,
+                                  filedate, temp_res, dirstruct, begin_date,
+                                  variables)
 
-    def download(self, download_path=None, begin=None, end=None):
-        """Download latest ECV dekadal data
-
-        Parameters
-        ----------
-        download_path : str, optional
-            Path where to save the downloaded files.
-        begin : datetime.date, optional
-            Set either to first date of remote repository or date of
-            last file in local repository
-        end : datetime.date, optional
-            Entered in [years]. End year is not downloaded anymore.
-            Set to today if none given
-
-        Returns
-        -------
-        bool
-            true if data is available, false if not
-        """
-
-        if download_path == None:
-            download_path = os.path.join(Settings.tmp_path, self.name)
-
-        if not os.path.exists(download_path):
-            print('[INFO] output path does not exist... creating path')
-            os.makedirs(download_path)
-
-        if begin == None:
-            begin = self._get_download_date()
-
-        if end == None:
-            end = datetime.datetime.now()
-
-        print('[INFO] downloading data from ' + str(begin) + ' - '
-              + str(end) + '-12-31')
-
-        remotepath = '/_down/daily_files/COMBINED/'
-        localpath = download_path
-
-        # connect to ftp server
-        host = 'ftp.ipf.tuwien.ac.at'
-        port = 22
-        transport = paramiko.Transport((host, port))
-        password = "FRT$_22"  # hard-coded
-        username = "ecv_sm_v2"  # hard-coded
-        transport.connect(username=username, password=password)
-
-        sftp = paramiko.SFTPClient.from_transport(transport)
-
-        subdirs = sftp.listdir(remotepath)
-
-        # check if data is available
-        if str(begin.year) not in subdirs:
-            return False
-
-        # download files to temporary path
-        for year in subdirs:
-            if str(begin.year) > year:
-                continue
-            if str(end.year) < year:
-                continue
-            files = sftp.listdir(os.path.join(remotepath, str(year)))
-            files.sort()
-            for filename in files:
-                fdate = self.get_file_date(filename)
-                if fdate < begin:
-                    continue
-                if fdate > end:
-                    continue
-                if os.path.isfile(os.path.join(localpath, filename)) is False:
-                    sftp.get(remotepath + str(year) + '/' + filename,
-                             os.path.join(localpath, filename))
-                    sftp.close
-        return True
+#==============================================================================
+#     def download(self, download_path=None, begin=None, end=None):
+#         """Download latest ECV dekadal data
+#
+#         Parameters
+#         ----------
+#         download_path : str, optional
+#             Path where to save the downloaded files.
+#         begin : datetime.date, optional
+#             Set either to first date of remote repository or date of
+#             last file in local repository
+#         end : datetime.date, optional
+#             Entered in [years]. End year is not downloaded anymore.
+#             Set to today if none given
+#
+#         Returns
+#         -------
+#         bool
+#             true if data is available, false if not
+#         """
+#
+#         if download_path == None:
+#             download_path = os.path.join(Settings.tmp_path, self.name)
+#
+#         if not os.path.exists(download_path):
+#             print('[INFO] output path does not exist... creating path')
+#             os.makedirs(download_path)
+#
+#         if begin == None:
+#             begin = self._get_download_date()
+#
+#         if end == None:
+#             end = datetime.datetime.now()
+#
+#         print('[INFO] downloading data from ' + str(begin) + ' - '
+#               + str(end) + '-12-31')
+#
+#         remotepath = '/_down/daily_files/COMBINED/'
+#         localpath = download_path
+#
+#         # connect to ftp server
+#         host = 'ftp.ipf.tuwien.ac.at'
+#         port = 22
+#         transport = paramiko.Transport((host, port))
+#         password = "FRT$_22"  # hard-coded
+#         username = "ecv_sm_v2"  # hard-coded
+#         transport.connect(username=username, password=password)
+#
+#         sftp = paramiko.SFTPClient.from_transport(transport)
+#
+#         subdirs = sftp.listdir(remotepath)
+#
+#         # check if data is available
+#         if str(begin.year) not in subdirs:
+#             return False
+#
+#         # download files to temporary path
+#         for year in subdirs:
+#             if str(begin.year) > year:
+#                 continue
+#             if str(end.year) < year:
+#                 continue
+#             files = sftp.listdir(os.path.join(remotepath, str(year)))
+#             files.sort()
+#             for filename in files:
+#                 fdate = self.get_file_date(filename)
+#                 if fdate < begin:
+#                     continue
+#                 if fdate > end:
+#                     continue
+#                 if os.path.isfile(os.path.join(localpath, filename)) is False:
+#                     sftp.get(remotepath + str(year) + '/' + filename,
+#                              os.path.join(localpath, filename))
+#                     sftp.close
+#         return True
+#==============================================================================
 
 if __name__ == "__main__":
     pass

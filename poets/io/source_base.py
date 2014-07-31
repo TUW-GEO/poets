@@ -21,11 +21,12 @@ import os
 import pandas as pd
 import numpy as np
 import datetime
+from netCDF4 import Dataset, num2date, date2num
 from poets.settings import Settings
 import poets.timedate.dateindex as dt
-from netCDF4 import Dataset, num2date, date2num
 from poets.image.resampling import resample_to_shape, average_layers
 import poets.image.netcdf as net
+from poets.io.download import download_http, download_sftp, download_ftp, get_file_date
 
 
 class BasicSource(object):
@@ -37,6 +38,8 @@ class BasicSource(object):
         Name of the data source
     source_path : str
         Link to data source
+    source_type : str
+        Connection type to data source, FTP, SFTP or HTTP
     begin_date : datetime.date
         Date, from which on data is available
     filename : str
@@ -52,20 +55,22 @@ class BasicSource(object):
         Variables used from data source
     """
 
-    def __init__(self, name, source_path, filename, filedate, temp_res,
-                 dirstruct, begin_date, variables):
+    def __init__(self, name, source_path, source_type, filename, filedate,
+                 temp_res, dirstruct, begin_date, variables):
         """
         init method
         """
 
         self.name = name
         self.source_path = source_path
+        self.source_type = source_type
         self.begin_date = begin_date
         self.filename = filename
         self.filedate = filedate
         self.temp_res = temp_res
         self.dirstruct = dirstruct
         self.variables = variables
+        self.download_path = os.path.join(Settings.tmp_path, self.name)
 
     def _check_current_date(self, begin=True, end=True):
         """Helper method that checks the current date of individual variables
@@ -155,55 +160,6 @@ class BasicSource(object):
 
         return begin
 
-    def get_file_date(self, fname):
-        """Gets the date from a file name.
-
-        Parameters
-        ----------
-        fname : str
-            Filename
-
-        Returns
-        -------
-        datetime.datetime
-            Date and, if given, time from filename
-        """
-
-        fname = str(fname)
-
-        if 'YYYY' in self.filedate.keys():
-            year = int(fname[self.filedate['YYYY'][0]:
-                             self.filedate['YYYY'][1]])
-
-        if 'MM' in self.filedate.keys():
-            month = int(fname[self.filedate['MM'][0]:self.filedate['MM'][1]])
-
-        if 'DD' in self.filedate.keys():
-            day = int(fname[self.filedate['DD'][0]:self.filedate['DD'][1]])
-        else:
-            day = 1
-
-        if 'P' in self.filedate.keys():
-            dekad = int(fname[self.filedate['P'][0]:self.filedate['P'][1]])
-            day = dt.dekad2day(year, month, dekad)
-
-        if 'hh' in self.filedate.keys():
-            hour = int(fname[self.filedate['hh'][0]:self.filedate['hh'][1]])
-        else:
-            hour = 0
-
-        if 'mm' in self.filedate.keys():
-            minute = int(fname[self.filedate['mm'][0]:self.filedate['mm'][1]])
-        else:
-            minute = 0
-
-        if 'ss' in self.filedate.keys():
-            second = int(fname[self.filedate['ss'][0]:self.filedate['ss'][1]])
-        else:
-            second = 0
-
-        return datetime.datetime(year, month, day, hour, minute, second)
-
     def _get_tmp_filepath(self, prefix, region):
         """Creates path to a temporary directory.
 
@@ -245,7 +201,7 @@ class BasicSource(object):
             src_file = os.path.join(tmp_path, item)
             raw_files.append(src_file)
 
-            fdate = self.get_file_date(item)
+            fdate = get_file_date(item, self.filedate)
 
             if begin is not None:
                 if fdate < begin:
@@ -310,16 +266,24 @@ class BasicSource(object):
         print ''
         os.unlink(src_file)
 
-    def download(self):
-        """"
-        Virtual method, it has to be overriden by childs
+    def download(self, download_path=None, begin=None, end=None):
+        """"Download data
 
-        Raises
-        ------
-        NotImplementedError
-            Raised if not overriden by childs
+        Parameters
+        ----------
+        begin : datetime.datetime, optional
+            start date of download, default to None
+        end : datetime.datetime, optional
+            start date of download, default to None
         """
-        raise NotImplementedError()
+
+        if begin == None:
+            begin = self.begin_date
+
+        if self.source_type == 'HTTP':
+            do.download_http(download_path, self.source_path, self.filedate,
+                             self.filename, self.dirstruct, begin,
+                             end=end)
 
     def resample(self, begin=None, end=None, delete_rawdata=False):
         """Resamples source data to given spatial and temporal resolution.
@@ -485,8 +449,10 @@ class BasicSource(object):
             position = np.where(time[:] == datenum)[0][0]
 
             img = nc.variables[variable][position]
+            lon = nc.variables['lon'][:]
+            lat = nc.variables['lat'][:]
 
-        return img
+        return img, lon, lat
 
 if __name__ == "__main__":
     pass

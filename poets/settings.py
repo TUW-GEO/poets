@@ -23,8 +23,8 @@ import datetime
 class Settings():
     sp_res = 0.25  # Possible values: 0.1, 0.25, 1
     temp_res = 'dekad'  # Possible values: daily, weekly, dekad, monthly
-    tmp_path = ''
-    data_path = ''
+    tmp_path = '/media/sf_D/PROJECTS/SATIDA/tmp'
+    data_path = '/media/sf_D/PROJECTS/SATIDA/DATA'
     regions = ['ET']  # using FIPS country code
     nan_value = -99
     start_date = datetime.date(2000, 1, 1)
