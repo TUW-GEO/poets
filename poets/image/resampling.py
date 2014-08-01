@@ -27,7 +27,7 @@ from poets.grid.shapes import Shape
 from poets.settings import Settings
 from pytesmo.grid import resample
 from shapely.geometry import Point
-from USER_DEV.ipfeil.imagefile import bbox_img
+from poets.image.imagefile import bbox_img
 
 
 def _create_grid():
@@ -152,8 +152,7 @@ def resample_to_gridpoints(source_file, country):
 
     grid = _create_grid()
 
-    # gr.get_country_gridpoints?
-    gridpoints = gr.getCountryPoints(grid, country)
+    gridpoints = gr.get_country_gridpoints(grid, country)
     shp = Shape(country)
 
     data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
