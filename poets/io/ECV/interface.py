@@ -57,7 +57,7 @@ class ECV(BasicSource):
         filename = ("ESACCI-SOILMOISTURE-L3S-SSMV-COMBINED-{YYYY}{MM}{TT}{hh}"
                     "{mm}{ss}-fv02.0.nc")
         filedate = {'YYYY': (38, 42), 'MM': (42, 44), 'DD': (44, 46),
-                         'hh': (46, 48), 'mm': (48, 50), 'ss': (50, 52)}
+                    'hh': (46, 48), 'mm': (48, 50), 'ss': (50, 52)}
         temp_res = 'daily'
         begin_date = datetime.datetime(1978, 11, 01)
         variables = ['sm']
@@ -109,23 +109,23 @@ class ECV(BasicSource):
 #         remotepath = '/_down/daily_files/COMBINED/'
 #         localpath = download_path
 #
-#         # connect to ftp server
+# connect to ftp server
 #         host = 'ftp.ipf.tuwien.ac.at'
 #         port = 22
 #         transport = paramiko.Transport((host, port))
-#         password = "FRT$_22"  # hard-coded
-#         username = "ecv_sm_v2"  # hard-coded
+# password = "FRT$_22"  # hard-coded
+# username = "ecv_sm_v2"  # hard-coded
 #         transport.connect(username=username, password=password)
 #
 #         sftp = paramiko.SFTPClient.from_transport(transport)
 #
 #         subdirs = sftp.listdir(remotepath)
 #
-#         # check if data is available
+# check if data is available
 #         if str(begin.year) not in subdirs:
 #             return False
 #
-#         # download files to temporary path
+# download files to temporary path
 #         for year in subdirs:
 #             if str(begin.year) > year:
 #                 continue

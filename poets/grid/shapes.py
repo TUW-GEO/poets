@@ -19,6 +19,7 @@
 
 import os
 import shapefile
+from shapely.geometry import MultiPolygon
 
 
 class FipsError(Exception):
@@ -65,7 +66,7 @@ class Shape(object):
             Record of the country
         bbox : shapefile._Array
             Bounding box of the country
-        polygon : list
+        multipoly : shapely.geometry.MultiPolygon
             Country boundary polygon
 
         Raises
@@ -86,7 +87,22 @@ class Shape(object):
 
         sh = sf.shapeRecord(pos)
 
-        return sh.record, sh.shape.bbox, sh.shape.points
+        if len(sh.shape.parts) == 1:
+            multipoly = [[sh.shape.points, []]]
+
+        else:
+            points = []
+            for i in range(0, len(sh.shape.parts) - 1):
+                points.append(sh.shape.points[sh.shape.parts[i]:\
+                                                      sh.shape.parts[i + 1]])
+            points.append(sh.shape.points[sh.shape.parts[-1]:])
+            multipoly = []
+            for i in range(0, len(points)):
+                    multipoly.append([points[i], []])
+
+        multipoly = MultiPolygon(multipoly)
+
+        return sh.record, sh.shape.bbox, multipoly
 
 if __name__ == '__main__':
     pass

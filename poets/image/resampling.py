@@ -26,7 +26,8 @@ import poets.image.netcdf as nc
 from poets.grid.shapes import Shape
 from poets.settings import Settings
 from pytesmo.grid import resample
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Point
+from poets.image.imagefile import bbox_img
 
 
 def _create_grid():
@@ -69,7 +70,7 @@ def resample_to_shape(source_file, country, prefix=None):
     lons : numpy.array
         longitudes of the points in the resampled image
     lats : numpy.array
-        latgitudes of the points in the resampled image
+        latitudes of the points in the resampled image
     gpis : numpy.array
         grid point indices
     timestamp : datetime.date
@@ -78,6 +79,8 @@ def resample_to_shape(source_file, country, prefix=None):
 
     if prefix is not None:
         prefix += '_'
+    else:
+        prefix = ''
 
     shp = Shape(country)
 
@@ -87,16 +90,22 @@ def resample_to_shape(source_file, country, prefix=None):
         data, src_lon, src_lat, timestamp, metadata = \
             nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
                          shp.bbox[3], country=country)
+<<<<<<< HEAD
     elif fileExtension in ['.png', '.PNG']:
         print  # clip bbox from png
     elif fileExtension in ['.tif', '.tiff']:
         print  # clip bbox from geotiff
+=======
+    elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
+        data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
+                                                            country)
+>>>>>>> 426f45d284ea016924081bc68c9d396b597a8590
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
 
     dest_lon, dest_lat = np.meshgrid(np.unique(grid.arrlon),
-                                     np.unique(grid.arrlat)[::-1])
+                                      np.unique(grid.arrlat)[::-1])
 
     gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),
                                      grid.arrlon.min(), grid.arrlon.max())
@@ -106,13 +115,13 @@ def resample_to_shape(source_file, country, prefix=None):
 
     mask = np.zeros(shape=grid.shape, dtype=np.bool)
 
-    poly = Polygon(shp.polygon)
+    poly = shp.polygon
 
     for i in range(0, grid.shape[0]):
         for j in range(0, grid.shape[1]):
             p = Point(dest_lon[i][j], dest_lat[i][j])
             if p.within(poly) == False:
-                mask[i][j] = True
+                    mask[i][j] = True
             if data[data.keys()[0]].mask[i][j] == True:
                 mask[i][j] = True
 
@@ -126,7 +135,7 @@ def resample_to_shape(source_file, country, prefix=None):
         dat[data[var].mask == True] = Settings.nan_value
         data[var] = np.ma.masked_array(dat, mask=mask,
                                        fill_value=Settings.nan_value)
-        del data[key]
+        # del data[key]
 
     return data, dest_lon, dest_lat, gpis, timestamp, metadata
 
@@ -150,7 +159,7 @@ def resample_to_gridpoints(source_file, country):
 
     grid = _create_grid()
 
-    gridpoints = gr.getCountryPoints(grid, country)
+    gridpoints = gr.get_country_gridpoints(grid, country)
     shp = Shape(country)
 
     data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
