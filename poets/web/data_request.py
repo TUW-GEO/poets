@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 from poets.io.TAMSAT.interface import TAMSAT
 from poets.io.ECV.interface import ECV
+from poets.grid.grids import CountryGrid
 
 
 def to_dygraph_format(self):
@@ -56,6 +57,14 @@ def read_ts(gp, region=None, variable=None):
     ts = {'labels': labels, 'data': values}
 
     return ts
+
+
+def get_gridpoints(region):
+
+    grid = CountryGrid(region)
+    gridpoints = grid.get_country_gridpoints()
+
+    return gridpoints
 
 if __name__ == "__main__":
     pass

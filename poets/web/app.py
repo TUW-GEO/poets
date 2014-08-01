@@ -20,7 +20,7 @@
 from flask import Flask, jsonify, render_template
 from poets.settings import Settings
 from poets.io.TAMSAT.interface import TAMSAT
-from data_request import read_ts
+from data_request import read_ts, get_gridpoints
 
 app = Flask(__name__, template_folder="templates")
 
@@ -28,9 +28,12 @@ app = Flask(__name__, template_folder="templates")
 @app.route('/')
 def index():
 
+    gridpoints = get_gridpoints('ET')
+
     data = read_ts(1500, region='ET', variable='sm')
 
-    return render_template('index.html', regions=Settings.regions, ts=data)
+    return render_template('index.html', regions=Settings.regions,
+                           gridpoints=gridpoints, ts=data)
 
 
 @app.route('/create_json')

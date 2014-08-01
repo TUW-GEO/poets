@@ -26,7 +26,7 @@ import pytesmo.grid.grids as grids
 import numpy as np
 import pandas as pd
 import math
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Point
 from poets.grid.shapes import Shape
 from poets.settings import Settings
 
@@ -184,13 +184,41 @@ class CountryGrid(grids.BasicGrid):
 
         self.shp = Shape(country)
 
-        lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2])
+        # countries that cross the international dateline (maybe more!)
+        if country == 'NZ':
+            lonmin = 165.0 + 52.0 / 60.0 + 12.0 / 3600.0
+            lonmax = -(175.0 + 50.0 / 60.0)
+
+        elif country == 'US':
+            lonmin = 173.0 + 11.0 / 60.0
+            lonmax = -(66.0 + 59.0 / 60.0 + 0.71006 / 3600.0)
+
+        elif country == 'RS':
+            lonmin = 19.0 + 38.0 / 60.0
+            lonmax = -(169.0 + 3.0 / 60.0 + 54.0 / 3600.0)
+        else:
+            lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2])
+
         latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3])
 
-        lons = np.arange(lonmin, lonmax + Settings.sp_res, Settings.sp_res)
+        # fuer nz, rs und us ist lons=[]
+        if country in ['NZ', 'US', 'RS']:
+            lons1 = np.arange(lonmin, 180 + Settings.sp_res, Settings.sp_res)
+            lons2 = (np.arange(-180, lonmax + Settings.sp_res,
+                                   Settings.sp_res))
+            lons = np.empty(len(lons1) + len(lons2))
+            lons[0:len(lons1)] = lons1[:]
+            lons[len(lons1):] = lons2[:]
+        else:
+            lons = np.arange(lonmin, lonmax + Settings.sp_res, Settings.sp_res)
+
         lats = np.arange(latmin, latmax + Settings.sp_res, Settings.sp_res)
 
         lon_new, lat_new = _remove_blank_frame(country, lons, lats)
+        #======================================================================
+        # lon_new = lons
+        # lat_new = lats
+        #======================================================================
 
         lon, lat = np.meshgrid(lon_new, lat_new)
 
@@ -211,7 +239,7 @@ class CountryGrid(grids.BasicGrid):
 
         box = self.get_bbox_grid_points(self.shp.bbox[1], self.shp.bbox[3],
                                         self.shp.bbox[0], self.shp.bbox[2])
-        poly = Polygon(self.shp.polygon)
+        poly = self.shp.polygon  # MultiPolygon
 
         lons = []
         lats = []
@@ -220,9 +248,9 @@ class CountryGrid(grids.BasicGrid):
         for gpi in box:
             lon, lat = self.gpi2lonlat(gpi)
             if poly.contains(Point(lon, lat)):
-                pts.append(gpi)
-                lons.append(lon)
-                lats.append(lat)
+                    pts.append(gpi)
+                    lons.append(lon)
+                    lats.append(lat)
 
         points = pd.DataFrame({'lon': lons, 'lat': lats}, pts)
 
@@ -230,7 +258,7 @@ class CountryGrid(grids.BasicGrid):
 
 
 def _remove_blank_frame(country, lons, lats):
-    """Removes longitutes and latitudes without points in country shape.
+    """Removes longitudes and latitudes without points in country shape.
 
     Parameters
     ----------
@@ -241,7 +269,7 @@ def _remove_blank_frame(country, lons, lats):
     lats : numpy.ndarray
         Array with latitudes
 
-    Retrurns
+    Returns
     --------
     lon_new : list of floats
         updated list of longitudes
@@ -251,7 +279,7 @@ def _remove_blank_frame(country, lons, lats):
 
     shp = Shape(country)
 
-    poly = Polygon(shp.polygon)
+    poly = shp.polygon
 
     del_lons = []
     del_lats = []
