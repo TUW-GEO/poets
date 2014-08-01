@@ -26,51 +26,98 @@ from poets.settings import Settings
 import poets.timedate.dateindex as dt
 from poets.image.resampling import resample_to_shape, average_layers
 import poets.image.netcdf as net
-from poets.io.download import download_http, download_sftp, download_ftp, get_file_date
+from poets.io.download import download_http, download_sftp, download_ftp, \
+    get_file_date
 
 
 class BasicSource(object):
+
     """Base Class for data sources.
 
-    Attributes
+    Parameters
     ----------
     name : str
         Name of the data source
-    source_path : str
-        Link to data source
-    source_type : str
-        Connection type to data source, FTP, SFTP or HTTP
-    begin_date : datetime.date
-        Date, from which on data is available
     filename : str
         Structure/convention of the file name
     filedate : dict
         Position of date fields in filename, given as tuple
     temp_res : str
         Temporal resolution of the source
+    host : str
+        Link to data host
+    protocol : str
+        Protocol for data transfer
+    username : str, optional
+        Username for data access
+    password : str, optional
+        Password for data access
+    port : int, optional
+        Port to data host, defaults to 22
+    directory : str, optional
+        Path to data on host
     dirstruct : list of strings
-        Structure of source directory
-        Each list item represents a subdirectory
+        Structure of source directory, each list item represents a subdirectory
+    begin_date : datetime.date, optional
+        Date from which on data is available, defaults to 2000-01-01
+    variables : list of strings, optional
+        Variables used from data source
+
+    Attributes
+    ----------
+    name : str
+        Name of the data source
+    filename : str
+        Structure/convention of the file name
+    filedate : dict
+        Position of date fields in filename, given as tuple
+    temp_res : str
+        Temporal resolution of the source
+    host : str
+        Link to data host
+    protocol : str
+        Protocol for data transfer
+    username : str
+        Username for data access
+    password : str
+        Password for data access
+    port : int
+        Port to data host
+    directory : str
+        Path to data on host
+    dirstruct : list of strings
+        Structure of source directory, each list item represents a subdirectory
+    begin_date : datetime.date
+        Date from which on data is available
     variables : list of strings
         Variables used from data source
     """
 
-    def __init__(self, name, source_path, source_type, filename, filedate,
-                 temp_res, dirstruct, begin_date, variables):
-        """
-        init method
-        """
+    def __init__(self, name, filename, filedate, temp_res, host, protocol,
+                 username=None, password=None, port=22, directory=None,
+                 dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
+                 variables=None):
 
         self.name = name
-        self.source_path = source_path
-        self.source_type = source_type
-        self.begin_date = begin_date
         self.filename = filename
         self.filedate = filedate
         self.temp_res = temp_res
+        self.host = host
+        self.protocol = protocol
+        self.username = username
+        self.password = password
+        self.port = port
+        self.directory = directory
         self.dirstruct = dirstruct
+        self.begin_date = begin_date
         self.variables = variables
         self.download_path = os.path.join(Settings.tmp_path, self.name)
+
+        if self.host[-1] != '/':
+            self.host += '/'
+
+        if self.directory is not None and self.directory[-1] != '/':
+            self.directory += '/'
 
     def _check_current_date(self, begin=True, end=True):
         """Helper method that checks the current date of individual variables
@@ -92,7 +139,7 @@ class BasicSource(object):
 
         for region in Settings.regions:
             nc_name = os.path.join(Settings.data_path, region + '_'
-                                  + str(Settings.sp_res) + '.nc')
+                                   + str(Settings.sp_res) + '.nc')
             if os.path.exists(nc_name):
                 dates[region] = {}
                 for var in self.variables:
@@ -102,7 +149,7 @@ class BasicSource(object):
                         if begin is True:
                             # check first date of data
                             for i in range(0, nc.variables['time'].size - 1):
-                                if nc.variables[ncvar][i].mask.min() == True:
+                                if nc.variables[ncvar][i].mask.min() is True:
                                     continue
                                 else:
                                     times = nc.variables['time']
@@ -118,7 +165,7 @@ class BasicSource(object):
                             # check last date of data
                             for i in range(nc.variables['time'].size - 1,
                                            - 1, -1):
-                                if nc.variables[ncvar][i].mask.min() == True:
+                                if nc.variables[ncvar][i].mask.min() is True:
                                     continue
                                 else:
                                     times = nc.variables['time']
@@ -277,18 +324,29 @@ class BasicSource(object):
             start date of download, default to None
         """
 
-        if begin == None:
+        if begin is None:
             begin = self.begin_date
 
-        if self.source_type == 'HTTP':
-            do.download_http(download_path, self.source_path, self.filedate,
-                             self.filename, self.dirstruct, begin,
-                             end=end)
+        if self.protocol == 'HTTP':
+            check = download_http(self.download_path, self.host,
+                                  self.directory, self.filename, self.filedate,
+                                  self.dirstruct, begin, end=end)
+        elif self.protocol == 'FTP':
+            check = download_ftp(self.download_path, self.host, self.directory,
+                                 self.port, self.username, self.password,
+                                 self.filedate, self.dirstruct, begin, end=end)
+        elif self.protocol == 'SFTP':
+            check = download_sftp(self.download_path, self.host,
+                                  self.directory, self.port, self.username,
+                                  self.password, self.filedate, self.dirstruct,
+                                  begin, end=end)
+
+        return check
 
     def resample(self, begin=None, end=None, delete_rawdata=False):
         """Resamples source data to given spatial and temporal resolution.
 
-        Writes resampled images into a netCDF data file. Deletes original 
+        Writes resampled images into a netCDF data file. Deletes original
         files if flag delete_rawdata is set True.
 
         Parameters
@@ -331,10 +389,10 @@ class BasicSource(object):
             Original files will be deleted from tmp_path if set True
         """
 
-        if begin == None:
+        if begin is None:
             begin = self._get_download_date()
 
-        if end == None:
+        if end is None:
             end = datetime.datetime.now()
 
         drange = dt.get_dtindex(Settings.temp_res, begin, end)
