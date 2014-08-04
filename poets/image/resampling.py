@@ -90,16 +90,10 @@ def resample_to_shape(source_file, country, prefix=None):
         data, src_lon, src_lat, timestamp, metadata = \
             nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
                          shp.bbox[3], country=country)
-<<<<<<< HEAD
-    elif fileExtension in ['.png', '.PNG']:
-        print  # clip bbox from png
-    elif fileExtension in ['.tif', '.tiff']:
-        print  # clip bbox from geotiff
-=======
+
     elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
                                                             country)
->>>>>>> 426f45d284ea016924081bc68c9d396b597a8590
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
