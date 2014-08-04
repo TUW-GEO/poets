@@ -30,7 +30,7 @@ def index():
 
     gridpoints = get_gridpoints('ET')
 
-    data = read_ts(1500, region='ET', variable='sm')
+    data = read_ts(1500, region='ET', variable='rfe')
 
     return render_template('index.html', regions=Settings.regions,
                            gridpoints=gridpoints, ts=data)
@@ -39,7 +39,7 @@ def index():
 @app.route('/create_json')
 def create_json():
 
-    data = read_ts(1500, region='ET', variable='sm')
+    data = read_ts(1500, region='ET', variable='rfe')
 
     return jsonify(data)
 

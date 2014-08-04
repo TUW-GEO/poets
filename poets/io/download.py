@@ -307,18 +307,35 @@ def download_http(download_path, host, directory, filename, filedate,
             dekads = range(3)
 
             # get dekad of first and last interval based on input dates
-            if i == 0 and begin.day > 1:
+            if begin.year == end.year and begin.month == end.month:
                 if begin.day < 11:
-                    dekads = [0, 1, 2]
-                elif begin.day >= 11 and begin.day < 21:
-                    dekads = [1, 2]
-                elif begin.day == 21:
-                    dekads = [2]
-            elif i == (len(daterange) - 1) and end.day < 21:
-                if end.day < 11:
-                    dekads = [0]
+                    if end.day > 10:
+                        if end.day > 20:
+                            dekads = range(3)
+                        else:
+                            dekads = [0, 1]
+                    else:
+                        dekads = [0]
+                elif begin.day > 10 and begin.day < 21:
+                    if end.day < 21:
+                        dekads = [1]
+                    elif end.day > 20:
+                        dekads = [1, 2]
                 else:
-                    dekads = [0, 1]
+                    dekads = [2]
+            else:
+                if i == 0 and begin.day > 1:
+                    if begin.day < 11:
+                        dekads = [0, 1, 2]
+                    elif begin.day >= 11 and begin.day < 21:
+                        dekads = [1, 2]
+                    elif begin.day == 21:
+                        dekads = [2]
+                elif i == (len(daterange) - 1) and end.day < 21:
+                    if end.day < 11:
+                        dekads = [0]
+                    else:
+                        dekads = [0, 1]
 
             # loop through dekads
             for j in dekads:
