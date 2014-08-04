@@ -157,7 +157,8 @@ def ctrd_mov_avg(ts_seas):
         ts_ctrd.append((ts_movavg[i] + ts_movavg[i + 1]) / 2)
         i = i + 1
 
-    return ts_ctrd
+    return ts_catrd
+
 
 if __name__ == "__main__":
     pass

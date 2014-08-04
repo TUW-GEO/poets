@@ -24,18 +24,17 @@ a time series.
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from USER_DEV.ipfeil.filtering import group_months, group_seasons, ctrd_mov_avg
+from poets.time_series.filtering import group_months, group_seasons, ctrd_mov_avg
 
 
-def seasonal_indices(TS, lon, lat, attribute):
+def seasonal_indices(ts, lon, lat, attribute):
     """
     Deseasonalizing of a time series using normalized seasonal indices as in
         http://people.duke.edu/~rnau/411outbd.htm
 
     Parameters:
     ----------
-    TS : pandas.DataFrame
+    ts : pandas.DataFrame
         Time Series
     lon : float
         Longitude
@@ -46,17 +45,17 @@ def seasonal_indices(TS, lon, lat, attribute):
 
     Returns:
     -------
-    TS_seas_adj : pandas DataFrame
+    ts_seas_adj : pandas DataFrame
         seasonally adjusted time series
     """
 
-    TS_months, dates = group_months(TS, attribute)
-    TS_seas, dates = group_seasons(TS_months, dates)
-    TS_ctrd = ctrd_mov_avg(TS_seas)
+    ts_months, dates = group_months(ts, attribute)
+    ts_seas, dates = group_seasons(ts_months, dates)
+    ts_ctrd = ctrd_mov_avg(ts_seas)
 
     count = 0
 
-    for item in TS_ctrd:
+    for item in ts_ctrd:
         if item >= 0:
             count += 1
 
@@ -64,21 +63,21 @@ def seasonal_indices(TS, lon, lat, attribute):
         print 'Not enough data.'
     else:
 
-        TS_tmp = TS_seas[:]
-        del TS_tmp[0]
-        del TS_tmp[0]
-        del TS_tmp[0]
-        del TS_tmp[-1]
-        del TS_tmp[-1]
+        ts_tmp = ts_seas[:]
+        del ts_tmp[0]
+        del ts_tmp[0]
+        del ts_tmp[0]
+        del ts_tmp[-1]
+        del ts_tmp[-1]
 
         # seasonal component
-        seas = np.subtract(TS_tmp, TS_ctrd)
+        seas = np.subtract(ts_tmp, ts_ctrd)
 
-        # ratio: TS_seas/TS_ctrd
-        ratio = np.divide(TS_tmp, TS_ctrd)
+        # ratio: ts_seas/ts_ctrd
+        ratio = np.divide(ts_tmp, ts_ctrd)
 
-        TS_ctrd = np.insert(TS_ctrd, 0, np.repeat(np.nan, 3))
-        TS_ctrd = np.append(TS_ctrd, np.repeat(np.nan, 2))
+        ts_ctrd = np.insert(ts_ctrd, 0, np.repeat(np.nan, 3))
+        ts_ctrd = np.append(ts_ctrd, np.repeat(np.nan, 2))
 
         seas = np.insert(seas, 0, np.repeat(np.nan, 3))
         seas = np.append(seas, np.repeat(np.nan, 2))
@@ -100,36 +99,36 @@ def seasonal_indices(TS, lon, lat, attribute):
         index_norm = np.multiply(index_unnorm, 4) / np.sum(index_unnorm)
         index_norm = index_norm.tolist()
 
-        # TS_norm is shifted by 3 seasons compared to TS_seas
+        # ts_norm is shifted by 3 seasons compared to ts_seas
         index_norm2 = index_norm[1:]
         index_norm2.append(index_norm[0])
         index_norm = index_norm2[:]
 
-        while len(index_norm) < len(TS_seas):
+        while len(index_norm) < len(ts_seas):
             for i in range(0, 4):
                 index_norm.append(index_norm[i])
-                if len(index_norm) == len(TS_seas):
+                if len(index_norm) == len(ts_seas):
                     break
 
         # Seasonal adjustment of the data
-        TS_seas_adj = np.divide(TS_seas, index_norm)
+        ts_seas_adj = np.divide(ts_seas, index_norm)
 
-        TS_seas = pd.DataFrame(TS_seas, index=dates)
-        TS_ctrd = pd.DataFrame(TS_ctrd, index=dates)
+        ts_seas = pd.DataFrame(ts_seas, index=dates)
+        ts_ctrd = pd.DataFrame(ts_ctrd, index=dates)
         seas = pd.DataFrame(seas, index=dates)
-        TS_seas_adj = pd.DataFrame(TS_seas_adj, index=dates)
+        ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates)
 
-        return TS_seas_adj
+        return ts_seas_adj
 
 
-def zscore(TS, lon, lat, attribute):
+def zscore(ts, lon, lat, attribute):
     """
     Deseasonalizing of a time series using z-score as in
         http://www.jenvstat.org/v04/i11/paper (p. 2)
 
     Parameters:
     ----------
-    TS : pandas.DataFrame
+    ts : pandas.DataFrame
         Time Series
     lon : float
         Longitude
@@ -140,16 +139,16 @@ def zscore(TS, lon, lat, attribute):
 
     Returns:
     -------
-    TS_seas_adj : pandas DataFrame
+    ts_seas_adj : pandas DataFrame
         seasonally adjusted time series
     """
 
-    TS_months, dates = group_months(TS, attribute)
-    TS_seas, dates = group_seasons(TS_months, dates)
+    ts_months, dates = group_months(ts, attribute)
+    ts_seas, dates = group_seasons(ts_months, dates)
 
     count = 0
 
-    for item in TS_seas:
+    for item in ts_seas:
         if item >= 0:
             count += 1
 
@@ -159,9 +158,9 @@ def zscore(TS, lon, lat, attribute):
 
         # mean of entire time series
         mean_ts = []
-        for i in range(0, len(TS_seas)):
-            if TS_seas[i] >= 0:
-                mean_ts.append(TS_seas[i])
+        for i in range(0, len(ts_seas)):
+            if ts_seas[i] >= 0:
+                mean_ts.append(ts_seas[i])
 
         mean_ts = np.mean(mean_ts)
 
@@ -174,10 +173,10 @@ def zscore(TS, lon, lat, attribute):
             seas = []
             seas_nan = []
 
-            while i < len(TS_seas):
-                seas_nan.append(TS_seas[i])
-                if TS_seas[i] >= 0:
-                    seas.append(TS_seas[i])
+            while i < len(ts_seas):
+                seas_nan.append(ts_seas[i])
+                if ts_seas[i] >= 0:
+                    seas.append(ts_seas[i])
                 i = i + 4
 
             seas_m = np.mean(seas)
@@ -185,47 +184,20 @@ def zscore(TS, lon, lat, attribute):
             des_m.append(seas_m)
 
         # compute deseasonalized time series
-        years = len(TS_seas) / 4
-        rest = len(TS_seas) % 4
+        years = len(ts_seas) / 4
+        rest = len(ts_seas) % 4
 
         des_m = des_m * years
         for i in range(0, rest):
             des_m.append(des_m[i])
 
-        TS_seas_adj = np.add(TS_seas, np.subtract(mean_ts, des_m))
+        ts_seas_adj = np.add(ts_seas, np.subtract(mean_ts, des_m))
 
-        TS_seas = pd.DataFrame(TS_seas, index=dates)
-        TS_seas_adj = pd.DataFrame(TS_seas_adj, index=dates)
+        ts_seas = pd.DataFrame(ts_seas, index=dates)
+        ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates)
 
-        return TS_seas_adj
+        return ts_seas_adj
 
-
-def plot_results(TS1, TS2, lon, lat, attribute):
-    """
-    plots results of two different deseasonalizing methods for comparison
-
-    Parameters:
-    ----------
-    TS1 : pandas.Dataframe
-        deseasonalized time series
-    TS2 : pandas.Dataframe
-        deseasonalized time series
-    lon : float
-        Longitude
-    lat : float
-        Latitude
-    """
-
-    plt.plot(TS1.index, TS1, 'b', label='method 1: seas. indices')
-    plt.hold(True)
-    plt.plot(TS2.index, TS2, 'r', label='method 2: z-score')
-    plt.legend(loc='upper right')
-    labels = plt.xticks()[1]
-    plt.setp(labels, rotation=60)
-    plt.suptitle('Deseasonalizing with different methods, Lon = ' + str(lon) +
-                 ', Lat = ' + str(lat), fontsize=20)
-    plt.ylabel(attribute)
-    plt.show()
 
 if __name__ == "__main__":
     pass
