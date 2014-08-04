@@ -29,28 +29,28 @@ import pandas as pd
 import datetime
 
 
-def group_months(TS, attribute):
+def group_months(ts, attribute):
     """
     groups daily time series in years and months
 
     Parameters:
     ----------
-    TS : pandas DataFrame
+    ts : pandas DataFrame
         time series
     attribute : string
         attribute, e.g. 'sm', 'data'
     """
 
-    grp = pd.DataFrame(TS.as_matrix(), columns=TS.columns,
-                       index=(TS.index.year * 100 + TS.index.month))
+    grp = pd.DataFrame(ts.as_matrix(), columns=ts.columns,
+                       index=(ts.index.year * 100 + ts.index.month))
     df = grp.groupby(level=0)
-    TS_mean = df.mean()
+    ts_mean = df.mean()
     indices = []
 
     # create corresponding datetime indices
-    for i in range(0, len(TS_mean)):
-        indices.append(datetime.date(year=TS_mean.index[i] / 100,
-                                         month=TS_mean.index[i] % 100, day=01))
+    for i in range(0, len(ts_mean)):
+        indices.append(datetime.date(year=ts_mean.index[i] / 100,
+                                     month=ts_mean.index[i] % 100, day=01))
 
     dates = [indices[0]]
 
@@ -68,12 +68,12 @@ def group_months(TS, attribute):
     if indices[-1].month % 3 != 0:
         dates.append(indices[-1])
 
-    TS = TS_mean[attribute]
-    TS = pd.np.array(TS)
-    return TS, dates
+    ts = ts_mean[attribute]
+    ts = pd.np.array(ts)
+    return ts, dates
 
 
-def group_seasons(TS, dates):
+def group_seasons(ts, dates):
     """
     groups monthly time series in seasons:
         Winter: Dec, Jan, Feb
@@ -83,12 +83,12 @@ def group_seasons(TS, dates):
 
     Parameters:
     -----------
-    TS : np.array
+    ts : np.array
         monthly time series
     dates : pandas DataFrame
     """
 
-    TS_seas = []
+    ts_seas = []
 
     # check if time series starts with Mar, Jun, Sep or Dec - if not,
     # put redundant values to beginning/end of seasonal time series
@@ -97,10 +97,10 @@ def group_seasons(TS, dates):
         lB1 = 0
     elif dates[0].month % 3 == 1:
         lB1 = 2
-        TS_seas.append(np.mean((TS[0], TS[1])))
+        ts_seas.append(np.mean((ts[0], ts[1])))
     elif dates[0].month % 3 == 2:
         lB1 = 1
-        TS_seas.append(TS[0])
+        ts_seas.append(ts[0])
 
     if dates[-1].month % 3 == 2:
         lB3 = 0
@@ -109,54 +109,55 @@ def group_seasons(TS, dates):
     elif dates[-1].month % 3 == 1:
         lB3 = 2
 
-    lB2 = len(TS) - lB1 - lB3
+    lB2 = len(ts) - lB1 - lB3
 
     for j in range(0, lB2 / 3):
-        TS_seas.append(np.mean((TS[3 * j + lB1], TS[3 * j + 1 + lB1],
-                                TS[3 * j + 2 + lB1])))
+        ts_seas.append(np.mean((ts[3 * j + lB1], ts[3 * j + 1 + lB1],
+                                ts[3 * j + 2 + lB1])))
 
     if lB3 == 0:
         del(dates[-1])
     if lB3 == 1:
-        TS_seas.append(TS[-1])
+        ts_seas.append(ts[-1])
     if lB3 == 2:
-        TS_seas.append(np.mean((TS[-1], TS[-2])))
+        ts_seas.append(np.mean((ts[-1], ts[-2])))
         del(dates[-1])
 
-    if len(dates) != len(TS_seas):
+    if len(dates) != len(ts_seas):
         print 'Dimension mismatch between data and indices'
 
-    return TS_seas, dates
+    return ts_seas, dates
 
 
-def ctrd_mov_avg(TS_seas):
+def ctrd_mov_avg(ts_seas):
     """
     calculates centered moving average from seasonal time series,
     window : 1 year (4 seasons)
 
     Parameters:
     -----------
-    TS_seas : np.array
+    ts_seas : np.array
         seasonal time series
     """
 
     # compute moving average
-    TS_movavg = []
+    ts_movavg = []
     i = 0
 
-    while i < (len(TS_seas) - 4):
-        TS_movavg.append((TS_seas[i] + 2 * (TS_seas[i + 1] + TS_seas[i + 2]
-                                      + TS_seas[i + 3]) + TS_seas[i + 4]) / 8)
+    while i < (len(ts_seas) - 4):
+        ts_movavg.append((ts_seas[i] + 2 *
+                          (ts_seas[i + 1] + ts_seas[i + 2] + ts_seas[i + 3]) +
+                          ts_seas[i + 4]) / 8)
         i = i + 1
 
     # compute centered moving average
-    TS_ctrd = []
+    ts_ctrd = []
     i = 0
-    while i < (len(TS_movavg) - 1):
-        TS_ctrd.append((TS_movavg[i] + TS_movavg[i + 1]) / 2)
+    while i < (len(ts_movavg) - 1):
+        ts_ctrd.append((ts_movavg[i] + ts_movavg[i + 1]) / 2)
         i = i + 1
 
-    return TS_ctrd
+    return ts_ctrd
 
 if __name__ == "__main__":
     pass
