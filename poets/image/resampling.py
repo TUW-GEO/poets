@@ -98,8 +98,16 @@ def resample_to_shape(source_file, country, prefix=None):
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
 
-    dest_lon, dest_lat = np.meshgrid(np.unique(grid.arrlon),
-                                      np.unique(grid.arrlat)[::-1])
+    if country == 'NZ':
+        lons = grid.arrlon[0:71]  # only valid for NZ
+    elif country == 'RS':
+        lons = grid.arrlon[0:682]
+    elif country == 'US':
+        lons = grid.arrlon[0:480]
+    else:
+        lons = np.unique(grid.arrlon)
+
+    dest_lon, dest_lat = np.meshgrid(lons, np.unique(grid.arrlat)[::-1])
 
     gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),
                                      grid.arrlon.min(), grid.arrlon.max())
