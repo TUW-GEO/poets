@@ -24,13 +24,15 @@ from data_request import read_ts, get_gridpoints
 
 app = Flask(__name__, template_folder="templates")
 
+region = 'MO'
+poi = 1391
 
 @app.route('/')
 def index():
 
-    gridpoints = get_gridpoints('ET')
+    gridpoints = get_gridpoints(region)
 
-    data = read_ts(1500, region='ET', variable='rfe')
+    data = read_ts(poi, region=region, variable='rfe')
 
     return render_template('index.html', regions=Settings.regions,
                            gridpoints=gridpoints, ts=data)
@@ -39,7 +41,7 @@ def index():
 @app.route('/create_json')
 def create_json():
 
-    data = read_ts(1500, region='ET', variable='rfe')
+    data = read_ts(poi, region=region, variable='rfe')
 
     return jsonify(data)
 

@@ -24,6 +24,7 @@ import datetime
 from netCDF4 import Dataset, num2date, date2num
 from poets.settings import Settings
 import poets.timedate.dateindex as dt
+from poets.timedate.dekad import check_dekad
 from poets.image.resampling import resample_to_shape, average_layers
 import poets.image.netcdf as net
 from poets.io.download import download_http, download_sftp, download_ftp, \
@@ -459,6 +460,7 @@ class BasicSource(object):
                 # Renames variable name to SOURCE_variable
                 ncvar = self.name + '_' + var
                 df[ncvar] = np.NAN
+                # val = np.copy(nc.variables[ncvar])
                 values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
                 df[ncvar][begin:end + 1] = values
 
@@ -497,7 +499,7 @@ class BasicSource(object):
                                    + '.nc')
 
         # get dekad of date:
-        date = dt.check_dekad(date)
+        date = check_dekad(date)
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
             time = nc.variables['time']
