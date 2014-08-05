@@ -244,6 +244,32 @@ def plot_polygon(country):
     plt.show()
 
 
+def dateline_country(country):
+    """
+    Min and max longitude for countries that spread across the
+    international dateline
+
+    Returns:
+    -------
+    lon_min, lon_max : float
+        min and max longitude
+    """
+
+    if country == 'NZ':
+        lon_min = 165.0 + 52.0 / 60.0 + 12.0 / 3600.0
+        lon_max = -(175.0 + 50.0 / 60.0)
+
+    elif country == 'US':
+        lon_min = 173.0 + 11.0 / 60.0
+        lon_max = -(66.0 + 59.0 / 60.0 + 0.71006 / 3600.0)
+
+    elif country == 'RS':
+        lon_min = 19.0 + 38.0 / 60.0
+        lon_max = -(169.0 + 3.0 / 60.0 + 54.0 / 3600.0)
+
+    return lon_min, lon_max
+
+
 def bbox_img(source_file, country):
     """
     Clips bounding box out of image file and returns data as numpy.ndarray
@@ -280,17 +306,8 @@ def bbox_img(source_file, country):
     d = lon_max - lon_min
 
     # countries that cross the international dateline (maybe more!)
-    if country == 'NZ':
-        lon_min = 165.0 + 52.0 / 60.0 + 12.0 / 3600.0
-        lon_max = -(175.0 + 50.0 / 60.0)
-
-    elif country == 'US':
-        lon_min = 173.0 + 11.0 / 60.0
-        lon_max = -(66.0 + 59.0 / 60.0 + 0.71006 / 3600.0)
-
-    elif country == 'RS':
-        lon_min = 19.0 + 38.0 / 60.0
-        lon_max = -(169.0 + 3.0 / 60.0 + 54.0 / 3600.0)
+    if country in ['NZ', 'RS', 'US']:
+        lon_min, lon_max = dateline_country(country)
 
     # get 2 pairs of points (upper left, lower right of bbox)
     if d > 350 and country != 'AY':

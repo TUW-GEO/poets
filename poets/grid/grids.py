@@ -29,6 +29,7 @@ import math
 from shapely.geometry import Point
 from poets.grid.shapes import Shape
 from poets.settings import Settings
+from poets.image.imagefile import dateline_country
 
 
 class HundredthDegGrid(grids.BasicGrid):
@@ -185,25 +186,15 @@ class CountryGrid(grids.BasicGrid):
         self.shp = Shape(country)
 
         # countries that cross the international dateline (maybe more!)
-        if country == 'NZ':
-            lonmin = 165.0 + 52.0 / 60.0 + 12.0 / 3600.0
-            lonmax = -(175.0 + 50.0 / 60.0)
-
-        elif country == 'US':
-            lonmin = 173.0 + 11.0 / 60.0
-            lonmax = -(66.0 + 59.0 / 60.0 + 0.71006 / 3600.0)
-
-        elif country == 'RS':
-            lonmin = 19.0 + 38.0 / 60.0
-            lonmax = -(169.0 + 3.0 / 60.0 + 54.0 / 3600.0)
+        if country in ['NZ', 'RS', 'US']:
+            lonmin, lonmax = dateline_country(country)
         else:
             lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2])
 
         latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3])
 
-        # fuer nz, rs und us ist lons=[]
         if country in ['NZ', 'US', 'RS']:
-            lons1 = np.arange(lonmin, 180 + Settings.sp_res, Settings.sp_res)
+            lons1 = np.arange(lonmin, 180, Settings.sp_res)
             lons2 = (np.arange(-180, lonmax + Settings.sp_res,
                                    Settings.sp_res))
             lons = np.empty(len(lons1) + len(lons2))
@@ -215,15 +206,12 @@ class CountryGrid(grids.BasicGrid):
         lats = np.arange(latmin, latmax + Settings.sp_res, Settings.sp_res)
 
         lon_new, lat_new = _remove_blank_frame(country, lons, lats)
-        #======================================================================
-        # lon_new = lons
-        # lat_new = lats
-        #======================================================================
 
         lon, lat = np.meshgrid(lon_new, lat_new)
 
         super(CountryGrid, self).__init__(lon.flatten(), lat.flatten(),
                                           shape=lon.shape)
+
 
     def get_country_gridpoints(self):
         """Gets all points within a country shape.
