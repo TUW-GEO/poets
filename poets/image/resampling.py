@@ -122,22 +122,26 @@ def resample_to_shape(source_file, country, prefix=None):
     for i in range(0, grid.shape[0]):
         for j in range(0, grid.shape[1]):
             p = Point(dest_lon[i][j], dest_lat[i][j])
-            if p.within(poly) == False:
+            if p.within(poly) is False:
                     mask[i][j] = True
-            if data[data.keys()[0]].mask[i][j] == True:
+            if data[data.keys()[0]].mask[i][j] is True:
                 mask[i][j] = True
 
     for key in data.keys():
-        var = prefix + key
-        metadata[prefix + key] = metadata[key]
+        if prefix is None:
+            var = key
+        else:
+            var = prefix + key
+        metadata[var] = metadata[key]
         del metadata[key]
         data[var] = np.ma.masked_array(data[key], mask=mask,
                                        fill_value=Settings.nan_value)
         dat = np.copy(data[var].data)
-        dat[data[var].mask == True] = Settings.nan_value
+        dat[data[var].mask is True] = Settings.nan_value
         data[var] = np.ma.masked_array(dat, mask=mask,
                                        fill_value=Settings.nan_value)
-        # del data[key]
+        if prefix is not None:
+            del data[key]
 
     return data, dest_lon, dest_lat, gpis, timestamp, metadata
 

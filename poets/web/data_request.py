@@ -45,13 +45,8 @@ pd.DataFrame.to_dygraph_format = to_dygraph_format
 
 def read_ts(gp, region=None, variable=None):
 
-    #==========================================================================
-    # tamsat = TAMSAT()
-    # dat = tamsat.read_ts(gp, region, variable)
-    #==========================================================================
-
-    ecv = ECV()
-    dat = ecv.read_ts(gp, region, variable)
+    tamsat = TAMSAT()
+    dat = tamsat.read_ts(gp, region, variable)
 
     labels, values = dat.to_dygraph_format()
     ts = {'labels': labels, 'data': values}
