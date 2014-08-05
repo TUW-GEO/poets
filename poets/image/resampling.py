@@ -24,6 +24,7 @@ import pyresample as pr
 import poets.grid.grids as gr
 import poets.image.netcdf as nc
 from poets.grid.shapes import Shape
+from poets.grid.grids import CountryGrid
 from poets.settings import Settings
 from pytesmo.grid import resample
 from shapely.geometry import Point
@@ -79,8 +80,6 @@ def resample_to_shape(source_file, country, prefix=None):
 
     if prefix is not None:
         prefix += '_'
-    else:
-        prefix = ''
 
     shp = Shape(country)
 
@@ -98,15 +97,7 @@ def resample_to_shape(source_file, country, prefix=None):
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
 
-    if country == 'NZ':
-        lons = grid.arrlon[0:71]  # only valid for NZ
-    elif country == 'RS':
-        lons = grid.arrlon[0:682]
-    elif country == 'US':
-        lons = grid.arrlon[0:480]
-    else:
-        lons = np.unique(grid.arrlon)
-
+    lons = grid.arrlon[0:grid.shape[1]]
     dest_lon, dest_lat = np.meshgrid(lons, np.unique(grid.arrlat)[::-1])
 
     gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),
@@ -163,9 +154,9 @@ def resample_to_gridpoints(source_file, country):
         resampled data with gridpoints as index
     """
 
-    grid = _create_grid()
+    grid = CountryGrid(country)
 
-    gridpoints = gr.get_country_gridpoints(grid, country)
+    gridpoints = grid.get_country_gridpoints()
     shp = Shape(country)
 
     data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
