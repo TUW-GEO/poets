@@ -23,8 +23,8 @@ Description of module.
 
 import numpy as np
 import pandas as pd
-from poets.io.TAMSAT.interface import TAMSAT
-from poets.io.ECV.interface import ECV
+from poets.io.sat.tamsat import TAMSAT
+from poets.io.sat.ecv import ECV
 from poets.grid.grids import CountryGrid
 
 

@@ -19,13 +19,14 @@
 
 from flask import Flask, jsonify, render_template
 from poets.settings import Settings
-from poets.io.TAMSAT.interface import TAMSAT
+from poets.io.sat.tamsat import TAMSAT
 from data_request import read_ts, get_gridpoints
 
 app = Flask(__name__, template_folder="templates")
 
 region = 'MO'
 poi = 1391
+
 
 @app.route('/')
 def index():

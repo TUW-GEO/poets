@@ -22,6 +22,31 @@ import numpy as np
 from poets.timedate.dekad import get_dekad_period
 
 
+def calc_CDI(data, weights):
+    """
+    Calculates a weighted average over all columns of a pandas DataFrame.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Pandas DataFrame containing data to be averaged
+    weights : list of int
+        An list of weights associated with the values in data
+
+    Returns
+    -------
+    df : pandas DataFrame
+        Return the average of data
+    """
+    cols = data.keys()
+    dat = np.array(data[cols])
+    dat = np.ma.masked_invalid(dat)
+    avg = np.ma.average(dat, axis=1, weights=weights)
+    df = pd.DataFrame(avg, columns=['CDI'], index=data.index)
+
+    return df
+
+
 def calc_DI(data, parameter, interest_period=[6, 12, 24]):
     """
     Calculates a Drought Index based on an algorythm developed by FAO SWALIM

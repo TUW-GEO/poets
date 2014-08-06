@@ -338,10 +338,10 @@ def bbox_img(source_file, country):
         lon_new, lat_new = px2lonlat(orig_img, lon_px, lat_px)
 
     # timestamp
-    timestamp = np.NAN
+    timestamp = None
 
     # metadata
-    metadata = {'dataset': np.NAN}
+    metadata = None
 
     return data, lon_new, lat_new, timestamp, metadata
 

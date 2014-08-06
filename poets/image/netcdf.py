@@ -155,7 +155,8 @@ def write_tmp_file(image, timestamp, country, metadata, filepath):
                     var_index = times[:].size - 1
 
             var[var_index] = image[key]
-            var.setncatts(metadata[key])
+            if metadata is not None:
+                var.setncatts(metadata[key])
 
 
 def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):

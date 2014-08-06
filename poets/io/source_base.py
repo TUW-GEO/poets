@@ -149,32 +149,38 @@ class BasicSource(object):
                     with Dataset(nc_name, 'r', format='NETCDF4') as nc:
                         if begin is True:
                             # check first date of data
-                            for i in range(0, nc.variables['time'].size - 1):
-                                if nc.variables[ncvar][i].mask.min() is True:
-                                    continue
-                                else:
-                                    times = nc.variables['time']
-                                    dat = num2date(nc.variables['time'][i],
-                                                   units=times.units,
-                                                   calendar=times.calendar)
-                                    dates[region][var].append(dat)
-                                    break
+                            if ncvar in nc.variables.keys():
+                                for i in range(0, nc.variables['time'].size - 1):
+                                    if nc.variables[ncvar][i].mask.min() is True:
+                                        continue
+                                    else:
+                                        times = nc.variables['time']
+                                        dat = num2date(nc.variables['time'][i],
+                                                       units=times.units,
+                                                       calendar=times.calendar)
+                                        dates[region][var].append(dat)
+                                        break
+                            else:
+                                dates[region][var].append(None)
                         else:
                             dates[region][var].append(None)
 
                         if end is True:
                             # check last date of data
-                            for i in range(nc.variables['time'].size - 1,
-                                           - 1, -1):
-                                if nc.variables[ncvar][i].mask.min() is True:
-                                    continue
-                                else:
-                                    times = nc.variables['time']
-                                    dat = num2date(nc.variables['time'][i],
-                                                   units=times.units,
-                                                   calendar=times.calendar)
-                                    dates[region][var].append(dat)
-                                    break
+                            if ncvar in nc.variables.keys():
+                                for i in range(nc.variables['time'].size - 1,
+                                               - 1, -1):
+                                    if nc.variables[ncvar][i].mask.min() is True:
+                                        continue
+                                    else:
+                                        times = nc.variables['time']
+                                        dat = num2date(nc.variables['time'][i],
+                                                       units=times.units,
+                                                       calendar=times.calendar)
+                                        dates[region][var].append(dat)
+                                        break
+                            else:
+                                dates[region][var].append(None)
                         else:
                             dates[region][var].append(None)
 
@@ -257,11 +263,14 @@ class BasicSource(object):
             if end is not None:
                 if fdate > end:
                     continue
-
-            print '.',
+            else:
+                print '.',
 
             image, _, _, _, timestamp, metadata = \
                 resample_to_shape(src_file, region, self.name)
+
+            if timestamp is None:
+                timestamp = get_file_date(item, self.filedate)
 
             if self.temp_res is 'dekad':
                 net.save_image(image, timestamp, region, metadata)
@@ -460,13 +469,15 @@ class BasicSource(object):
                 # Renames variable name to SOURCE_variable
                 ncvar = self.name + '_' + var
                 df[ncvar] = np.NAN
-                # val = np.copy(nc.variables[ncvar])
-                values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
-                df[ncvar][begin:end + 1] = values
-
-                # Replaces NAN value with np.NAN
-                df[ncvar][df[ncvar] == Settings.nan_value] = np.NAN
-                df[ncvar]
+                for i in range(begin, end + 1):
+                    df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
+#==============================================================================
+#                 values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
+#                 df[ncvar][begin:end + 1] = values
+#
+#                 # Replaces NAN value with np.NAN
+#                 df[ncvar][df[ncvar] == Settings.nan_value] = np.NAN
+#==============================================================================
 
         return df
 

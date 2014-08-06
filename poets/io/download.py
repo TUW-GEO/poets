@@ -28,6 +28,7 @@ import requests
 import paramiko
 import pandas as pd
 from ftplib import FTP
+from poets.timedate.dekad import dekad2day
 
 
 def download_ftp(download_path, host, directory, port, username, password,
@@ -65,6 +66,9 @@ def download_ftp(download_path, host, directory, port, username, password,
         true if data is available, false if not
     """
 
+    if host[-1] == '/':
+        host = host[:-1]
+
     ftp = FTP(host)
     ftp.login(username, password)
 
@@ -81,7 +85,7 @@ def download_ftp(download_path, host, directory, port, username, password,
 
     files = []
 
-    if dirstruct[0] == 'YYYY':
+    if dirstruct is not None and len(dirstruct) > 0 and dirstruct[0] == 'YYYY':
         for year in subdirs:
             if begin.year > int(year):
                 continue
@@ -111,8 +115,11 @@ def download_ftp(download_path, host, directory, port, username, password,
         for fname in files:
             date = get_file_date(fname, filedate)
             if date >= begin and date <= end:
-                ftp.retrbinary("RETR " + fname, open(fname, "wb").write)
-                print '.',
+                if not os.path.exists(os.path.join(download_path, fname)):
+                    ftp.retrbinary("RETR " + fname, open(fname, "wb").write)
+                    print '.',
+                else:
+                    print ' file exists, skipping download'
         ftp.close()
         print ''
         return True
@@ -374,6 +381,11 @@ def download_http(download_path, host, directory, filename, filedate,
 
         for fp in files:
             newfile = os.path.join(download_path, fp.split('/')[-1])
+            if os.path.exists(newfile):
+                print ''
+                print '[INFO] File already exists, nothing to download',
+                continue
+
             r = requests.get(fp)
             if r.status_code == 200:
                 # check if year folder is existing
@@ -424,6 +436,10 @@ def get_file_date(fname, fdate):
         day = int(fname[fdate['DD'][0]:fdate['DD'][1]])
     else:
         day = 1
+
+    if 'P' in fdate.keys():
+        dekad = int(fname[fdate['P'][0]:fdate['P'][1]])
+        day = dekad2day(year, month, dekad)
 
     if 'hh' in fdate.keys():
         hour = int(fname[fdate['hh'][0]:fdate['hh'][1]])

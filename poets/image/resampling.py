@@ -123,8 +123,9 @@ def resample_to_shape(source_file, country, prefix=None):
             var = key
         else:
             var = prefix + key
-        metadata[var] = metadata[key]
-        del metadata[key]
+        if metadata is not None:
+            metadata[var] = metadata[key]
+            del metadata[key]
         data[var] = np.ma.masked_array(data[key], mask=mask,
                                        fill_value=Settings.nan_value)
         dat = np.copy(data[var].data)
