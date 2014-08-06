@@ -292,6 +292,10 @@ class BasicSource(object):
 
         src_file = self._get_tmp_filepath('spatial', region)
 
+        if not os.path.exists(src_file):
+            print '[Info] No data available for this period'
+            return False
+
         data = {}
         variables, _, period = net.get_properties(src_file)
 
