@@ -105,4 +105,5 @@ class MODIS_LST(BasicSource):
                                         directory=directory,
                                         dirstruct=dirstruct,
                                         begin_date=begin_date,
-                                        variables=variables)
+                                        variables=variables,
+                                        nan_value=nan_value)

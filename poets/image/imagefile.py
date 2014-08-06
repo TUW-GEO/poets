@@ -315,15 +315,19 @@ def bbox_img(source_file, country):
         row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
         row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
 
-        img = orig_img.crop((int(math.floor(col_min)), int(math.floor(row_min)),
-                        int(math.ceil(col_max)), int(math.ceil(row_max))))
+        img = orig_img.crop((int(math.floor(col_min)),
+                             int(math.floor(row_min)),
+                             int(math.ceil(col_max)),
+                             int(math.ceil(row_max))))
     else:
         row_min, col_min = lonlat2px(orig_img, lon_min, lat_max)
         row_max, col_max = lonlat2px(orig_img, lon_max, lat_min)
 
         # crop image
-        img = orig_img.crop((int(math.floor(col_min)), int(math.floor(row_min)),
-                        int(math.ceil(col_max)), int(math.ceil(row_max))))
+        img = orig_img.crop((int(math.floor(col_min)),
+                             int(math.floor(row_min)),
+                             int(math.ceil(col_max)),
+                             int(math.ceil(row_max))))
 
     # get data values from image
     data = {'dataset': np.array(img)}

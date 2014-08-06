@@ -63,6 +63,8 @@ class BasicSource(object):
         Date from which on data is available, defaults to 2000-01-01
     variables : list of strings, optional
         Variables used from data source
+    nan_value : int, float, optional
+        Nan value of the original data as given by the data provider
 
     Attributes
     ----------
@@ -92,12 +94,14 @@ class BasicSource(object):
         Date from which on data is available
     variables : list of strings
         Variables used from data source
+    nan_value : int, float
+        N a number value of the original data as given by the data provider
     """
 
     def __init__(self, name, filename, filedate, temp_res, host, protocol,
                  username=None, password=None, port=22, directory=None,
                  dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
-                 variables=None):
+                 variables=None, nan_value=None):
 
         self.name = name
         self.filename = filename
@@ -112,6 +116,8 @@ class BasicSource(object):
         self.dirstruct = dirstruct
         self.begin_date = begin_date
         self.variables = variables
+        self.nan_value = nan_value
+
         self.download_path = os.path.join(Settings.tmp_path, self.name)
 
         if self.host[-1] != '/':
@@ -267,7 +273,7 @@ class BasicSource(object):
                 print '.',
 
             image, _, _, _, timestamp, metadata = \
-                resample_to_shape(src_file, region, self.name)
+                resample_to_shape(src_file, region, self.name, self.nan_value)
 
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)

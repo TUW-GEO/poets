@@ -53,7 +53,7 @@ def _create_grid():
     return grid
 
 
-def resample_to_shape(source_file, country, prefix=None):
+def resample_to_shape(source_file, country, prefix=None, nan_value=None):
     """
     Resamples images and clips country boundaries
 
@@ -63,6 +63,10 @@ def resample_to_shape(source_file, country, prefix=None):
         path to source file
     country : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    prefix : str, optional
+        Prefix for the variable in the NetCDF file, should be name of source
+    nan_value : int, float, optional
+        Not a number value of the original data as given by the data provider
 
     Returns
     -------
@@ -92,7 +96,11 @@ def resample_to_shape(source_file, country, prefix=None):
 
     elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
-                                                            country)
+                                                               country)
+
+    if nan_value is not None:
+        for key in data.keys():
+            data[key] = np.ma.array(data[key], mask=(data[key] == 255))
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
     grid = gr.CountryGrid(country)
@@ -113,9 +121,9 @@ def resample_to_shape(source_file, country, prefix=None):
     for i in range(0, grid.shape[0]):
         for j in range(0, grid.shape[1]):
             p = Point(dest_lon[i][j], dest_lat[i][j])
-            if p.within(poly) is False:
-                    mask[i][j] = True
-            if data[data.keys()[0]].mask[i][j] is True:
+            if not p.within(poly):
+                mask[i][j] = True
+            if data[data.keys()[0]].mask[i][j]:
                 mask[i][j] = True
 
     for key in data.keys():
@@ -129,7 +137,7 @@ def resample_to_shape(source_file, country, prefix=None):
         data[var] = np.ma.masked_array(data[key], mask=mask,
                                        fill_value=Settings.nan_value)
         dat = np.copy(data[var].data)
-        dat[data[var].mask is True] = Settings.nan_value
+        dat[mask == True] = Settings.nan_value
         data[var] = np.ma.masked_array(dat, mask=mask,
                                        fill_value=Settings.nan_value)
         if prefix is not None:
