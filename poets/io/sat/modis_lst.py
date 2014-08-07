@@ -97,7 +97,7 @@ class MODIS_LST(BasicSource):
         directory = "/gs/MOD11C1_D_LSTDA/"
         dirstruct = []
         begin_date = datetime.datetime(2000, 02, 24)
-        variables = ['lst']
+        variables = ['dataset']
         nan_value = 255
 
         super(MODIS_LST, self).__init__(name, filename, filedate, temp_res,

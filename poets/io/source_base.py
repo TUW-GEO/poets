@@ -309,7 +309,8 @@ class BasicSource(object):
             dtindex = dt.dekad_index(period[0], end=period[1])
 
         for date in dtindex:
-            print '.',
+            print date
+            # print '.',
             if date.day < 21:
                 begin = datetime.datetime(date.year, date.month,
                                           date.day - 10 + 1)
