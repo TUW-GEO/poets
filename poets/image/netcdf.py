@@ -22,15 +22,17 @@ Functions for loading from and writing to netCDF4 files
 """
 
 import os.path
-import numpy as np
+
+from netCDF4 import Dataset, date2num, num2date
 from pytesmo.grid.netcdf import save_grid
-from poets.settings import Settings
+
+import numpy as np
 from poets.grid import grids
 from poets.timedate.dateindex import dekad_index
-from netCDF4 import Dataset, date2num, num2date
 
 
-def save_image(image, timestamp, country, metadata, dest_file=None):
+def save_image(image, timestamp, country, metadata, dest_file, start_date,
+               nan_value=-99):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Creates a datetimeindex over the whole period defined in the settings file
@@ -45,33 +47,29 @@ def save_image(image, timestamp, country, metadata, dest_file=None):
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
     metadata : dict
         netCDF metadata from source file
-    dest_file : str, optional
+    dest_file : str
         Path to the output file
+    start_date : datetime.datetime
+        First date of available data
+    nan_value : int, optional
+        Not a number value for dataset, defaults to -99
     """
 
     c_grid = grids.CountryGrid(country)
 
-    path = Settings.data_path
+    dest_file = dest_file
 
-    if dest_file is None:
+    if not os.path.isfile(dest_file):
+        save_grid(dest_file, c_grid)
 
-        filename = country + '_' + str(Settings.sp_res) + '.nc'
-        nc_name = os.path.join(path, filename)
+    dt = dekad_index(start_date)
 
-    else:
-        nc_name = dest_file
-
-    if not os.path.isfile(nc_name):
-        save_grid(nc_name, c_grid)
-
-    dt = dekad_index(Settings.start_date)
-
-    with Dataset(nc_name, 'r+', format='NETCDF4') as ncfile:
+    with Dataset(dest_file, 'r+', format='NETCDF4') as ncfile:
 
         if 'time' not in ncfile.dimensions.keys():
             ncfile.createDimension("time", None)
             times = ncfile.createVariable('time', 'uint16', ('time',))
-            times.units = 'days since ' + str(Settings.start_date)
+            times.units = 'days since ' + str(start_date)
             times.calendar = 'standard'
             times[:] = date2num(dt.tolist(), units=times.units,
                                 calendar=times.calendar)
@@ -88,7 +86,7 @@ def save_image(image, timestamp, country, metadata, dest_file=None):
 
             if key not in ncfile.variables.keys():
                 var = ncfile.createVariable(key, image[key].dtype.char, dim,
-                                            fill_value=Settings.nan_value)
+                                            fill_value=nan_value)
             else:
                 var = ncfile.variables[key]
 
@@ -97,7 +95,8 @@ def save_image(image, timestamp, country, metadata, dest_file=None):
                 setattr(var, attr, metadata[key][attr])
 
 
-def write_tmp_file(image, timestamp, country, metadata, filepath):
+def write_tmp_file(image, timestamp, country, metadata, dest_file, start_date,
+                   nan_value=-99):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Parameters
@@ -110,21 +109,23 @@ def write_tmp_file(image, timestamp, country, metadata, filepath):
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
     metadata : dict
         netCDF metadata from source file
-    filepath : str, optional
+    dest_file : str
         Path to the output file
+    nan_value : int, optional
+        Not a number value for dataset, defaults to -99
     """
 
     c_grid = grids.CountryGrid(country)
 
-    if not os.path.isfile(filepath):
-        save_grid(filepath, c_grid)
+    if not os.path.isfile(dest_file):
+        save_grid(dest_file, c_grid)
 
-    with Dataset(filepath, 'r+', format='NETCDF4') as ncfile:
+    with Dataset(dest_file, 'r+', format='NETCDF4') as ncfile:
 
         if 'time' not in ncfile.dimensions.keys():
             ncfile.createDimension("time", None)
             times = ncfile.createVariable('time', 'uint16', ('time',))
-            times.units = 'days since ' + str(Settings.start_date)
+            times.units = 'days since ' + str(start_date)
             times.calendar = 'standard'
 
         else:
@@ -139,7 +140,7 @@ def write_tmp_file(image, timestamp, country, metadata, filepath):
 
             if key not in ncfile.variables.keys():
                 var = ncfile.createVariable(key, image[key].dtype.char, dim,
-                                            fill_value=Settings.nan_value)
+                                            fill_value=nan_value)
             else:
                 var = ncfile.variables[key]
 

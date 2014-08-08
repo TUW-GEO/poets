@@ -92,12 +92,12 @@ class Shape(object):
         sf = shapefile.Reader(self.shpfile)
         pos = False
         for i, rec in enumerate(sf.records()):
-            if self.fips == str(rec[0]):
+            if self.code == str(rec[0]):
                 pos = i
                 break
 
         if not pos:
-            raise FipsError("FIPS Code '" + self.fips + "' does not exist")
+            raise FipsError("FIPS Code '" + self.code + "' does not exist")
 
         sh = sf.shapeRecord(pos)
 

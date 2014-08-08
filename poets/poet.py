@@ -24,7 +24,6 @@ Description of module.
 import datetime
 import os
 
-import poets.io.sat as source
 from poets.io.source_base import BasicSource
 
 
@@ -33,7 +32,7 @@ class Poet(object):
 
     Parameters
     ----------
-    data_path : str
+    rootpath : str
         path to the directory where data should be stored
     region : list of str, optional
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code),
@@ -49,7 +48,7 @@ class Poet(object):
         NaN value to use, defaults to -99
     """
 
-    def __init__(self, data_path, region='global',
+    def __init__(self, rootpath, regions=['global'],
                  spatial_resolution=0.25,
                  temporal_resolution='dekad',
                  start_date=datetime.datetime(2000, 1, 1),
@@ -57,9 +56,10 @@ class Poet(object):
 
         self.spatial_resolution = spatial_resolution
         self.temporal_resolution = temporal_resolution
-        self.tmp_path = os.path.join(data_path, 'TMP')
-        self.data_path = os.path.join(data_path, 'DATA')
-        self.regions = region
+        self.rootpath = rootpath
+        self.tmp_path = os.path.join(rootpath, 'TMP')
+        self.data_path = os.path.join(rootpath, 'DATA')
+        self.regions = regions
         self.nan_value = nan_value
         self.start_date = start_date
         self.shapefile = shapefile
@@ -73,9 +73,12 @@ class Poet(object):
                    dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
                    variables=None, nan_value=None):
 
-        source = BasicSource(name, filename, filedate, temp_res, host,
-                             protocol, username, password, port, directory,
-                             dirstruct, begin_date, variables)
+        source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
+                             host, protocol, username, password, port, 
+                             directory, dirstruct, begin_date, variables,
+                             nan_value, self.nan_value, self.regions,
+                             self.spatial_resolution, self.temporal_resolution,
+                             self.start_date)
 
         self.sources[name] = source
 

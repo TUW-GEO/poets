@@ -24,11 +24,9 @@ from netCDF4 import Dataset, num2date, date2num
 
 import numpy as np
 import pandas as pd
-import poets.image.netcdf as net
+import poets.image.netcdf as nt
 from poets.image.resampling import resample_to_shape, average_layers
-from poets.io.download import download_http, download_sftp, download_ftp, \
-    get_file_date
-from poets.settings import Settings
+from poets.io.download import download_http, download_ftp, download_sftp, get_file_date
 import poets.timedate.dateindex as dt
 from poets.timedate.dekad import check_dekad
 
@@ -47,6 +45,8 @@ class BasicSource(object):
         Position of date fields in filename, given as tuple
     temp_res : str
         Temporal resolution of the source
+    rootpath : str
+        Root path where all data will be stored
     host : str
         Link to data host
     protocol : str
@@ -67,6 +67,17 @@ class BasicSource(object):
         Variables used from data source
     nan_value : int, float, optional
         Nan value of the original data as given by the data provider
+    dest_nan_value : int, float, optional
+        NaN value in the final NetCDF file
+    dest_regions : list of str, optional
+        Regions of interest where data should be resampled to
+    dest_sp_res : int, float, optional
+        Spatial resolution of the destination NetCDF file, defaults to 0.25
+        degree
+    dest_temp_res : string, optional
+        Temporal resolution of the destination NetCDF file, defaults to dekad
+    dest_start_date : datetime.datetime, optional
+        Start date of the destination NetCDF file, defaults to 2000-01-01
 
     Attributes
     ----------
@@ -98,13 +109,28 @@ class BasicSource(object):
         Variables used from data source
     nan_value : int, float
         N a number value of the original data as given by the data provider
+    dest_nan_value : int, float, optional
+        NaN value in the final NetCDF file
+    tmp_path : str
+        Path where temporary files and original files are stored and downloaded
+        to
+    data_path : str
+        Path where resampled NetCDF file is stored
+    dest_regions : list of str
+        Regions of interest where data is resampled to
+    dest_sp_res : int, float
+        Spatial resolution of the destination NetCDF file
+    dest_temp_res : string
+        Temporal resolution of the destination NetCDF file, defaults to dekad
     """
 
-    def __init__(self, name, filename, filedate, temp_res, download_path,
-                 data_path, host, protocol,
-                 username=None, password=None, port=22, directory=None,
-                 dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
-                 variables=None, nan_value=None):
+    def __init__(self, name, filename, filedate, temp_res, rootpath,
+                 host, protocol, username=None, password=None, port=22,
+                 directory=None, dirstruct=None,
+                 begin_date=datetime.datetime(2000, 1, 1), variables=None,
+                 nan_value=None, dest_nan_value=-99, dest_regions=None,
+                 dest_sp_res=0.25, dest_temp_res='dekad',
+                 dest_start_date=datetime.datetime(2000, 1, 1)):
 
         self.name = name
         self.filename = filename
@@ -120,8 +146,13 @@ class BasicSource(object):
         self.begin_date = begin_date
         self.variables = variables
         self.nan_value = nan_value
-
-        self.download_path = os.path.join(Settings.tmp_path, self.name)
+        self.dest_nan_value = dest_nan_value
+        self.dest_regions = dest_regions
+        self.dest_sp_res = dest_sp_res
+        self.dest_temp_res = dest_temp_res
+        self.dest_start_date = dest_start_date
+        self.tmp_path = os.path.join(rootpath, 'TMP', name)
+        self.data_path = os.path.join(rootpath, 'DATA')
 
         if self.host[-1] != '/':
             self.host += '/'
@@ -147,9 +178,9 @@ class BasicSource(object):
 
         dates = {}
 
-        for region in Settings.regions:
-            nc_name = os.path.join(Settings.data_path, region + '_'
-                                   + str(Settings.sp_res) + '.nc')
+        for region in self.dest_regions:
+            nc_name = os.path.join(self.data_path, region + '_'
+                                   + str(self.dest_sp_res) + '.nc')
             if os.path.exists(nc_name):
                 dates[region] = {}
                 for var in self.variables:
@@ -210,7 +241,7 @@ class BasicSource(object):
         dates = self._check_current_date(begin=False)
         if dates is not None:
             begin = datetime.datetime.now()
-            for region in Settings.regions:
+            for region in self.dest_regions:
                 for var in self.variables:
                     if dates[region][var][1] is not None:
                         if dates[region][var][1] < begin:
@@ -231,9 +262,9 @@ class BasicSource(object):
         str
             Path to the temporary direcotry
         """
-        filename = ('_' + prefix + '_' + region + '_' + str(Settings.sp_res)
+        filename = ('_' + prefix + '_' + region + '_' + str(self.dest_sp_res)
                     + '.nc')
-        return os.path.join(Settings.tmp_path, filename)
+        return os.path.join(self.tmp_path, filename)
 
     def _resample_spatial(self, region, begin, end, delete_rawdata):
         """Helper method that calls spatial resampling routines.
@@ -251,17 +282,16 @@ class BasicSource(object):
         """
 
         raw_files = []
-        tmp_path = os.path.join(Settings.tmp_path, self.name)
 
         # filename if tmp file is used
         dest_file = self._get_tmp_filepath('spatial', region)
 
-        dirList = os.listdir(tmp_path)
+        dirList = os.listdir(self.tmp_path)
         dirList.sort()
 
         for item in dirList:
 
-            src_file = os.path.join(tmp_path, item)
+            src_file = os.path.join(self.tmp_path, item)
             raw_files.append(src_file)
 
             fdate = get_file_date(item, self.filedate)
@@ -282,10 +312,14 @@ class BasicSource(object):
                 timestamp = get_file_date(item, self.filedate)
 
             if self.temp_res is 'dekad':
-                net.save_image(image, timestamp, region, metadata)
+                filename = region + '_' + str(self.dest_sp_res) + '.nc'
+                dfile = os.path.join(self.data_path, filename)
+                nt.save_image(image, timestamp, region, metadata, dfile,
+                              self.dest_start_date, self.dest_nan_value)
             else:
-                net.write_tmp_file(image, timestamp, region, metadata,
-                                   dest_file)
+                nt.write_tmp_file(image, timestamp, region, metadata,
+                                  dest_file, self.dest_start_date,
+                                  self.dest_nan_value)
 
             if delete_rawdata:
                 os.unlink(src_file)
@@ -306,9 +340,9 @@ class BasicSource(object):
             return False
 
         data = {}
-        variables, _, period = net.get_properties(src_file)
+        variables, _, period = nt.get_properties(src_file)
 
-        if Settings.temp_res is 'dekad':
+        if self.dest_temp_res is 'dekad':
             dtindex = dt.dekad_index(period[0], end=period[1])
 
         for date in dtindex:
@@ -326,12 +360,17 @@ class BasicSource(object):
 
             for var in variables:
                 img, _, _, meta = \
-                    net.read_image(src_file, region, var, begin, end)
+                    nt.read_image(src_file, region, var, begin, end)
 
                 metadata[var] = meta
                 data[var] = average_layers(img)
 
-            net.save_image(data, date, region, metadata)
+            filename = region + '_' + str(self.dest_sp_res) + '.nc'
+            dest_file = os.path.join(self.data_path, filename)
+
+            nt.save_image(data, date, region, metadata, dest_file,
+                          self.dest_start_date,
+                          self.dest_nan_value)
 
         # delete intermediate netCDF file
         print ''
@@ -352,15 +391,16 @@ class BasicSource(object):
             begin = self.begin_date
 
         if self.protocol in ['HTTP', 'http']:
-            check = download_http(self.download_path, self.host,
+            check = download_http(self.tmp_path, self.host,
                                   self.directory, self.filename, self.filedate,
                                   self.dirstruct, begin, end=end)
         elif self.protocol in ['FTP', 'ftp']:
-            check = download_ftp(self.download_path, self.host, self.directory,
+            check = download_ftp(self.tmp_path, self.host, self.directory,
                                  self.port, self.username, self.password,
                                  self.filedate, self.dirstruct, begin, end=end)
+
         elif self.protocol in ['SFTP', 'sftp']:
-            check = download_sftp(self.download_path, self.host,
+            check = download_sftp(self.tmp_path, self.host,
                                   self.directory, self.port, self.username,
                                   self.password, self.filedate, self.dirstruct,
                                   begin, end=end)
@@ -383,7 +423,7 @@ class BasicSource(object):
             Original files will be deleted from tmp_path if set 'True'
         """
 
-        for region in Settings.regions:
+        for region in self.dest_regions:
 
             print '[INFO] resampling to region ' + region
             print '[INFO] performing spatial resampling ',
@@ -419,7 +459,7 @@ class BasicSource(object):
         if end is None:
             end = datetime.datetime.now()
 
-        drange = dt.get_dtindex(Settings.temp_res, begin, end)
+        drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
         for i, date in enumerate(drange):
             if i == 0:
@@ -454,15 +494,15 @@ class BasicSource(object):
         """
 
         if region is None:
-            region = Settings.regions[0]
+            region = self.dest_regions[0]
 
         if variable is None:
             variable = self.variables
         else:
             variable = [variable]
 
-        source_file = os.path.join(Settings.data_path,
-                                   region + '_' + str(Settings.sp_res)
+        source_file = os.path.join(self.data_path,
+                                   region + '_' + str(self.dest_sp_res)
                                    + '.nc')
 
         var_dates = self._check_current_date()
@@ -514,13 +554,13 @@ class BasicSource(object):
         """
 
         if region is None:
-            region = Settings.regions[0]
+            region = self.dest_regions[0]
 
         if variable is None:
             variable = self.name + '_' + self.variables[0]
 
-        source_file = os.path.join(Settings.data_path,
-                                   region + '_' + str(Settings.sp_res)
+        source_file = os.path.join(self.data_path,
+                                   region + '_' + str(self.dest_sp_res)
                                    + '.nc')
 
         # get dekad of date:
