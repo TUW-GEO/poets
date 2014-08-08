@@ -21,9 +21,11 @@
 Description of module.
 """
 
-import os
 import datetime
+import os
+
 import poets.io.sat as source
+from poets.io.source_base import BasicSource
 
 
 class Poet(object):
@@ -61,9 +63,22 @@ class Poet(object):
         self.nan_value = nan_value
         self.start_date = start_date
         self.shapefile = shapefile
+        self.sources = {}
 
     def fetch_data(self):
         pass
+
+    def add_source(self, name, filename, filedate, temp_res, host, protocol,
+                   username=None, password=None, port=22, directory=None,
+                   dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
+                   variables=None, nan_value=None):
+
+        source = BasicSource(name, filename, filedate, temp_res, host,
+                             protocol, username, password, port, directory,
+                             dirstruct, begin_date, variables)
+
+        self.sources[name] = source
+
 
 if __name__ == "__main__":
     pass

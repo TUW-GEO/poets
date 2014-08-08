@@ -31,16 +31,24 @@ class Shape(object):
 
     Parameters
     ----------
-    fips : str
-        FIPS country code
+    code : str
+        identifier of the records in the shapefile; uses the first argument
+        returned by shapefile.Reader as identifier, for the default shapefile,
+        this would be the FIPS country code
     shapefile : str, optional
         path to shape file, uses "world country admin boundary shapefile" by
         default
 
     Attributes
     ----------
-    fips : str
-        FIPS country code
+    code : str
+        identifier of the selected record in the shapefile; uses the first
+        argument returned by shapefile.Reader as identifier, for the default
+        shapefile, this would be the FIPS country code
+    name : str
+        name of the selected record in the shapefile; uses the second argument
+        returned by shapefile.Reader as identifier, for the default shapefile,
+        this would be the FIPS country code
     shpfile : str
         Path to the source shapefile
     bbox : tuple
@@ -49,8 +57,8 @@ class Shape(object):
         Country boundary polygon
     """
 
-    def __init__(self, fips, shapefile=None):
-        self.fips = fips
+    def __init__(self, code, shapefile=None):
+        self.code = code
         if shapefile is None:
             self.shpfile = os.path.join(os.path.dirname(__file__),
                                         'ancillary', 'boundaries',
@@ -84,11 +92,11 @@ class Shape(object):
         sf = shapefile.Reader(self.shpfile)
         pos = False
         for i, rec in enumerate(sf.records()):
-            if rec[0] == self.fips:
+            if self.fips == str(rec[0]):
                 pos = i
                 break
 
-        if pos is False:
+        if not pos:
             raise FipsError("FIPS Code '" + self.fips + "' does not exist")
 
         sh = sf.shapeRecord(pos)

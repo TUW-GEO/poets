@@ -17,18 +17,20 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-06-30
 
-import os
-import pandas as pd
-import numpy as np
 import datetime
+import os
+
 from netCDF4 import Dataset, num2date, date2num
+
+import numpy as np
+import pandas as pd
+import poets.image.netcdf as net
+from poets.image.resampling import resample_to_shape, average_layers
+from poets.io.download import download_http, download_sftp, download_ftp, \
+    get_file_date
 from poets.settings import Settings
 import poets.timedate.dateindex as dt
 from poets.timedate.dekad import check_dekad
-from poets.image.resampling import resample_to_shape, average_layers
-import poets.image.netcdf as net
-from poets.io.download import download_http, download_sftp, download_ftp, \
-    get_file_date
 
 
 class BasicSource(object):
@@ -98,7 +100,8 @@ class BasicSource(object):
         N a number value of the original data as given by the data provider
     """
 
-    def __init__(self, name, filename, filedate, temp_res, host, protocol,
+    def __init__(self, name, filename, filedate, temp_res, download_path,
+                 data_path, host, protocol,
                  username=None, password=None, port=22, directory=None,
                  dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
                  variables=None, nan_value=None):
@@ -153,11 +156,11 @@ class BasicSource(object):
                     ncvar = self.name + '_' + var
                     dates[region][var] = []
                     with Dataset(nc_name, 'r', format='NETCDF4') as nc:
-                        if begin is True:
+                        if begin:
                             # check first date of data
                             if ncvar in nc.variables.keys():
                                 for i in range(0, nc.variables['time'].size - 1):
-                                    if nc.variables[ncvar][i].mask.min() is True:
+                                    if nc.variables[ncvar][i].mask.min():
                                         continue
                                     else:
                                         times = nc.variables['time']
@@ -176,7 +179,7 @@ class BasicSource(object):
                             if ncvar in nc.variables.keys():
                                 for i in range(nc.variables['time'].size - 1,
                                                - 1, -1):
-                                    if nc.variables[ncvar][i].mask.min() is True:
+                                    if nc.variables[ncvar][i].mask.min():
                                         continue
                                     else:
                                         times = nc.variables['time']
@@ -284,7 +287,7 @@ class BasicSource(object):
                 net.write_tmp_file(image, timestamp, region, metadata,
                                    dest_file)
 
-            if delete_rawdata is True:
+            if delete_rawdata:
                 os.unlink(src_file)
         print ''
 
@@ -348,7 +351,7 @@ class BasicSource(object):
         if begin is None:
             begin = self.begin_date
 
-        if self.protocol == 'HTTP':
+        if self.protocol in ['HTTP', 'http']:
             check = download_http(self.download_path, self.host,
                                   self.directory, self.filename, self.filedate,
                                   self.dirstruct, begin, end=end)
@@ -356,7 +359,7 @@ class BasicSource(object):
             check = download_ftp(self.download_path, self.host, self.directory,
                                  self.port, self.username, self.password,
                                  self.filedate, self.dirstruct, begin, end=end)
-        elif self.protocol == 'SFTP':
+        elif self.protocol in ['SFTP', 'sftp']:
             check = download_sftp(self.download_path, self.host,
                                   self.directory, self.port, self.username,
                                   self.password, self.filedate, self.dirstruct,
