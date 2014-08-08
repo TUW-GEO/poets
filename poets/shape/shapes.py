@@ -31,8 +31,11 @@ class Shape(object):
 
     Parameters
     ----------
-    fips : string
+    fips : str
         FIPS country code
+    shapefile : str, optional
+        path to shape file, uses world country admin boundary shapefile by
+        default
 
     Attributes
     ----------
@@ -46,12 +49,15 @@ class Shape(object):
         Country boundary polygon
     """
 
-    def __init__(self, fips):
+    def __init__(self, fips, shapefile=None):
         self.fips = fips
-        self.shpfile = os.path.join(os.path.dirname(__file__),
-                                    'ancillary', 'boundaries',
-                                    'world_country_admin_boundary_shapefile_'
-                                    'with_fips_codes')
+        if shapefile is None:
+            self.shpfile = os.path.join(os.path.dirname(__file__),
+                                        'ancillary', 'boundaries',
+                                        'world_country_admin_boundary_'
+                                        'shapefile_with_fips_codes')
+        else:
+            self.shpfile = shapefile
         rec, bbox, polygon = self._get_shape()
         self.name = rec[1]
         self.bbox = tuple(bbox)
@@ -82,7 +88,7 @@ class Shape(object):
                 pos = i
                 break
 
-        if pos == False:
+        if pos is False:
             raise FipsError("FIPS Code '" + self.fips + "' does not exist")
 
         sh = sf.shapeRecord(pos)
@@ -93,8 +99,8 @@ class Shape(object):
         else:
             points = []
             for i in range(0, len(sh.shape.parts) - 1):
-                points.append(sh.shape.points[sh.shape.parts[i]:\
-                                                      sh.shape.parts[i + 1]])
+                points.append(sh.shape.points[sh.shape.parts[i]:
+                                              sh.shape.parts[i + 1]])
             points.append(sh.shape.points[sh.shape.parts[-1]:])
             multipoly = []
             for i in range(0, len(points)):

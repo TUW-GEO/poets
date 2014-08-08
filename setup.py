@@ -38,7 +38,9 @@ else:
                                             "scipy >= 0.12",
                                             "statsmodels >= 0.4.3",
                                             "netcdf4 >= 1.0.1",
-                                            "GDAL >= 1.11.0"  # ?????
+                                            "GDAL >= 1.11.0",
+                                            "paramiko >= 1.14.0",
+                                            "requests >= 1.14.0"
                                            ]
                        }
 

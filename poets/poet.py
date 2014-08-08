@@ -23,6 +23,7 @@ Description of module.
 
 import os
 import datetime
+import poets.io.sat as source
 
 
 class Poet(object):
@@ -50,7 +51,7 @@ class Poet(object):
                  spatial_resolution=0.25,
                  temporal_resolution='dekad',
                  start_date=datetime.datetime(2000, 1, 1),
-                 nan_value=-99):
+                 nan_value=-99, shapefile=None):
 
         self.spatial_resolution = spatial_resolution
         self.temporal_resolution = temporal_resolution
@@ -59,6 +60,7 @@ class Poet(object):
         self.regions = region
         self.nan_value = nan_value
         self.start_date = start_date
+        self.shapefile = shapefile
 
     def fetch_data(self):
         pass

@@ -23,7 +23,7 @@ import pandas as pd
 import pyresample as pr
 import poets.grid.grids as gr
 import poets.image.netcdf as nc
-from poets.grid.shapes import Shape
+from poets.shape.shapes import Shape
 from poets.grid.grids import CountryGrid
 from poets.settings import Settings
 from pytesmo.grid import resample

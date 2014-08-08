@@ -18,7 +18,7 @@
 # Creation date: 2014-07-08
 
 import unittest
-from poets.grid.shapes import Shape
+from poets.shape.shapes import Shape
 
 
 class Test(unittest.TestCase):

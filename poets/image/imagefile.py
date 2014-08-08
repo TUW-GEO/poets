@@ -25,7 +25,7 @@ country bounding box.
 
 import numpy as np
 from PIL import Image
-from poets.grid.shapes import Shape
+from poets.shape.shapes import Shape
 import math
 import matplotlib.pyplot as plt
 from matplotlib.path import Path

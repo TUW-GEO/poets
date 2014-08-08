@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 import math
 from shapely.geometry import Point
-from poets.grid.shapes import Shape
+from poets.shape.shapes import Shape
 from poets.settings import Settings
 from poets.image.imagefile import dateline_country
 
@@ -175,7 +175,7 @@ class CountryGrid(grids.BasicGrid):
         https://en.wikipedia.org/wiki/FIPS_country_code
     resolution : float
         spatial resolution of the grid
-    shp : poets.grid.shapes.Country
+    shp : poets.shape.shapes.Country
         Information about the country/region shape
     """
 
