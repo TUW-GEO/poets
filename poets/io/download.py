@@ -80,6 +80,9 @@ def download_ftp(download_path, host, directory, port, username, password,
     if end is None:
         end = datetime.datetime.now()
 
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
+
     os.chdir(download_path)
     print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end),
 
@@ -174,6 +177,9 @@ def download_sftp(download_path, host, directory, port, username, password,
         end = datetime.datetime.now()
 
     print '[INFO] downloading data from ' + str(begin) + ' - ' + str(end),
+
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
 
     localpath = download_path
 
@@ -288,6 +294,9 @@ def download_http(download_path, host, directory, filename, filedate,
         leading_month = False
 
     path = host + directory
+
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
 
     # loop through daterange
     for i, dat in enumerate(daterange):
