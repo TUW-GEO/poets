@@ -34,7 +34,7 @@ class Shape(object):
     fips : str
         FIPS country code
     shapefile : str, optional
-        path to shape file, uses world country admin boundary shapefile by
+        path to shape file, uses "world country admin boundary shapefile" by
         default
 
     Attributes

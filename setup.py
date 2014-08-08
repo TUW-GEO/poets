@@ -40,7 +40,8 @@ else:
                                             "netcdf4 >= 1.0.1",
                                             "GDAL >= 1.11.0",
                                             "paramiko >= 1.14.0",
-                                            "requests >= 1.14.0"
+                                            "requests >= 1.14.0",
+                                            "pillow >= 2.5.1"
                                            ]
                        }
 
