@@ -352,7 +352,7 @@ class BasicSource(object):
             check = download_http(self.download_path, self.host,
                                   self.directory, self.filename, self.filedate,
                                   self.dirstruct, begin, end=end)
-        elif self.protocol == 'FTP':
+        elif self.protocol in ['FTP', 'ftp']:
             check = download_ftp(self.download_path, self.host, self.directory,
                                  self.port, self.username, self.password,
                                  self.filedate, self.dirstruct, begin, end=end)
