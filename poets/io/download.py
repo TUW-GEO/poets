@@ -21,13 +21,15 @@
 Provides download functions for FTP/SFTP, HTTP and local data sources.
 """
 
-import os
-import datetime
 import calendar
-import requests
-import paramiko
-import pandas as pd
+import datetime
 from ftplib import FTP
+import os
+
+import paramiko
+import requests
+
+import pandas as pd
 from poets.timedate.dekad import dekad2day
 
 
@@ -195,7 +197,7 @@ def download_sftp(download_path, host, directory, port, username, password,
 
     files = []
 
-    if dirstruct[0] == 'YYYY':
+    if dirstruct is not None and len(dirstruct) > 0 and dirstruct[0] == 'YYYY':
         for year in subdirs:
             if begin.year > int(year):
                 continue
@@ -303,12 +305,14 @@ def download_http(download_path, host, directory, filename, filedate,
         year = str(dat.year)
         month = str("%02d" % (dat.month,))
 
-        if dirstruct == ['YYYY']:
+        if dirstruct is not None and dirstruct == ['YYYY']:
             path = host + directory + year + '/'
         elif dirstruct == ['YYYY', 'MM']:
             path = host + directory + year + '/' + month + '/'
         elif dirstruct == ['YYYY', 'M']:
             path = host + directory + year + '/' + dat.month + '/'
+        else:
+            path = host
 
         if leading_month is True:
             month = str("%02d" % (dat.month,))
