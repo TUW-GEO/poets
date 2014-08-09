@@ -65,9 +65,6 @@ class Poet(object):
         self.shapefile = shapefile
         self.sources = {}
 
-    def fetch_data(self):
-        pass
-
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime.datetime(2000, 1, 1),
@@ -81,6 +78,19 @@ class Poet(object):
                              self.start_date)
 
         self.sources[name] = source
+
+    def fetch_data(self, begin=None, end=None):
+
+        if begin is None:
+            begin = self.start_date
+        if end is None:
+            end = datetime.datetime.now()
+
+        for source in self.sources.keys():
+            print '[INFO] Download data for source ' + source
+            self.sources[source].download_and_resample(begin=begin, end=end)
+
+        print '[SUCCESS] Download and resampling complete!'
 
 
 if __name__ == "__main__":
