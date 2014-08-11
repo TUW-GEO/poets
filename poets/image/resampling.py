@@ -25,13 +25,12 @@ import poets.grid.grids as gr
 import poets.image.netcdf as nc
 from poets.shape.shapes import Shape
 from poets.grid.grids import CountryGrid
-from poets.settings import Settings
 from pytesmo.grid import resample
 from shapely.geometry import Point
 from poets.image.imagefile import bbox_img
 
 
-def _create_grid():
+def _create_grid(sp_res):
     """
     Generates regular grid based on spatial resolution set in constants.py
 
@@ -41,19 +40,20 @@ def _create_grid():
         regular grid
     """
 
-    if Settings.sp_res == 0.01:
+    if sp_res == 0.01:
         grid = gr.HundredthDegGrid(setup_kdTree=False)
-    elif Settings.sp_res == 0.1:
+    elif sp_res == 0.1:
         grid = gr.TenthDegGrid(setup_kdTree=False)
-    elif Settings.sp_res == 0.25:
+    elif sp_res == 0.25:
         grid = gr.TenthDegGrid(setup_kdTree=False)
-    elif Settings.sp_res == 1:
+    elif sp_res == 1:
         grid = gr.OneDegGrid(setup_kdTree=False)
 
     return grid
 
 
-def resample_to_shape(source_file, country, prefix=None, nan_value=None):
+def resample_to_shape(source_file, country, sp_res, prefix=None,
+                      nan_value=None, dest_nan_value=None):
     """
     Resamples images and clips country boundaries
 
@@ -135,11 +135,11 @@ def resample_to_shape(source_file, country, prefix=None, nan_value=None):
             metadata[var] = metadata[key]
             del metadata[key]
         data[var] = np.ma.masked_array(data[key], mask=mask,
-                                       fill_value=Settings.nan_value)
+                                       fill_value=dest_nan_value)
         dat = np.copy(data[var].data)
-        dat[mask == True] = Settings.nan_value
+        dat[mask == True] = dest_nan_value
         data[var] = np.ma.masked_array(dat, mask=mask,
-                                       fill_value=Settings.nan_value)
+                                       fill_value=dest_nan_value)
         if prefix is not None:
             del data[key]
 
@@ -189,25 +189,7 @@ def resample_to_gridpoints(source_file, country):
     return dframe
 
 
-def resample_temporal(src_file, temp_res=Settings.temp_res):
-    """
-    Resamples image-cubes to a specific temporal resolution.
-
-    Parameters
-    ----------
-    src_file : str
-        path to source file
-    temp_res : str, optional
-        temporal resolution of output images
-
-    Returns
-    -------
-
-    """
-    print 'test'
-
-
-def average_layers(image):
+def average_layers(image, dest_nan_value):
     """
     Averages image layers, given as ndimensional masked arrays to one image
 
@@ -222,11 +204,11 @@ def average_layers(image):
         averaged image
     """
 
-    img = np.ma.masked_array(image.mean(0), fill_value=Settings.nan_value)
+    img = np.ma.masked_array(image.mean(0), fill_value=dest_nan_value)
     mask = img.mask
     data = np.copy(img.data)
-    data[img.mask == True] = Settings.nan_value
+    data[img.mask == True] = dest_nan_value
     avg_img = np.ma.masked_array(data, mask=mask,
-                                 fill_value=Settings.nan_value)
+                                 fill_value=dest_nan_value)
 
     return avg_img

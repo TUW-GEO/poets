@@ -306,7 +306,9 @@ class BasicSource(object):
                 print '.',
 
             image, _, _, _, timestamp, metadata = \
-                resample_to_shape(src_file, region, self.name, self.nan_value)
+                resample_to_shape(src_file, region, self.dest_sp_res,
+                                  self.name, self.nan_value,
+                                  self.dest_nan_value)
 
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)
@@ -315,11 +317,12 @@ class BasicSource(object):
                 filename = region + '_' + str(self.dest_sp_res) + '.nc'
                 dfile = os.path.join(self.data_path, filename)
                 nt.save_image(image, timestamp, region, metadata, dfile,
-                              self.dest_start_date, self.dest_nan_value)
+                              self.dest_start_date, self.dest_sp_res,
+                              self.dest_nan_value)
             else:
                 nt.write_tmp_file(image, timestamp, region, metadata,
                                   dest_file, self.dest_start_date,
-                                  self.dest_nan_value)
+                                  self.dest_sp_res, self.dest_nan_value)
 
             if delete_rawdata:
                 os.unlink(src_file)
@@ -363,13 +366,13 @@ class BasicSource(object):
                     nt.read_image(src_file, region, var, begin, end)
 
                 metadata[var] = meta
-                data[var] = average_layers(img)
+                data[var] = average_layers(img, self.dest_nan_value)
 
             filename = region + '_' + str(self.dest_sp_res) + '.nc'
             dest_file = os.path.join(self.data_path, filename)
 
             nt.save_image(data, date, region, metadata, dest_file,
-                          self.dest_start_date,
+                          self.dest_start_date, self.dest_sp_res,
                           self.dest_nan_value)
 
         # delete intermediate netCDF file

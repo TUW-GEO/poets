@@ -28,7 +28,6 @@ import pandas as pd
 import math
 from shapely.geometry import Point
 from poets.shape.shapes import Shape
-from poets.settings import Settings
 from poets.image.imagefile import dateline_country
 
 
@@ -41,7 +40,7 @@ class HundredthDegGrid(grids.BasicGrid):
         latdim = np.arange(-89.995, 90, 0.01)
         lon, lat = np.meshgrid(londim, latdim)
         super(HundredthDegGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                         shape=lon.shape, **kwargs)
+                                               shape=lon.shape, **kwargs)
 
 
 class TenthDegGrid(grids.BasicGrid):
@@ -53,7 +52,7 @@ class TenthDegGrid(grids.BasicGrid):
         latdim = np.arange(-89.95, 90, 0.1)
         lon, lat = np.meshgrid(londim, latdim)
         super(TenthDegGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                         shape=lon.shape, **kwargs)
+                                           shape=lon.shape, **kwargs)
 
 
 class QuarterDegGrid(grids.BasicGrid):
@@ -118,8 +117,8 @@ class CountryGrid(grids.BasicGrid):
     country : str
         optional; FIPS country code:
         https://en.wikipedia.org/wiki/FIPS_country_code
-    resolution : float
-        optional; spatial resolution of the grid
+    sp_res : float, optional
+        spatial resolution of the grid, defaults to 0.25 degree
 
     Attributes
     ----------
@@ -179,7 +178,7 @@ class CountryGrid(grids.BasicGrid):
         Information about the country/region shape
     """
 
-    def __init__(self, country, resolution=Settings.sp_res):
+    def __init__(self, country, sp_res=0.25):
 
         self.country = country
 
@@ -189,21 +188,22 @@ class CountryGrid(grids.BasicGrid):
         if country in ['NZ', 'RS', 'US']:
             lonmin, lonmax = dateline_country(country)
         else:
-            lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2])
+            lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2],
+                                          sp_res)
 
-        latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3])
+        latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3],
+                                      sp_res)
 
         if country in ['NZ', 'US', 'RS']:
-            lons1 = np.arange(lonmin, 180, Settings.sp_res)
-            lons2 = (np.arange(-180, lonmax + Settings.sp_res,
-                                   Settings.sp_res))
+            lons1 = np.arange(lonmin, 180, sp_res)
+            lons2 = (np.arange(-180, lonmax + sp_res, sp_res))
             lons = np.empty(len(lons1) + len(lons2))
             lons[0:len(lons1)] = lons1[:]
             lons[len(lons1):] = lons2[:]
         else:
-            lons = np.arange(lonmin, lonmax + Settings.sp_res, Settings.sp_res)
+            lons = np.arange(lonmin, lonmax + sp_res, sp_res)
 
-        lats = np.arange(latmin, latmax + Settings.sp_res, Settings.sp_res)
+        lats = np.arange(latmin, latmax + sp_res, sp_res)
 
         lon_new, lat_new = _remove_blank_frame(country, lons, lats)
 
@@ -211,7 +211,6 @@ class CountryGrid(grids.BasicGrid):
 
         super(CountryGrid, self).__init__(lon.flatten(), lat.flatten(),
                                           shape=lon.shape)
-
 
     def get_country_gridpoints(self):
         """Gets all points within a country shape.
@@ -277,7 +276,7 @@ def _remove_blank_frame(country, lons, lats):
         checksum = 0
         for y in lats:
             p = Point(x, y)
-            if p.within(poly) == False:
+            if not p.within(poly):
                 checksum += 1
         if checksum == lats.size:
             del_lons.append(i)
@@ -289,7 +288,7 @@ def _remove_blank_frame(country, lons, lats):
         checksum = 0
         for y in lats:
             p = Point(x, y)
-            if p.within(poly) == False:
+            if not p.within(poly):
                 checksum += 1
         if checksum == lats.size:
             del_lons.append(lons.size - 1 - i)
@@ -301,7 +300,7 @@ def _remove_blank_frame(country, lons, lats):
         checksum = 0
         for x in lons:
             p = Point(x, y)
-            if p.within(poly) == False:
+            if not p.within(poly):
                 checksum += 1
         if checksum == lons.size:
             del_lats.append(i)
@@ -313,7 +312,7 @@ def _remove_blank_frame(country, lons, lats):
         checksum = 0
         for x in lons:
             p = Point(x, y)
-            if p.within(poly) == False:
+            if not p.within(poly):
                 checksum += 1
         if checksum == lons.size:
             del_lats.append(lats.size - 1 - i)
@@ -334,7 +333,7 @@ def _remove_blank_frame(country, lons, lats):
     return lon_new, lat_new
 
 
-def _minmaxcoord(min_threshold, max_threshold):
+def _minmaxcoord(min_threshold, max_threshold, sp_res):
     """Gets min and max coordinates of a specific grid.
 
     Based on the frame of a global grid.
@@ -354,7 +353,7 @@ def _minmaxcoord(min_threshold, max_threshold):
         updated maximum coordinate
     """
 
-    res = float(Settings.sp_res)
+    res = float(sp_res)
 
     minval = int(math.ceil(min_threshold / res)) * res
     maxval = int(math.floor(max_threshold / res)) * res

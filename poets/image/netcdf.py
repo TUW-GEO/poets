@@ -32,7 +32,7 @@ from poets.timedate.dateindex import dekad_index
 
 
 def save_image(image, timestamp, country, metadata, dest_file, start_date,
-               nan_value=-99):
+               sp_res, nan_value=-99):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Creates a datetimeindex over the whole period defined in the settings file
@@ -55,7 +55,7 @@ def save_image(image, timestamp, country, metadata, dest_file, start_date,
         Not a number value for dataset, defaults to -99
     """
 
-    c_grid = grids.CountryGrid(country)
+    c_grid = grids.CountryGrid(country, sp_res)
 
     dest_file = dest_file
 
@@ -96,7 +96,7 @@ def save_image(image, timestamp, country, metadata, dest_file, start_date,
 
 
 def write_tmp_file(image, timestamp, country, metadata, dest_file, start_date,
-                   nan_value=-99):
+                   sp_res, nan_value=-99):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Parameters
@@ -115,7 +115,7 @@ def write_tmp_file(image, timestamp, country, metadata, dest_file, start_date,
         Not a number value for dataset, defaults to -99
     """
 
-    c_grid = grids.CountryGrid(country)
+    c_grid = grids.CountryGrid(country, sp_res)
 
     if not os.path.isfile(dest_file):
         save_grid(dest_file, c_grid)
