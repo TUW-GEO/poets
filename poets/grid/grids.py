@@ -117,8 +117,8 @@ class CountryGrid(grids.BasicGrid):
     country : str
         optional; FIPS country code:
         https://en.wikipedia.org/wiki/FIPS_country_code
-    sp_res : float, optional
-        spatial resolution of the grid, defaults to 0.25 degree
+    sp_res : float
+        spatial resolution of the grid
 
     Attributes
     ----------
@@ -178,7 +178,7 @@ class CountryGrid(grids.BasicGrid):
         Information about the country/region shape
     """
 
-    def __init__(self, country, sp_res=0.25):
+    def __init__(self, country, sp_res):
 
         self.country = country
 

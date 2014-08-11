@@ -45,7 +45,7 @@ def _create_grid(sp_res):
     elif sp_res == 0.1:
         grid = gr.TenthDegGrid(setup_kdTree=False)
     elif sp_res == 0.25:
-        grid = gr.TenthDegGrid(setup_kdTree=False)
+        grid = gr.QuarterDegGrid(setup_kdTree=False)
     elif sp_res == 1:
         grid = gr.OneDegGrid(setup_kdTree=False)
 
@@ -103,7 +103,7 @@ def resample_to_shape(source_file, country, sp_res, prefix=None,
             data[key] = np.ma.array(data[key], mask=(data[key] == 255))
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
-    grid = gr.CountryGrid(country)
+    grid = gr.CountryGrid(country, sp_res)
 
     lons = grid.arrlon[0:grid.shape[1]]
     dest_lon, dest_lat = np.meshgrid(lons, np.unique(grid.arrlat)[::-1])
@@ -146,7 +146,7 @@ def resample_to_shape(source_file, country, sp_res, prefix=None,
     return data, dest_lon, dest_lat, gpis, timestamp, metadata
 
 
-def resample_to_gridpoints(source_file, country):
+def resample_to_gridpoints(source_file, country, sp_res):
     """
     resamples image to the predefined grid
 
@@ -163,7 +163,7 @@ def resample_to_gridpoints(source_file, country):
         resampled data with gridpoints as index
     """
 
-    grid = CountryGrid(country)
+    grid = CountryGrid(country, sp_res)
 
     gridpoints = grid.get_country_gridpoints()
     shp = Shape(country)
