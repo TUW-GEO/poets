@@ -79,10 +79,10 @@ class OneDegGrid(grids.BasicGrid):
                                          shape=lon.shape, **kwargs)
 
 
-class CountryGrid(grids.BasicGrid):
-    """Regular grid for spedific country.
+class ShapeGrid(grids.BasicGrid):
+    """Regular grid for a specific shape.
 
-    Regular grid for spedific country, that just has lat,lon coordinates
+    Regular grid for spedific shape, that just has lat,lon coordinates
     and can find the nearest neighbour. It can also yield the gpi, lat, lon
     information in order.
 
@@ -114,11 +114,14 @@ class CountryGrid(grids.BasicGrid):
         The shape has to be given as (latdim, londim)
         It it is not given the shape is set to the length of the input
         lon and lat arrays.
-    country : str
-        optional; FIPS country code:
-        https://en.wikipedia.org/wiki/FIPS_country_code
+    region : str, optional
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
     sp_res : float
-        spatial resolution of the grid
+        Spatial resolution of the grid.
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
 
     Attributes
     ----------
@@ -169,24 +172,24 @@ class CountryGrid(grids.BasicGrid):
     londim : numpy.array, optional
         if shape is given this attribute has contains
         all longitudes that make up the regular lat,lon grid
-    country : str
-        FIPS country code:
-        https://en.wikipedia.org/wiki/FIPS_country_code
-    resolution : float
+    region : str
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
+    sp_res : float
         spatial resolution of the grid
     shp : poets.shape.shapes.Country
         Information about the country/region shape
     """
 
-    def __init__(self, country, sp_res):
+    def __init__(self, region, sp_res, shapefile=None):
 
-        self.country = country
+        self.country = region
 
-        self.shp = Shape(country)
+        self.shp = Shape(region, shapefile=shapefile)
 
         # countries that cross the international dateline (maybe more!)
-        if country in ['NZ', 'RS', 'US']:
-            lonmin, lonmax = dateline_country(country)
+        if region in ['NZ', 'RS', 'US']:
+            lonmin, lonmax = dateline_country(region)
         else:
             lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2],
                                           sp_res)
@@ -194,7 +197,7 @@ class CountryGrid(grids.BasicGrid):
         latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3],
                                       sp_res)
 
-        if country in ['NZ', 'US', 'RS']:
+        if region in ['NZ', 'US', 'RS']:
             lons1 = np.arange(lonmin, 180, sp_res)
             lons2 = (np.arange(-180, lonmax + sp_res, sp_res))
             lons = np.empty(len(lons1) + len(lons2))
@@ -205,14 +208,14 @@ class CountryGrid(grids.BasicGrid):
 
         lats = np.arange(latmin, latmax + sp_res, sp_res)
 
-        lon_new, lat_new = _remove_blank_frame(country, lons, lats)
+        lon_new, lat_new = _remove_blank_frame(region, lons, lats)
 
         lon, lat = np.meshgrid(lon_new, lat_new)
 
-        super(CountryGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                          shape=lon.shape)
+        super(ShapeGrid, self).__init__(lon.flatten(), lat.flatten(),
+                                        shape=lon.shape)
 
-    def get_country_gridpoints(self):
+    def get_gridpoints(self):
         """Gets all points within a country shape.
 
         Removes all gridpoints that are within country bounding box, but
@@ -221,7 +224,8 @@ class CountryGrid(grids.BasicGrid):
         Returns
         -------
         points : pd.DataFrame
-            GPI as index, lat and lon as columns
+            Dataframe containing all points with GPI as index, lat and lon as
+            columns.
         """
 
         box = self.get_bbox_grid_points(self.shp.bbox[1], self.shp.bbox[3],
@@ -244,27 +248,27 @@ class CountryGrid(grids.BasicGrid):
         return points
 
 
-def _remove_blank_frame(country, lons, lats):
-    """Removes longitudes and latitudes without points in country shape.
+def _remove_blank_frame(region, lons, lats):
+    """Removes longitudes and latitudes without points in region shape.
 
     Parameters
     ----------
-    country : str
+    region : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
     lons : numpy.ndarray
-        Array with longitudes
+        Array with longitudes.
     lats : numpy.ndarray
-        Array with latitudes
+        Array with latitudes.
 
     Returns
     --------
     lon_new : list of floats
-        updated list of longitudes
+        Updated list of longitudes.
     lat_new : list of floats
-        updated list of latitudes
+        Updated list of latitudes.
     """
 
-    shp = Shape(country)
+    shp = Shape(region)
 
     poly = shp.polygon
 
@@ -341,16 +345,18 @@ def _minmaxcoord(min_threshold, max_threshold, sp_res):
     Parameters
     ----------
     min_threshold : float
-        minimum value of coordinate
+        Minimum value of coordinate
     max_threshold : float
-        maximum value of coordinate
+        Maximum value of coordinate
+    sp_res : float or int
+        Spatial resolution or the grid
 
     Returns
     -------
     minval : float
-        updated minimum coordinate
+        Updated minimum coordinate
     maxval : float
-        updated maximum coordinate
+        Updated maximum coordinate
     """
 
     res = float(sp_res)

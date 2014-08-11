@@ -38,90 +38,92 @@ class BasicSource(object):
     Parameters
     ----------
     name : str
-        Name of the data source
+        Name of the data source.
     filename : str
-        Structure/convention of the file name
+        Structure/convention of the file name.
     filedate : dict
-        Position of date fields in filename, given as tuple
+        Position of date fields in filename, given as tuple.
     temp_res : str
-        Temporal resolution of the source
+        Temporal resolution of the source.
     rootpath : str
-        Root path where all data will be stored
+        Root path where all data will be stored.
     host : str
-        Link to data host
+        Link to data host.
     protocol : str
-        Protocol for data transfer
+        Protocol for data transfer.
     username : str, optional
-        Username for data access
+        Username for data access.
     password : str, optional
-        Password for data access
+        Password for data access.
     port : int, optional
-        Port to data host, defaults to 22
+        Port to data host, defaults to 22.
     directory : str, optional
-        Path to data on host
+        Path to data on host.
     dirstruct : list of strings
-        Structure of source directory, each list item represents a subdirectory
+        Structure of source directory, each list item represents a
+        subdirectory.
     begin_date : datetime.date, optional
-        Date from which on data is available, defaults to 2000-01-01
+        Date from which on data is available, defaults to 2000-01-01.
     variables : list of strings, optional
-        Variables used from data source
+        Variables used from data source.
     nan_value : int, float, optional
-        Nan value of the original data as given by the data provider
+        Nan value of the original data as given by the data provider.
     dest_nan_value : int, float, optional
-        NaN value in the final NetCDF file
+        NaN value in the final NetCDF file.
     dest_regions : list of str, optional
-        Regions of interest where data should be resampled to
+        Regions of interest where data should be resampled to.
     dest_sp_res : int, float, optional
         Spatial resolution of the destination NetCDF file, defaults to 0.25
-        degree
+        degree.
     dest_temp_res : string, optional
-        Temporal resolution of the destination NetCDF file, defaults to dekad
+        Temporal resolution of the destination NetCDF file, defaults to dekad.
     dest_start_date : datetime.datetime, optional
-        Start date of the destination NetCDF file, defaults to 2000-01-01
+        Start date of the destination NetCDF file, defaults to 2000-01-01.
 
     Attributes
     ----------
     name : str
-        Name of the data source
+        Name of the data source.
     filename : str
-        Structure/convention of the file name
+        Structure/convention of the file name.
     filedate : dict
-        Position of date fields in filename, given as tuple
+        Position of date fields in filename, given as tuple.
     temp_res : str
-        Temporal resolution of the source
+        Temporal resolution of the source.
     host : str
-        Link to data host
+        Link to data host.
     protocol : str
-        Protocol for data transfer
+        Protocol for data transfer.
     username : str
-        Username for data access
+        Username for data access.
     password : str
-        Password for data access
+        Password for data access.
     port : int
-        Port to data host
+        Port to data host.
     directory : str
-        Path to data on host
+        Path to data on host.
     dirstruct : list of strings
-        Structure of source directory, each list item represents a subdirectory
+        Structure of source directory, each list item represents a
+        subdirectory.
     begin_date : datetime.date
-        Date from which on data is available
+        Date from which on data is available.
     variables : list of strings
-        Variables used from data source
+        Variables used from data source.
     nan_value : int, float
-        N a number value of the original data as given by the data provider
+        N a number value of the original data as given by the data provider.
     dest_nan_value : int, float, optional
-        NaN value in the final NetCDF file
+        NaN value in the final NetCDF file.
     tmp_path : str
-        Path where temporary files and original files are stored and downloaded
-        to
+        Path where temporary files and original files are stored and
+        downloaded.
     data_path : str
-        Path where resampled NetCDF file is stored
+        Path where resampled NetCDF file is stored.
     dest_regions : list of str
-        Regions of interest where data is resampled to
+        Regions of interest where data is resampled to.
     dest_sp_res : int, float
-        Spatial resolution of the destination NetCDF file
+        Spatial resolution of the destination NetCDF file.
     dest_temp_res : string
-        Temporal resolution of the destination NetCDF file, defaults to dekad
+        Temporal resolution of the destination NetCDF file, defaults to dekad.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
@@ -266,7 +268,8 @@ class BasicSource(object):
                     + '.nc')
         return os.path.join(self.tmp_path, filename)
 
-    def _resample_spatial(self, region, begin, end, delete_rawdata):
+    def _resample_spatial(self, region, begin, end, delete_rawdata,
+                          shapefile=None):
         """Helper method that calls spatial resampling routines.
 
         Parameters:
@@ -308,7 +311,7 @@ class BasicSource(object):
             image, _, _, _, timestamp, metadata = \
                 resample_to_shape(src_file, region, self.dest_sp_res,
                                   self.name, self.nan_value,
-                                  self.dest_nan_value)
+                                  self.dest_nan_value, shapefile)
 
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)
@@ -318,22 +321,28 @@ class BasicSource(object):
                 dfile = os.path.join(self.data_path, filename)
                 nt.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
-                              self.dest_nan_value)
+                              self.dest_nan_value, shapefile)
             else:
                 nt.write_tmp_file(image, timestamp, region, metadata,
                                   dest_file, self.dest_start_date,
-                                  self.dest_sp_res, self.dest_nan_value)
+                                  self.dest_sp_res, self.dest_nan_value,
+                                  shapefile)
 
             if delete_rawdata:
                 os.unlink(src_file)
         print ''
 
-    def _resample_temporal(self, region):
+    def _resample_temporal(self, region, shapefile=None):
         """Helper method that calls temporal resampling routines.
 
         Parameters:
         region : str
-            FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+            Identifier of the region in the shapefile. If the default shapefile is
+            used, this would be the FIPS country code.
+
+        shapefile : str, optional
+            Path to shape file, uses "world country admin boundary shapefile" by
+            default.
         """
 
         src_file = self._get_tmp_filepath('spatial', region)
@@ -373,7 +382,7 @@ class BasicSource(object):
 
             nt.save_image(data, date, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
-                          self.dest_nan_value)
+                          self.dest_nan_value, shapefile)
 
         # delete intermediate netCDF file
         print ''
@@ -410,7 +419,8 @@ class BasicSource(object):
 
         return check
 
-    def resample(self, begin=None, end=None, delete_rawdata=False):
+    def resample(self, begin=None, end=None, delete_rawdata=False,
+                 shapefile=None):
         """Resamples source data to given spatial and temporal resolution.
 
         Writes resampled images into a netCDF data file. Deletes original
@@ -419,11 +429,14 @@ class BasicSource(object):
         Parameters
         ----------
         begin : datetime.datetime
-            Start date of resampling
+            Start date of resampling.
         end : datetime.datetime
-            End date of resampling
+            End date of resampling.
         delete_rawdata : bool
-            Original files will be deleted from tmp_path if set 'True'
+            Original files will be deleted from tmp_path if set 'True'.
+        shapefile : str, optional
+            Path to shape file, uses "world country admin boundary shapefile"
+            by default.
         """
 
         for region in self.dest_regions:
@@ -431,16 +444,17 @@ class BasicSource(object):
             print '[INFO] resampling to region ' + region
             print '[INFO] performing spatial resampling ',
 
-            self._resample_spatial(region, begin, end, delete_rawdata)
+            self._resample_spatial(region, begin, end, delete_rawdata,
+                                   shapefile)
 
             if self.temp_res is 'dekad':
                 print '[INFO] skipping temporal resampling'
             else:
                 print '[INFO] performing temporal resampling ',
-                self._resample_temporal(region)
+                self._resample_temporal(region, shapefile)
 
     def download_and_resample(self, download_path=None, begin=None, end=None,
-                              delete_rawdata=False):
+                              delete_rawdata=False, shapefile=None):
         """Downloads and resamples data.
 
         Parameters
@@ -454,6 +468,9 @@ class BasicSource(object):
             set to today if none given
         delete_rawdata : bool, optional
             Original files will be deleted from tmp_path if set True
+        shapefile : str, optional
+            Path to shape file, uses "world country admin boundary shapefile" by
+            default.
         """
 
         if begin is None:
@@ -473,8 +490,7 @@ class BasicSource(object):
 
             filecheck = self.download(download_path, start, stop)
             if filecheck is True:
-                self.resample(begin=start, end=stop,
-                              delete_rawdata=delete_rawdata)
+                self.resample(start, stop, delete_rawdata, shapefile)
             else:
                 print '[WARNING] no data available for this date'
 
@@ -484,16 +500,16 @@ class BasicSource(object):
         Parameters
         ----------
         gp : int
-            Grid point index
+            Grid point index.
         region : str, optional
-            Region of interest, set to first defined region if not set
+            Region of interest, set to first defined region if not set.
         variable : str, optional
-            Variable to display, selects all available variables if None
+            Variable to display, selects all available variables if None.
 
         Returns
         -------
         df : pd.DataFrame
-            Timeseries for selected variables
+            Timeseries for selected variables.
         """
 
         if region is None:
@@ -544,16 +560,16 @@ class BasicSource(object):
         Parameters
         ----------
         date : datetime.datetime
-            Date of the image
+            Date of the image.
         region : str, optional
-            Region of interest, set to first defined region if not set
+            Region of interest, set to first defined region if not set.
         variable : str, optional
-            Variable to display, selects first available variables if None
+            Variable to display, selects first available variables if None.
 
         Returns
         -------
         img : numpy.ndarray
-            Image of selected date
+            Image of selected date.
         """
 
         if region is None:

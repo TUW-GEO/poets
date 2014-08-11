@@ -23,8 +23,11 @@ Description of module.
 
 import datetime
 import os
-
+import numpy as np
+import pandas as pd
+from netCDF4 import Dataset
 from poets.io.source_base import BasicSource
+from poets.grid.grids import ShapeGrid
 
 
 class Poet(object):
@@ -35,8 +38,8 @@ class Poet(object):
     rootpath : str
         path to the directory where data should be stored
     region : list of str, optional
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code),
-        defaults to global
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code. Defaults to global.
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
@@ -46,6 +49,9 @@ class Poet(object):
         first date of the dataset, defaults to 2000-01-01
     nan_value : int
         NaN value to use, defaults to -99
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
     """
 
     def __init__(self, rootpath, regions=['global'],
@@ -71,7 +77,7 @@ class Poet(object):
                    variables=None, nan_value=None):
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
-                             host, protocol, username, password, port, 
+                             host, protocol, username, password, port,
                              directory, dirstruct, begin_date, variables,
                              nan_value, self.nan_value, self.regions,
                              self.spatial_resolution, self.temporal_resolution,
@@ -88,10 +94,36 @@ class Poet(object):
 
         for source in self.sources.keys():
             print '[INFO] Download data for source ' + source
-            self.sources[source].download_and_resample(begin=begin, end=end)
+            self.sources[source].download_and_resample(begin=begin, end=end,
+                                                       shapefile=self.shapefile)
 
         print '[SUCCESS] Download and resampling complete!'
 
+    def get_gridpoints(self, region):
+        """Returns gridpoints from NetCDF file.
+
+        Parameters
+        ----------
+        region : str
+            Identifier of the region in the NetCDF file.
+        """
+        filename = region + '_' + str(self.spatial_resolution) + '.nc'
+        ncfile = os.path.join(self.data_path, filename)
+
+        with Dataset(ncfile, 'r+', format='NETCDF4') as nc:
+            gpis = nc.variables['gpi'][:]
+            lons = nc.variables['lon'][:]
+            lats = nc.variables['lat'][:]
+            gpis = gpis.flatten()
+            lons, lats = np.meshgrid(lons, lats)
+            lons = lons.flatten()
+            lats = lats.flatten()
+
+        gridpoints = pd.DataFrame(index=gpis)
+        gridpoints['lon'] = lons
+        gridpoints['lat'] = lats
+
+        return gridpoints
 
 if __name__ == "__main__":
     pass

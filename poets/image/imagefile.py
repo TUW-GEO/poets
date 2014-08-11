@@ -212,15 +212,20 @@ def rearrange_img(img):
     return img2
 
 
-def plot_polygon(country):
+def plot_polygon(region, shapefile=None):
     """Plots the shapefile of a country border
 
     Parameters:
     ----------
-    country : FIPS-code
+    region : str, optional
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
     """
 
-    shp = Shape(country)
+    shp = Shape(region, shapefile)
     polygon = shp.polygon
     polygon.append(polygon[0])
 
@@ -270,34 +275,38 @@ def dateline_country(country):
     return lon_min, lon_max
 
 
-def bbox_img(source_file, country):
+def bbox_img(source_file, region, shapefile=None):
     """
     Clips bounding box out of image file and returns data as numpy.ndarray
 
     Parameters
     ----------
     source_file : str
-        path to source file
-    Country : str
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        Path to source file.
+    region : str
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
 
     Returns
     -------
     data : dict of numpy.arrays
-        clipped image (grey values)
+        Clipped image (grey values).
     lon_new : numpy.array
-        longitudes of the clipped image
+        Longitudes of the clipped image.
     lat_new : numpy.array
-        latitudes of the clipped image
+        Latitudes of the clipped image.
     timestamp : datetime.date
-        timestamp of image
+        Timestamp of the image.
     metadata : dict of strings
-        metadata from source netCDF file
+        Metadata from source netCDF file.
     """
 
     orig_img = Image.open(source_file)
 
-    shp = Shape(country)
+    shp = Shape(region, shapefile)
     lon_min = shp.bbox[0]
     lon_max = shp.bbox[2]
     lat_min = shp.bbox[1]
@@ -306,11 +315,11 @@ def bbox_img(source_file, country):
     d = lon_max - lon_min
 
     # countries that cross the international dateline (maybe more!)
-    if country in ['NZ', 'RS', 'US']:
-        lon_min, lon_max = dateline_country(country)
+    if region in ['NZ', 'RS', 'US']:
+        lon_min, lon_max = dateline_country(region)
 
     # get 2 pairs of points (upper left, lower right of bbox)
-    if d > 350 and country != 'AY':
+    if d > 350 and region != 'AY':
         orig_img = rearrange_img(orig_img)
         row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
         row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
@@ -336,7 +345,7 @@ def bbox_img(source_file, country):
     lon_px = np.arange(int(math.floor(col_min)), int(math.ceil(col_max)))
     lat_px = np.arange(int(math.floor(row_min)), int(math.ceil(row_max)))
 
-    if country in ['NZ', 'RS', 'US']:
+    if region in ['NZ', 'RS', 'US']:
         lon_new, lat_new = px2lonlat_rearr(orig_img, lon_px, lat_px)
     else:
         lon_new, lat_new = px2lonlat(orig_img, lon_px, lat_px)

@@ -31,8 +31,8 @@ from poets.grid import grids
 from poets.timedate.dateindex import dekad_index
 
 
-def save_image(image, timestamp, country, metadata, dest_file, start_date,
-               sp_res, nan_value=-99):
+def save_image(image, timestamp, region, metadata, dest_file, start_date,
+               sp_res, nan_value=-99, shapefile=None):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Creates a datetimeindex over the whole period defined in the settings file
@@ -40,22 +40,26 @@ def save_image(image, timestamp, country, metadata, dest_file, start_date,
     Parameters
     ----------
     image : dict of numpy.ndarrays
-        input image
+        Input image.
     timestamp : datetime.datetime
-        timestamp of image
-    country : str
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        Timestamp of image.
+    region : str, optional
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
     metadata : dict
-        netCDF metadata from source file
+        NetCDF metadata from source file.
     dest_file : str
-        Path to the output file
+        Path to the output file.
     start_date : datetime.datetime
-        First date of available data
+        First date of available data.
     nan_value : int, optional
-        Not a number value for dataset, defaults to -99
+        Not a number value for dataset, defaults to -99.
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
     """
 
-    c_grid = grids.CountryGrid(country, sp_res)
+    c_grid = grids.ShapeGrid(region, sp_res, shapefile)
 
     dest_file = dest_file
 
@@ -95,27 +99,31 @@ def save_image(image, timestamp, country, metadata, dest_file, start_date,
                 setattr(var, attr, metadata[key][attr])
 
 
-def write_tmp_file(image, timestamp, country, metadata, dest_file, start_date,
-                   sp_res, nan_value=-99):
+def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
+                   sp_res, nan_value=-99, shapefile=None):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Parameters
     ----------
     image : dict of numpy.ndarrays
-        input image
+        Input image.
     timestamp : datetime.datetime
-        timestamp of image
-    country : str
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        Timestamp of image.
+    region : str, optional
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
     metadata : dict
-        netCDF metadata from source file
+        NetCDF metadata from source file.
     dest_file : str
-        Path to the output file
+        Path to the output file.
     nan_value : int, optional
-        Not a number value for dataset, defaults to -99
+        Not a number value for dataset, defaults to -99.
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
     """
 
-    c_grid = grids.CountryGrid(country, sp_res)
+    c_grid = grids.ShapeGrid(region, sp_res, shapefile)
 
     if not os.path.isfile(dest_file):
         save_grid(dest_file, c_grid)
@@ -160,7 +168,7 @@ def write_tmp_file(image, timestamp, country, metadata, dest_file, start_date,
                 var.setncatts(metadata[key])
 
 
-def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, country=None):
+def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, region=None):
     """Clips bounding box out of netCDF file and returns data as numpy.ndarray
 
     Parameters
@@ -234,26 +242,27 @@ def read_image(source_file, region, variable, date, date_to=None):
     Parameters
     ----------
     source_file : str
-        path to source file
-    region : str
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        Path to source file.
+    region : str, optional
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
     variable : str
-        requested variable of image
+        Requested variable of image.
     date : datetime.datetime
-        date of the image, start date of data cube if date_to is set
+        Date of the image, start date of data cube if date_to is set.
     date_to : datetime.date, optional
-        end date of data cube to slice from netCDF file
+        End date of data cube to slice from NetCDF file.
 
     Returns
     -------
     image : numpy.ndarray
-        image for a specific date
+        Image for a specific date.
     lon : numpy.array
-        longitudes of the image
+        Longitudes of the image.
     lat : numpy.array
-        latgitudes of the image
+        Latgitudes of the image.
     metadata : dict of strings
-        metadata from source netCDF file
+        Metadata from source netCDF file.
     """
 
     with Dataset(source_file, 'r', format='NETCDF4') as nc:
@@ -288,16 +297,16 @@ def get_properties(src_file):
     Parameters
     ----------
     src_file : str
-        path to netCDF file
+        Path to NetCDF file.
 
     Returns
     -------
     variables : list of str
-        list of variables
+        List of variables.
     dimensions : list of str
-        dimensions of the netCDF file
+        Dimensions of the NetCDF file.
     period : list of datetime.datetime
-        date of first and last image in source file
+        Date of first and last image in source file.
     """
 
     with Dataset(src_file, 'r+', format='NETCDF4') as nc:

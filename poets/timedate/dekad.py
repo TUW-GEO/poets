@@ -32,14 +32,14 @@ def dekad_index(begin, end=None):
     Parameters
     ----------
     begin : datetime.date
-        datetime index start date
+        Datetime index start date.
     end : datetime.date, optional
-        datetime index end date, set to current date if None
+        Datetime index end date, set to current date if None.
 
     Returns
     -------
     dtindex : pandas.DatetimeIndex
-        dekadal datetime index
+        Dekadal datetime index.
     """
 
     if end is None:
@@ -97,12 +97,12 @@ def check_dekad(date):
     Parameters
     ----------
     date : datetime.datetime
-        Date to check
+        Date to check.
 
     Returns
     -------
     new_date : datetime.datetime
-        Date of the dekad
+        Date of the dekad.
     """
     if date.day < 11:
         dekad = 10
@@ -122,16 +122,16 @@ def dekad2day(year, month, dekad):
     Parameters
     ----------
     year : int
-        year of the date
+        Year of the date.
     month : int
-        month of the date
+        Month of the date.
     dekad : int
-        dekad of the date
+        Dekad of the date.
 
     Returns
     -------
     day : int
-        Day value for the dekad
+        Day value for the dekad.
     """
 
     if dekad == 1:
@@ -150,12 +150,12 @@ def day2dekad(day):
     Parameters
     ----------
     day : int
-        day of the date
+        Day of the date.
 
     Returns
     -------
     dekad : int
-        number of the dekad in a month
+        Number of the dekad in a month.
     """
 
     if day < 11:
@@ -169,6 +169,18 @@ def day2dekad(day):
 
 
 def get_dekad_period(date):
+    """Checks dekad periods for dates given as list
+
+    Parameters
+    ----------
+    date : list of datetime.datetime
+        Dates to check.
+
+    Returns
+    -------
+    period : list of int
+        List of dekad periods.
+    """
 
     period = []
 

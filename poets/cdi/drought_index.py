@@ -47,7 +47,7 @@ def calc_CDI(data, weights):
     return df
 
 
-def calc_DI(data, parameter, interest_period=[6, 12, 24]):
+def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
     """
     Calculates a Drought Index based on an algorythm developed by FAO SWALIM
 
@@ -122,6 +122,9 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24]):
             data[dkey] = ((data['val' + str(ip)] - data['val' + str(ip)].min())
                           / (data['val' + str(ip)].max() -
                              data['val' + str(ip)].min()))
+
+            if scale_zero:
+                data[dkey] = data[dkey] - data[dkey].mean()
 
             del (data['val' + str(ip)], data['nrl' + str(ip)],
                  data['sumip' + str(ip)], data['rlen' + str(ip)],

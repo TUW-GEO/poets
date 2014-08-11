@@ -33,16 +33,16 @@ def get_dtindex(interval, begin, end=None):
     Parameters
     ----------
     interval : str, int
-        interval of the datetime index
+        Interval of the datetime index.
     begin : datetime.date
-        datetime index start date
+        Datetime index start date.
     end : datetime.date, optional
-        datetime index end date, set to current date if None
+        Datetime index end date, defaults to current date.
 
     Returns
     -------
     dtindex : pandas.tseries.index.DatetimeIndex
-        datetime index
+        Datetime index.
     """
 
     if interval in ['dekad', 'dekadal', 'decadal', 'decade']:

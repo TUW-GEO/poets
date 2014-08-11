@@ -32,29 +32,29 @@ class Shape(object):
     Parameters
     ----------
     code : str
-        identifier of the records in the shapefile; uses the first argument
+        Identifier of the records in the shapefile; uses the first argument
         returned by shapefile.Reader as identifier, for the default shapefile,
-        this would be the FIPS country code
+        this would be the FIPS country code.
     shapefile : str, optional
-        path to shape file, uses "world country admin boundary shapefile" by
-        default
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
 
     Attributes
     ----------
     code : str
-        identifier of the selected record in the shapefile; uses the first
+        Identifier of the selected record in the shapefile; uses the first
         argument returned by shapefile.Reader as identifier, for the default
-        shapefile, this would be the FIPS country code
+        shapefile, this would be the FIPS country code.
     name : str
-        name of the selected record in the shapefile; uses the second argument
+        Name of the selected record in the shapefile; uses the second argument
         returned by shapefile.Reader as identifier, for the default shapefile,
-        this would be the FIPS country code
+        this would be the FIPS country code.
     shpfile : str
-        Path to the source shapefile
+        Path to the source shapefile.
     bbox : tuple
-        Bounding box of the country
+        Bounding box of the country.
     polygon : list of tuples
-        Country boundary polygon
+        Country boundary polygon.
     """
 
     def __init__(self, code, shapefile=None):
@@ -77,16 +77,16 @@ class Shape(object):
         Returns
         -------
         record : list
-            Record of the country
+            Record of the country.
         bbox : shapefile._Array
-            Bounding box of the country
+            Bounding box of the country.
         multipoly : shapely.geometry.MultiPolygon
-            Country boundary polygon
+            Country boundary polygon.
 
         Raises
         ------
         FipsError
-            if FIPS code does not exist
+            If FIPS code does not exist.
         """
 
         sf = shapefile.Reader(self.shpfile)

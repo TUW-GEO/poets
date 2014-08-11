@@ -24,20 +24,23 @@ import pyresample as pr
 import poets.grid.grids as gr
 import poets.image.netcdf as nc
 from poets.shape.shapes import Shape
-from poets.grid.grids import CountryGrid
+from poets.grid.grids import ShapeGrid
 from pytesmo.grid import resample
 from shapely.geometry import Point
 from poets.image.imagefile import bbox_img
 
 
 def _create_grid(sp_res):
-    """
-    Generates regular grid based on spatial resolution set in constants.py
+    """ Generates regular grid based.
 
+    Parameters
+    ----------
+    sp_res : int or float
+        Spatial resolution of the grid.
     Returns
     -------
     grid : grids.BasicGrid
-        regular grid
+        Regular grid.
     """
 
     if sp_res == 0.01:
@@ -52,21 +55,29 @@ def _create_grid(sp_res):
     return grid
 
 
-def resample_to_shape(source_file, country, sp_res, prefix=None,
-                      nan_value=None, dest_nan_value=None):
+def resample_to_shape(source_file, region, sp_res, prefix=None,
+                      nan_value=None, dest_nan_value=None, shapefile=None):
     """
     Resamples images and clips country boundaries
 
     Parameters
     ----------
     source_file : str
-        path to source file
-    country : str
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        Path to source file.
+    region : str
+        Identifier of the region in the shapefile. If the default shapefile is
+        used, this would be the FIPS country code.
+    sp_res : int or float
+        Spatial resolution of the shape-grid.
     prefix : str, optional
         Prefix for the variable in the NetCDF file, should be name of source
     nan_value : int, float, optional
         Not a number value of the original data as given by the data provider
+    dest_nan_value : int or float, optional
+        NaN value used in the final NetCDF file
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
 
     Returns
     -------
@@ -85,25 +96,25 @@ def resample_to_shape(source_file, country, sp_res, prefix=None,
     if prefix is not None:
         prefix += '_'
 
-    shp = Shape(country)
+    shp = Shape(region, shapefile)
 
     _, fileExtension = os.path.splitext(source_file)
 
     if fileExtension in ['.nc', '.nc3', '.nc4']:
         data, src_lon, src_lat, timestamp, metadata = \
             nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
-                         shp.bbox[3], country=country)
+                         shp.bbox[3], region=region)
 
     elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
-                                                               country)
+                                                               region)
 
     if nan_value is not None:
         for key in data.keys():
             data[key] = np.ma.array(data[key], mask=(data[key] == 255))
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
-    grid = gr.CountryGrid(country, sp_res)
+    grid = gr.ShapeGrid(region, sp_res, shapefile)
 
     lons = grid.arrlon[0:grid.shape[1]]
     dest_lon, dest_lat = np.meshgrid(lons, np.unique(grid.arrlat)[::-1])
@@ -146,27 +157,31 @@ def resample_to_shape(source_file, country, sp_res, prefix=None,
     return data, dest_lon, dest_lat, gpis, timestamp, metadata
 
 
-def resample_to_gridpoints(source_file, country, sp_res):
-    """
-    resamples image to the predefined grid
+def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
+    """Resamples image to predefined grid goints.
 
     Parameters
     ----------
     source_file : str
-        path to source file
-    country : str
-        latitudes of source image
+        Path to source file.
+    region : str
+        Latitudes of source image.
+    sp_res : int or float
+        Spatial resolution of the shape-grid.
+    shapefile : str, optional
+        Path to shape file, uses "world country admin boundary shapefile" by
+        default.
 
     Returns
     -------
     dframe : pandas.DataFrame
-        resampled data with gridpoints as index
+        Resampled data with gridpoints as index.
     """
 
-    grid = CountryGrid(country, sp_res)
+    grid = ShapeGrid(region, sp_res, shapefile)
 
     gridpoints = grid.get_country_gridpoints()
-    shp = Shape(country)
+    shp = Shape(region, shapefile)
 
     data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
                                   shp.bbox[2], shp.bbox[3])
@@ -196,12 +211,12 @@ def average_layers(image, dest_nan_value):
     Parameters
     ----------
     image : numpy.ma.MaskedArray
-        input image to average
+        Input image to average.
 
     Returns
     -------
     avg_img : numpy.ma.MaskedArray
-        averaged image
+        Averaged image.
     """
 
     img = np.ma.masked_array(image.mean(0), fill_value=dest_nan_value)

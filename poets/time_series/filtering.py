@@ -31,14 +31,14 @@ import datetime
 
 def group_months(ts, attribute):
     """
-    groups daily time series in years and months
+    Groups daily time series in years and months.
 
     Parameters:
     ----------
-    ts : pandas DataFrame
-        time series
+    ts : pandas.DataFrame
+        Time series.
     attribute : string
-        attribute, e.g. 'sm', 'data'
+        Attribute, e.g. 'sm', 'data'
     """
 
     grp = pd.DataFrame(ts.as_matrix(), columns=ts.columns,
@@ -75,7 +75,7 @@ def group_months(ts, attribute):
 
 def group_seasons(ts, dates):
     """
-    groups monthly time series in seasons:
+    Groups monthly time series in seasons:
         Winter: Dec, Jan, Feb
         Spring: Mar, Apr, May
         Summer: June, July, Aug
@@ -84,8 +84,9 @@ def group_seasons(ts, dates):
     Parameters:
     -----------
     ts : np.array
-        monthly time series
-    dates : pandas DataFrame
+        Monthly time series.
+    dates : pandas.DataFrame
+        Dates to be grouped.
     """
 
     ts_seas = []
@@ -131,13 +132,13 @@ def group_seasons(ts, dates):
 
 def ctrd_mov_avg(ts_seas):
     """
-    calculates centered moving average from seasonal time series,
+    Calculates centered moving average from seasonal time series,
     window : 1 year (4 seasons)
 
     Parameters:
     -----------
-    ts_seas : np.array
-        seasonal time series
+    ts_seas : numpy.array
+        Seasonal time series.
     """
 
     # compute moving average

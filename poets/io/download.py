@@ -143,24 +143,24 @@ def download_sftp(download_path, host, directory, port, username, password,
     Parameters
     ----------
     download_path : str, optional
-        Path where to save the downloaded files
+        Path where to save the downloaded files.
     host : str
-        Link to host
+        Link to host.
     directory : str
-        Path to data on host
+        Path to data on host.
     port : int
-        Port to host
+        Port to host.
     username : str
-        Username for source
+        Username for source.
     password : str
-        Passwor for source
+        Passwor for source.
     filedate : dict
-        Dict which points to the date fields in the filename
+        Dict which points to the date fields in the filename.
     dirstruct : list of str
-        Folder structure on host, each list element represents a subdirectory
+        Folder structure on host, each list element represents a subdirectory.
     begin : datetime.datetime
-        Set either to first date of remote repository or date of
-        last file in local repository
+        Set either to first date of remote repository or date of last file in 
+        local repository.
     end : datetime.datetime, optional
         Entered in [years]. End year is not downloaded anymore, defaults to
         datetime.datetime.now()
@@ -168,7 +168,7 @@ def download_sftp(download_path, host, directory, port, username, password,
     Returns
     -------
     bool
-        true if data is available, false if not
+        True if data is available, false if not.
     """
 
     if not os.path.exists(download_path):
@@ -267,11 +267,21 @@ def download_http(download_path, host, directory, filename, filedate,
     ----------
     download_path : str, optional
         Path where to save the downloaded files.
-    begin : datetime.date, optional
-        set either to first date of remote repository or date of
-        last file in local repository
+    host : str
+        Link to host.
+    directory : str
+        Path to data on host.
+    filename : str
+        Structure/convention of the file name.
+    filedate : dict
+        Dict which points to the date fields in the filename.
+    dirstruct : list of str
+        Folder structure on host, each list element represents a subdirectory.
+    begin : datetime.date
+        Set either to first date of remote repository or date of last file in
+        local repository.
     end : datetime.date, optional
-        set to today if none given
+        Set to today if none given.
 
     Returns
     -------
