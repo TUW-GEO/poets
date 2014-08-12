@@ -187,7 +187,8 @@ def zscore(ts, attribute):
         ts_seas_adj = np.add(ts_seas, np.subtract(mean_ts, des_m))
 
         ts_seas = pd.DataFrame(ts_seas, index=dates)
-        ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates)
+        ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates,
+                                   columns=[attribute])
 
         return ts_seas_adj
 
