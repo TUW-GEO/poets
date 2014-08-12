@@ -27,7 +27,7 @@ import pandas as pd
 from poets.time_series.filtering import group_months, group_seasons, ctrd_mov_avg
 
 
-def seasonal_indices(ts, lon, lat, attribute):
+def seasonal_indices(ts, attribute):
     """
     Deseasonalizing of a time series using normalized seasonal indices as in
         http://people.duke.edu/~rnau/411outbd.htm
@@ -36,10 +36,6 @@ def seasonal_indices(ts, lon, lat, attribute):
     ----------
     ts : pandas.DataFrame
         Time Series
-    lon : float
-        Longitude
-    lat : float
-        Latitude
     attribute : string
         attribute, e.g. 'sm', 'data'
 
@@ -116,12 +112,13 @@ def seasonal_indices(ts, lon, lat, attribute):
         ts_seas = pd.DataFrame(ts_seas, index=dates)
         ts_ctrd = pd.DataFrame(ts_ctrd, index=dates)
         seas = pd.DataFrame(seas, index=dates)
-        ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates)
+        ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates,
+                                   columns=[attribute])
 
         return ts_seas_adj
 
 
-def zscore(ts, lon, lat, attribute):
+def zscore(ts, attribute):
     """
     Deseasonalizing of a time series using z-score as in
         http://www.jenvstat.org/v04/i11/paper (p. 2)
@@ -130,10 +127,6 @@ def zscore(ts, lon, lat, attribute):
     ----------
     ts : pandas.DataFrame
         Time Series
-    lon : float
-        Longitude
-    lat : float
-        Latitude
     attribute : string
         attribute, e.g. 'sm', 'data'
 
