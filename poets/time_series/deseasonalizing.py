@@ -113,7 +113,7 @@ def seasonal_indices(ts, attribute):
         ts_ctrd = pd.DataFrame(ts_ctrd, index=dates)
         seas = pd.DataFrame(seas, index=dates)
         ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates,
-                                   columns=[attribute])
+                                   columns=[attribute + '_seasadj'])
 
         return ts_seas_adj
 
@@ -188,7 +188,7 @@ def zscore(ts, attribute):
 
         ts_seas = pd.DataFrame(ts_seas, index=dates)
         ts_seas_adj = pd.DataFrame(ts_seas_adj, index=dates,
-                                   columns=[attribute])
+                                   columns=[attribute + '_zscore'])
 
         return ts_seas_adj
 
