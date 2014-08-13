@@ -37,7 +37,7 @@ class Test(unittest.TestCase):
 
         shp = Shape(self.region)
 
-        assert shp.fips == self.region
+        assert shp.code == self.region
         assert shp.name == self.name
         assert shp.bbox == bbox
 
