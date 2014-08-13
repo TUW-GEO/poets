@@ -14,29 +14,24 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-Created on May 27, 2014
-
-@author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-'''
+# Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-05-27
 
 import pandas as pd
+from datetime import datetime
 from poets.timedate.dekad import dekad_index
 
 
 def get_dtindex(interval, begin, end=None):
-    """Creates a pandas datetime index.
-
-    Datetime index is based on the temporal resolution given in the settings
-    file
+    """Creates a pandas datetime index for a given interval.
 
     Parameters
     ----------
-    interval : str, int
-        Interval of the datetime index.
-    begin : datetime.date
+    interval : str or int
+        Interval of the datetime index. Integer values will be treated as days.
+    begin : datetime
         Datetime index start date.
-    end : datetime.date, optional
+    end : datetime, optional
         Datetime index end date, defaults to current date.
 
     Returns
@@ -44,6 +39,9 @@ def get_dtindex(interval, begin, end=None):
     dtindex : pandas.tseries.index.DatetimeIndex
         Datetime index.
     """
+
+    if end is None:
+        end = datetime.now()
 
     if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
         dtindex = dekad_index(begin, end)
@@ -55,6 +53,6 @@ def get_dtindex(interval, begin, end=None):
         dtindex = pd.date_range(begin, end, freq='M')
 
     if type(interval) is int:
-        dtindex = pd.date_range(begin, end, str(interval + 'D'))
+        dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
 
     return dtindex

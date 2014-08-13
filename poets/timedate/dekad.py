@@ -18,12 +18,12 @@
 # Creation date: 2014-08-05
 
 """
-Module provides functions for date manipulation on a dekadal basis
+This module provides functions for date manipulation on a dekadal basis.
 """
 
-import datetime
 import calendar
 import pandas as pd
+from datetime import datetime
 
 
 def dekad_index(begin, end=None):
@@ -31,9 +31,9 @@ def dekad_index(begin, end=None):
 
     Parameters
     ----------
-    begin : datetime.date
+    begin : datetime
         Datetime index start date.
-    end : datetime.date, optional
+    end : datetime, optional
         Datetime index end date, set to current date if None.
 
     Returns
@@ -43,10 +43,10 @@ def dekad_index(begin, end=None):
     """
 
     if end is None:
-        end = datetime.date.today()
+        end = datetime.now()
 
-    mon_begin = datetime.date(begin.year, begin.month, 1)
-    mon_end = datetime.date(end.year, end.month, 1)
+    mon_begin = datetime(begin.year, begin.month, 1)
+    mon_end = datetime(end.year, end.month, 1)
 
     daterange = pd.date_range(mon_begin, mon_end, freq='MS')
 
@@ -96,12 +96,12 @@ def check_dekad(date):
 
     Parameters
     ----------
-    date : datetime.datetime
+    date : datetime
         Date to check.
 
     Returns
     -------
-    new_date : datetime.datetime
+    new_date : datetime
         Date of the dekad.
     """
     if date.day < 11:
@@ -111,7 +111,7 @@ def check_dekad(date):
     else:
         dekad = calendar.monthrange(date.year, date.month)[1]
 
-    new_date = datetime.datetime(date.year, date.month, dekad)
+    new_date = datetime(date.year, date.month, dekad)
 
     return new_date
 
@@ -168,12 +168,12 @@ def day2dekad(day):
     return dekad
 
 
-def get_dekad_period(date):
-    """Checks dekad periods for dates given as list
+def get_dekad_period(dates):
+    """Checks number of the dekad in the current year for dates given as list.
 
     Parameters
     ----------
-    date : list of datetime.datetime
+    dates : list of datetime
         Dates to check.
 
     Returns
@@ -184,7 +184,7 @@ def get_dekad_period(date):
 
     period = []
 
-    for dat in date:
+    for dat in dates:
 
         d = check_dekad(dat)
         dekad = day2dekad(d.day)
