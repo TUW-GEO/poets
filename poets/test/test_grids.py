@@ -18,7 +18,7 @@
 # Creation date: 2014-07-07
 
 import unittest
-from poets.grid.grids import ShapeGrid
+from poets.grid.grids import ShapeGrid, RegularGrid
 
 
 class Test(unittest.TestCase):
@@ -26,6 +26,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.region = 'AU'
         self.sp_res = 0.25
+        self.sp_res1 = 0.5
 
     def tearDown(self):
         pass
@@ -47,6 +48,19 @@ class Test(unittest.TestCase):
         assert bbox == grid_bbox
         assert cpoints_shape == country_points_shape
 
+    def test_RegularGrid(self):
+        points_number = 259200
+        bbox = (-89.75, 89.75, -179.75, 179.75)
+        grid_shape = (360, 720)
+
+        grid = RegularGrid(sp_res=self.sp_res1)
+
+        grid_bbox = (grid.arrlat.min(), grid.arrlat.max(),
+                     grid.arrlon.min(), grid.arrlon.max())
+
+        assert grid.get_grid_points()[0].size == points_number
+        assert grid_bbox == bbox
+        assert grid.shape == grid_shape
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

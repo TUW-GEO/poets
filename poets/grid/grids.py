@@ -14,13 +14,9 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-Defines the grids using pytesmo.grid.grids
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-06-03
 
-Created on Jun 3, 2014
-
-@author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-'''
 
 import pytesmo.grid.grids as grids
 import numpy as np
@@ -31,59 +27,111 @@ from poets.shape.shapes import Shape
 from poets.image.imagefile import dateline_country
 
 
-class HundredthDegGrid(grids.BasicGrid):
-    """Regular 0.1 degree grid with coordinates as pixel center
+class RegularGrid(grids.BasicGrid):
+    """Regular grid with coordinates as pixel center.
+
+    Regular grid  that just has lat, lon coordinates and can find the nearest
+    neighbour. It can also yield the gpi, lat, lon information in order.
+
+    Parameters
+    ----------
+    lon : numpy.array
+        longitudes of the points in the grid
+    lat : numpy.array
+        latitudes of the points in the grid
+    gpis : numpy.array, optional
+        if the gpi numbers are in a different order than the
+        lon and lat arrays an array containing the gpi numbers
+        can be given
+        if no array is given here the lon lat arrays are given
+        gpi numbers starting at 0
+    subset : numpy.array, optional
+        if the active part of the array is only a subset of
+        all the points then the subset array which is a index
+        into lon and lat can be given here
+    setup_kdTree : boolean, optional
+        if set (default) then the kdTree for nearest neighbour
+        search will be built on initialization
+    shape : tuple, optional
+        if given the grid can be reshaped into the given shape
+        this indicates that it is a regular grid and fills the
+        attributes self.londim and self.latdim which
+        define the grid only be the meridian coordinates(self.londim) and
+        the coordinates of the circles of latitude(self.latdim).
+        The shape has to be given as (latdim, londim)
+        It it is not given the shape is set to the length of the input
+        lon and lat arrays.
+    sp_res : int or float
+        Spatial resolution of the grid.
+
+    Attributes
+    ----------
+    arrlon : numpy.array
+        array of all longitudes of the grid
+    arrlat : numpy.array
+        array of all latitudes of the grid
+    n_gpi : int
+        number of gpis in the grid
+    gpidirect : boolean
+        if true the gpi number is equal to the index
+        of arrlon and arrlat
+    gpis : numpy.array
+        gpi number for elements in arrlon and arrlat
+        gpi[i] is located at arrlon[i],arrlat[i]
+    subset : numpy.array
+        if given then this contains the indices of a subset of
+        the grid. This can be used if only a part of a grid is
+        interesting for a application. e.g. land points, or only
+        a specific country
+    allpoints : boolean
+        if False only a subset of the grid is active
+    activearrlon : numpy.array
+        array of longitudes that are active, is defined by
+        arrlon[subset] if a subset is given otherwise equal to
+        arrlon
+    activearrlat : numpy.array
+        array of latitudes that are active, is defined by
+        arrlat[subset] if a subset is given otherwise equal to
+        arrlat
+    activegpis : numpy.array
+        array of gpis that are active, is defined by
+        gpis[subset] if a subset is given otherwise equal to
+        gpis
+    issplit : boolean
+        if True then the array was split in n parts with
+        the self.split function
+    kdTree : object
+        grid.nearest_neighbor.findGeoNN object for
+        nearest neighbor search
+    shape : tuple, optional
+        if given during initialization then this is
+        the shape the grid can be reshaped to
+        this only makes sense for regular lat,lon grids
+    latdim : numpy.array, optional
+        if shape is given this attribute has contains
+        all latitudes that make up the regular lat,lon grid
+    londim : numpy.array, optional
+        if shape is given this attribute has contains
+        all longitudes that make up the regular lat,lon grid
     """
-    def __init__(self, **kwargs):
 
-        londim = np.arange(-179.995, 180, 0.01)
-        latdim = np.arange(-89.995, 90, 0.01)
+    def __init__(self, sp_res, **kwargs):
+
+        lonmin = -180. + (sp_res / 2.)
+        latmin = -90. + (sp_res / 2.)
+
+        londim = np.arange(lonmin, 180, sp_res)
+        latdim = np.arange(latmin, 90, sp_res)
         lon, lat = np.meshgrid(londim, latdim)
-        super(HundredthDegGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                               shape=lon.shape, **kwargs)
-
-
-class TenthDegGrid(grids.BasicGrid):
-    """Regular 0.1 degree grid with coordinates as pixel center
-    """
-    def __init__(self, **kwargs):
-
-        londim = np.arange(-179.95, 180, 0.1)
-        latdim = np.arange(-89.95, 90, 0.1)
-        lon, lat = np.meshgrid(londim, latdim)
-        super(TenthDegGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                           shape=lon.shape, **kwargs)
-
-
-class QuarterDegGrid(grids.BasicGrid):
-    """Regular 0.25 degree grid with coordinates as pixel center.
-    """
-    def __init__(self, **kwargs):
-
-        londim = np.arange(-179.875, 180, 0.25)
-        latdim = np.arange(-89.875, 90, 0.25)
-        lon, lat = np.meshgrid(londim, latdim)
-        super(QuarterDegGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                             shape=lon.shape, **kwargs)
-
-
-class OneDegGrid(grids.BasicGrid):
-    """Regular 0.1 degree grid with coordinates as pixel center
-    """
-    def __init__(self, **kwargs):
-
-        londim = np.arange(-179.5, 180, 1)
-        latdim = np.arange(-89.5, 90, 1)
-        lon, lat = np.meshgrid(londim, latdim)
-        super(OneDegGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                         shape=lon.shape, **kwargs)
+        super(RegularGrid, self).__init__(lon.flatten(), lat.flatten(),
+                                          shape=lon.shape, **kwargs)
 
 
 class ShapeGrid(grids.BasicGrid):
     """Regular grid for a specific shape.
 
-    Regular grid for spedific shape, that just has lat,lon coordinates
-    and can find the nearest neighbour. It can also yield the gpi, lat, lon
+    Regular grid for spedific shape, that just has lat,lon coordinates and can
+    find the nearest neighbour. It can also yield the gpi, lat, lon
     information in order.
 
     Parameters
