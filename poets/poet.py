@@ -126,10 +126,12 @@ class Poet(object):
             End date of data to download, defaults to current datetime.
         """
 
-        if begin is None:
-            begin = self.start_date
-        if end is None:
-            end = datetime.now()
+        #======================================================================
+        # if begin is None:
+        #     begin = self.start_date
+        # if end is None:
+        #     end = datetime.now()
+        #======================================================================
 
         for source in self.sources.keys():
             print '[INFO] Download data for source ' + source

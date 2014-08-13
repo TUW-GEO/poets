@@ -479,8 +479,16 @@ class BasicSource(object):
             default.
         """
 
+        self._get_download_date()
+
         if begin is None:
-            begin = self._get_download_date()
+            if self.dest_start_date < self.begin_date:
+                begin = self.begin_date
+            else:
+                begin = self.dest_start_date
+
+            if begin < self._get_download_date():
+                begin = self._get_download_date()
 
         if end is None:
             end = datetime.datetime.now()
@@ -554,7 +562,7 @@ class BasicSource(object):
 #                 values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
 #                 df[ncvar][begin:end + 1] = values
 #
-#                 # Replaces NAN value with np.NAN
+# Replaces NAN value with np.NAN
 #                 df[ncvar][df[ncvar] == Settings.nan_value] = np.NAN
 #==============================================================================
 

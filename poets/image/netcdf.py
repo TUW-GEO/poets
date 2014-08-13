@@ -126,10 +126,13 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
         default.
     """
 
-    c_grid = grids.ShapeGrid(region, sp_res, shapefile)
+    if region == 'global':
+        grid = grids.RegularGrid(sp_res)
+    else:
+        grid = grids.ShapeGrid(region, sp_res, shapefile)
 
     if not os.path.isfile(dest_file):
-        save_grid(dest_file, c_grid)
+        save_grid(dest_file, grid)
 
     with Dataset(dest_file, 'r+', format='NETCDF4') as ncfile:
 
@@ -171,36 +174,34 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
                 var.setncatts(metadata[key])
 
 
-def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, region=None):
+def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max):
     """Clips bounding box out of netCDF file and returns data as numpy.ndarray
 
     Parameters
     ----------
     source_file : str
-        path to source file
+        Path to source file.
     lon_min : float
-        min longitude of bounding box
+        Min longitude of bounding box.
     lat_min : float
-        min latitude of bounding box
+        Min latitude of bounding box.
     lon_max : float
-        max longitude of bounding box
+        Max longitude of bounding box.
     lat_max : float
-        max latitude of bounding box
-    country : str, optional
-        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+        Max latitude of bounding box.
 
     Returns
     -------
     data : dict of numpy.arrays
-        clipped image
+        Clipped image.
     lon_new : numpy.array
-        longitudes of the clipped image
+        Longitudes of the clipped image.
     lat_new : numpy.array
-        latgitudes of the clipped image
+        Latgitudes of the clipped image.
     timestamp : datetime.date
-        timestamp of image
+        Timestamp of image.
     metadata : dict of strings
-        metadata from source netCDF file
+        Metadata from source netCDF file.
     """
 
     with Dataset(source_file, 'r', format='NETCDF4') as nc:
@@ -214,20 +215,29 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max, region=None):
         lon = np.copy(nc.variables['lon'])
         lat = np.copy(nc.variables['lat'])
 
-        variables = nc.variables.keys()[3:]
+        variables = nc.variables.keys()
+        if 'gpi' in variables:
+            variables.remove('gpi')
+        if 'lat' in variables:
+            variables.remove('lat')
+        if 'lon' in variables:
+            variables.remove('lon')
+        if 'time' in variables:
+            variables.remove('time')
 
         lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
         lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
 
-        lon_new = lon[lons.min():lons.max()]
-        lat_new = lat[lats.min():lats.max()]
+        lon_new = lon[lons.min():lons.max() + 1]
+        lat_new = lat[lats.min():lats.max() + 1]
 
         data = {}
         metadata = {}
 
         for var in variables:
             dat = nc.variables[var][:][0]
-            data[var] = dat[lats.min():lats.max(), lons.min():lons.max()]
+            data[var] = dat[lats.min():lats.max() + 1,
+                            lons.min():lons.max() + 1]
             metadata[var] = {}
             for attr in nc.variables[var].ncattrs():
                 if attr[0] != '_' and attr != 'scale_factor':

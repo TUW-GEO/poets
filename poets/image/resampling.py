@@ -30,31 +30,6 @@ from shapely.geometry import Point
 from poets.image.imagefile import bbox_img
 
 
-def _create_grid(sp_res):
-    """ Generates regular grid based.
-
-    Parameters
-    ----------
-    sp_res : int or float
-        Spatial resolution of the grid.
-    Returns
-    -------
-    grid : grids.BasicGrid
-        Regular grid.
-    """
-
-    if sp_res == 0.01:
-        grid = gr.HundredthDegGrid(setup_kdTree=False)
-    elif sp_res == 0.1:
-        grid = gr.TenthDegGrid(setup_kdTree=False)
-    elif sp_res == 0.25:
-        grid = gr.QuarterDegGrid(setup_kdTree=False)
-    elif sp_res == 1:
-        grid = gr.OneDegGrid(setup_kdTree=False)
-
-    return grid
-
-
 def resample_to_shape(source_file, region, sp_res, prefix=None,
                       nan_value=None, dest_nan_value=None, shapefile=None):
     """
@@ -103,7 +78,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     if fileExtension in ['.nc', '.nc3', '.nc4']:
         data, src_lon, src_lat, timestamp, metadata = \
             nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
-                         shp.bbox[3], region=region)
+                         shp.bbox[3])
 
     elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
