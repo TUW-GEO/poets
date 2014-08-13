@@ -17,12 +17,8 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-07-07
 
-"""
-Description of module.
-"""
-
 import unittest
-from poets.grid.grids import CountryGrid
+from poets.grid.grids import ShapeGrid
 
 
 class Test(unittest.TestCase):
@@ -34,18 +30,18 @@ class Test(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_CountryGrid(self):
+    def test_ShapeGrid(self):
         points_number = 290
         bbox = (46.625, 48.875, 9.875, 16.875)
         cpoints_shape = (158, 2)
 
-        cgrid = CountryGrid(self.region, resolution=self.sp_res)
+        cgrid = ShapeGrid(self.region, sp_res=self.sp_res)
         grid_bbox = (cgrid.arrlat.min(), cgrid.arrlat.max(),
                      cgrid.arrlon.min(), cgrid.arrlon.max())
 
         grid_points_number = cgrid.get_grid_points()[0].size
 
-        country_points_shape = cgrid.get_country_gridpoints().shape
+        country_points_shape = cgrid.get_gridpoints().shape
 
         assert points_number == grid_points_number
         assert bbox == grid_bbox
