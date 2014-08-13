@@ -23,9 +23,8 @@ Description of module.
 
 import numpy as np
 import pandas as pd
+from poets.grid.grids import ShapeGrid
 from poets.io.sat.tamsat import TAMSAT
-from poets.io.sat.ecv import ECV
-from poets.grid.grids import CountryGrid
 
 
 def to_dygraph_format(self):
@@ -54,10 +53,10 @@ def read_ts(gp, region=None, variable=None):
     return ts
 
 
-def get_gridpoints(region):
+def get_gridpoints(region, sp_res):
 
-    grid = CountryGrid(region)
-    gridpoints = grid.get_country_gridpoints()
+    grid = ShapeGrid(region, sp_res)
+    gridpoints = grid.get_gridpoints()
 
     return gridpoints
 
