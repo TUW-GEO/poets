@@ -18,8 +18,6 @@
 # Creation date: 2014-05-26
 
 from flask import Flask, jsonify, render_template
-from poets.settings import Settings
-from poets.io.sat.tamsat import TAMSAT
 from data_request import read_ts, get_gridpoints
 
 app = Flask(__name__, template_folder="templates")
@@ -31,12 +29,11 @@ poi = 1391
 @app.route('/')
 def index():
 
-    gridpoints = get_gridpoints(region)
+    gridpoints = get_gridpoints(region, 0.1)
 
-    data = read_ts(poi, region=region, variable='rfe')
+    return render_template('index.html', regions=['MO'],
+                           gridpoints=gridpoints)
 
-    return render_template('index.html', regions=Settings.regions,
-                           gridpoints=gridpoints, ts=data)
 
 
 @app.route('/create_json')
@@ -45,6 +42,11 @@ def create_json():
     data = read_ts(poi, region=region, variable='rfe')
 
     return jsonify(data)
+
+
+def website():
+    app.run(debug=True)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
