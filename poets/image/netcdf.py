@@ -18,21 +18,19 @@
 # Creation date: 2014-06-13
 
 """
-Functions for loading from and writing to netCDF4 files
+This module provides functions for loading from and writing to NetCDF4 files.
 """
 
 import os.path
-
 from netCDF4 import Dataset, date2num, num2date
 from pytesmo.grid.netcdf import save_grid
-
 import numpy as np
 from poets.grid import grids
-from poets.timedate.dateindex import dekad_index
+from poets.timedate.dateindex import get_dtindex
 
 
 def save_image(image, timestamp, region, metadata, dest_file, start_date,
-               sp_res, nan_value=-99, shapefile=None):
+               sp_res, nan_value=-99, shapefile=None, temp_res='dekad'):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Creates a datetimeindex over the whole period defined in the settings file
@@ -57,16 +55,21 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
         default.
+    temp_res : string or int, optional
+        Temporal resolution of the output NetCDF4 file, defaults to dekad.
     """
 
-    c_grid = grids.ShapeGrid(region, sp_res, shapefile)
+    if region == 'global':
+        grid = grids.RegularGrid(sp_res)
+    else:
+        grid = grids.ShapeGrid(region, sp_res, shapefile)
 
     dest_file = dest_file
 
     if not os.path.isfile(dest_file):
-        save_grid(dest_file, c_grid)
+        save_grid(dest_file, grid)
 
-    dt = dekad_index(start_date)
+    dt = get_dtindex(temp_res, start_date)
 
     with Dataset(dest_file, 'r+', format='NETCDF4') as ncfile:
 
@@ -95,8 +98,8 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
                 var = ncfile.variables[key]
 
             var[np.where(times[:] == numdate)[0][0]] = image[key]
-            for attr in metadata[key].keys():
-                setattr(var, attr, metadata[key][attr])
+            if metadata is not None:
+                var.setncatts(metadata[key])
 
 
 def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,

@@ -18,22 +18,53 @@
 # Creation date: 2014-07-08
 
 import unittest
+import os
+import numpy as np
+import numpy.testing as nptest
+from datetime import datetime
+from poets.image.netcdf import save_image, write_tmp_file
+from netCDF4 import Dataset
+
+
+def curpath():
+    pth, _ = os.path.split(os.path.abspath(__file__))
+    return pth
 
 
 class Test(unittest.TestCase):
 
-
     def setUp(self):
-        pass
+        self.sp_res = 90
+        self.region = 'global'
+        self.testfilename = os.path.join(curpath(), 'data', 'test.nc')
+        self.metadata = None
+        self.timestamp = datetime.today()
+        self.start_date = datetime.today()
+        self.temp_res = 'day'
+        self.shape = (2, 4)
+        self.mask = [[1, 0, 1, 0], [0, 1, 0, 1]]
 
+        self.image = {}
+        self.data = np.ma.array(np.ones(self.shape), mask=self.mask,
+                          fill_value=-99)
+        self.image['data'] = self.data
+
+        if not os.path.exists(os.path.join(curpath(), 'data')):
+            os.mkdir(os.path.join(curpath(), 'data'))
 
     def tearDown(self):
+        os.remove(self.testfilename)
         pass
 
+    def test_save_image(self):
 
-    def testName(self):
-        pass
+        save_image(self.image, self.timestamp, self.region, self.metadata,
+                   self.testfilename, self.start_date, self.sp_res,
+                   temp_res=self.temp_res)
 
+        with Dataset(self.testfilename) as nc_data:
+            nptest.assert_array_equal(self.data,
+                                      nc_data.variables['data'][0, :])
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
