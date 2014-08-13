@@ -250,7 +250,10 @@ class BasicSource(object):
                             begin = dates[region][var][1]
                             begin += datetime.timedelta(days=1)
                     else:
-                        begin = self.begin_date
+                        if self.dest_start_date < self.begin_date:
+                            begin = self.begin_date
+                        else:
+                            begin = self.dest_start_date
         else:
             begin = self.begin_date
 
@@ -400,7 +403,10 @@ class BasicSource(object):
         """
 
         if begin is None:
-            begin = self.begin_date
+            if self.dest_start_date < self.begin_date:
+                begin = self.begin_date
+            else:
+                begin = self.dest_start_date
 
         if self.protocol in ['HTTP', 'http']:
             check = download_http(self.tmp_path, self.host,
