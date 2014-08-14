@@ -53,8 +53,6 @@ setup(
     author_email='Thomas.Mistelbauer@geo.tuwien.ac.at',
     packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
               'poets.timedate'],
-    scripts=[''],
-    url='',
     license='LICENSE.txt',
     description='python Open Earth Observation Tools',
     long_description=open('README.txt').read(),
