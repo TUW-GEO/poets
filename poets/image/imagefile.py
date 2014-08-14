@@ -27,9 +27,6 @@ import numpy as np
 from PIL import Image
 from poets.shape.shapes import Shape
 import math
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
 
 
 def lonlat2px(img, lon, lat):
@@ -212,52 +209,15 @@ def rearrange_img(img):
     return img2
 
 
-def plot_polygon(region, shapefile=None):
-    """Plots the shapefile of a country border
-
-    Parameters:
-    ----------
-    region : str, optional
-        Identifier of the region in the shapefile. If the default shapefile is
-        used, this would be the FIPS country code.
-    shapefile : str, optional
-        Path to shape file, uses "world country admin boundary shapefile" by
-        default.
-    """
-
-    shp = Shape(region, shapefile)
-    polygon = shp.polygon
-    polygon.append(polygon[0])
-
-    codes = [Path.MOVETO]
-    i = 1
-
-    while i < (len(polygon) - 1):
-        codes.append(Path.LINETO)
-        i += 1
-
-    codes.append(Path.CLOSEPOLY)
-
-    path = Path(polygon, codes)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    patch = patches.PathPatch(path, facecolor='orange')
-    ax.add_patch(patch)
-    ax.relim()
-    ax.autoscale_view(True, True, True)
-    plt.show()
-
-
 def dateline_country(country):
     """
     Min and max longitude for countries that spread across the
-    international dateline
+    international dateline.
 
     Returns:
     -------
     lon_min, lon_max : float
-        min and max longitude
+        Min and max longitude.
     """
 
     if country == 'NZ':
