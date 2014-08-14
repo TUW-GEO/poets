@@ -246,7 +246,7 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max):
     return data, lon_new, lat_new, timestamp, metadata
 
 
-def read_image(source_file, region, variable, date, date_to=None):
+def read_image(source_file, variable, date, date_to=None):
     """Gets images from a netCDF file.
 
     Reads the image for a specific date. If date_to is given, it will return
@@ -256,9 +256,6 @@ def read_image(source_file, region, variable, date, date_to=None):
     ----------
     source_file : str
         Path to source file.
-    region : str, optional
-        Identifier of the region in the shapefile. If the default shapefile is
-        used, this would be the FIPS country code.
     variable : str
         Requested variable of image.
     date : datetime.datetime

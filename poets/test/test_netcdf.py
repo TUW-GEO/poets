@@ -22,7 +22,8 @@ import os
 import numpy as np
 import numpy.testing as nptest
 from datetime import datetime
-from poets.image.netcdf import save_image, write_tmp_file, clip_bbox
+from poets.image.netcdf import save_image, write_tmp_file, clip_bbox, \
+    read_image, get_properties
 from netCDF4 import Dataset
 
 
@@ -37,24 +38,28 @@ class Test(unittest.TestCase):
         self.sp_res = 90
         self.region = 'global'
         self.testfilename = os.path.join(curpath(), 'data', 'test.nc')
-        self.metadata = None
+        self.metadata = {'data': {'Attribute1': 'Value1'}}
         self.timestamp = datetime.today()
         self.start_date = datetime.today()
         self.temp_res = 'day'
+        self.fill_value = -99
+        self.variable = 'data'
 
         self.shape = (2, 4)
         self.mask = [[1, 0, 1, 0], [0, 1, 0, 1]]
 
         self.image = {}
         self.data = np.ma.array(np.ones(self.shape), mask=self.mask,
-                                fill_value=-99)
+                                fill_value=self.fill_value)
         self.image['data'] = self.data
 
         self.bbox = np.ma.array(np.ones((1, 2)), mask=self.mask[0][0:2],
-                                fill_value=-99)
+                                fill_value=self.fill_value)
 
-        self.lon_new = np.array([-135., -45.], dtype=float)
-        self.lat_new = np.array([45.], dtype=float)
+        self.lon = np.array([-135., -45., 45., 135.])
+        self.lat = np.array([45., -45.])
+        self.lon_new = np.array([-135., -45.])
+        self.lat_new = np.array([45.])
 
         if not os.path.exists(os.path.join(curpath(), 'data')):
             os.mkdir(os.path.join(curpath(), 'data'))
@@ -72,20 +77,26 @@ class Test(unittest.TestCase):
                    temp_res=self.temp_res)
 
         with Dataset(self.testfilename) as nc_data:
-            data = nc_data.variables['data'][0]
+            data = nc_data.variables[self.variable]
             mask = np.array(self.mask, dtype=bool)
-            nptest.assert_array_equal(self.data, data)
-            nptest.assert_array_equal(mask, data.mask)
+            nptest.assert_array_equal(self.data, data[0])
+            nptest.assert_array_equal(mask, data[0].mask)
+            assert data.getncattr('_FillValue') == self.fill_value
+            assert data.getncattr('Attribute1') == \
+                self.metadata[self.variable]['Attribute1']
 
     def test_write_tmp_file(self):
         write_tmp_file(self.image, self.timestamp, self.region, self.metadata,
                        self.testfilename, self.start_date, self.sp_res)
 
         with Dataset(self.testfilename) as nc_data:
-            data = nc_data.variables['data'][0]
+            data = nc_data.variables[self.variable]
             mask = np.array(self.mask, dtype=bool)
-            nptest.assert_array_equal(self.data, data)
-            nptest.assert_array_equal(mask, data.mask)
+            nptest.assert_array_equal(self.data, data[0])
+            nptest.assert_array_equal(mask, data[0].mask)
+            assert data.getncattr('_FillValue') == self.fill_value
+            assert data.getncattr('Attribute1') == \
+                self.metadata[self.variable]['Attribute1']
 
     def test_clip_bbox(self):
         lon_min = -180
@@ -93,20 +104,51 @@ class Test(unittest.TestCase):
         lat_min = 0
         lat_max = 90
 
-        mdat = {'data': {}}
-
         write_tmp_file(self.image, self.timestamp, self.region, self.metadata,
                        self.testfilename, self.start_date, self.sp_res)
 
         data, lon_new, lat_new, timestamp, metadata = clip_bbox(
             self.testfilename, lon_min, lat_min, lon_max, lat_max)
 
-        nptest.assert_array_equal(self.bbox, data['data'])
+        timediff = self.timestamp - timestamp
+
+        nptest.assert_array_equal(self.bbox, data[self.variable])
         nptest.assert_array_equal(self.lon_new, lon_new)
         nptest.assert_array_equal(self.lat_new, lat_new)
-        assert metadata == {'data': {}}
+        assert timediff.days == 0
+        assert metadata == self.metadata
 
-        print 'asf'
+    def test_read_image(self):
+
+        save_image(self.image, self.timestamp, self.region, self.metadata,
+                   self.testfilename, self.start_date, self.sp_res,
+                   temp_res=self.temp_res)
+
+        image, lon, lat, metadata = read_image(self.testfilename,
+                                               self.variable,
+                                               self.timestamp)
+
+        nptest.assert_array_equal(image, self.data)
+        nptest.assert_array_equal(lon, self.lon)
+        nptest.assert_array_equal(lat, self.lat)
+        assert metadata == self.metadata[self.variable]
+
+    def test_get_properties(self):
+
+        save_image(self.image, self.timestamp, self.region, self.metadata,
+                   self.testfilename, self.start_date, self.sp_res,
+                   temp_res=self.temp_res)
+
+        variables, dimensions, period = get_properties(self.testfilename)
+
+        timediff1 = self.timestamp - period[0]
+        timediff2 = self.timestamp - period[1]
+
+        assert variables[0] == self.variable
+        assert dimensions == ['lat', 'lon', 'time']
+        assert timediff1.days == 0
+        assert timediff2.days == 0
+
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
