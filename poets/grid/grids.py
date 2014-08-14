@@ -412,14 +412,15 @@ def _minmaxcoord(min_threshold, max_threshold, sp_res):
     minval = int(math.ceil(min_threshold / res)) * res
     maxval = int(math.floor(max_threshold / res)) * res
 
-    if minval - (res / 2) < min_threshold:
-        minval += res / 2
-    else:
-        minval -= res / 2
+    if minval != maxval:
+        if minval - (res / 2) < min_threshold:
+            minval += res / 2
+        else:
+            minval -= res / 2
 
-    if maxval + (res / 2) > max_threshold:
-        maxval -= res / 2
-    else:
-        maxval += res / 2
+        if maxval + (res / 2) > max_threshold:
+            maxval -= res / 2
+        else:
+            maxval += res / 2
 
     return minval, maxval

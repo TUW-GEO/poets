@@ -24,7 +24,7 @@ import pyresample as pr
 import poets.grid.grids as gr
 import poets.image.netcdf as nc
 from poets.shape.shapes import Shape
-from poets.grid.grids import ShapeGrid
+from poets.grid.grids import ShapeGrid, RegularGrid
 from pytesmo.grid import resample
 from shapely.geometry import Point
 from poets.image.imagefile import bbox_img
@@ -71,14 +71,27 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     if prefix is not None:
         prefix += '_'
 
+    if region == 'global':
+        lon_min = -180
+        lon_max = 180
+        lat_min = -90
+        lat_max = 90
+    else:
+        shp = Shape(region, shapefile)
+        lon_min = shp.bbox[0]
+        lon_max = shp.bbox[2]
+        lat_min = shp.bbox[1]
+        lat_max = shp.bbox[3]
+
     shp = Shape(region, shapefile)
 
     _, fileExtension = os.path.splitext(source_file)
 
+    lon_min, lat_min, lon_max, lat_max
+
     if fileExtension in ['.nc', '.nc3', '.nc4']:
         data, src_lon, src_lat, timestamp, metadata = \
-            nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1], shp.bbox[2],
-                         shp.bbox[3])
+            nc.clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max)
 
     elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
@@ -119,7 +132,8 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
             var = prefix + key
         if metadata is not None:
             metadata[var] = metadata[key]
-            del metadata[key]
+            if var != key:
+                del metadata[key]
         data[var] = np.ma.masked_array(data[key], mask=mask,
                                        fill_value=dest_nan_value)
         dat = np.copy(data[var].data)
@@ -133,7 +147,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
 
 
 def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
-    """Resamples image to predefined grid goints.
+    """Resamples image to predefined gridpoints.
 
     Parameters
     ----------
@@ -153,13 +167,16 @@ def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
         Resampled data with gridpoints as index.
     """
 
-    grid = ShapeGrid(region, sp_res, shapefile)
-
-    gridpoints = grid.get_country_gridpoints()
     shp = Shape(region, shapefile)
+    lon_min = shp.bbox[0]
+    lon_max = shp.bbox[2]
+    lat_min = shp.bbox[1]
+    lat_max = shp.bbox[3]
+    grid = ShapeGrid(region, sp_res, shapefile)
+    gridpoints = grid.get_gridpoints()
 
-    data, lon, lat = nc.clip_bbox(source_file, shp.bbox[0], shp.bbox[1],
-                                  shp.bbox[2], shp.bbox[3])
+    data, lon, lat, _, _ = nc.clip_bbox(source_file, lon_min, lat_min, lon_max,
+                                        lat_max)
 
     lon, lat = np.meshgrid(lon, lat)
 

@@ -306,11 +306,17 @@ def bbox_img(source_file, region, shapefile=None):
 
     orig_img = Image.open(source_file)
 
-    shp = Shape(region, shapefile)
-    lon_min = shp.bbox[0]
-    lon_max = shp.bbox[2]
-    lat_min = shp.bbox[1]
-    lat_max = shp.bbox[3]
+    if region == 'global':
+        lon_min = -180
+        lon_max = 180
+        lat_min = -90
+        lat_max = 90
+    else:
+        shp = Shape(region, shapefile)
+        lon_min = shp.bbox[0]
+        lon_max = shp.bbox[2]
+        lat_min = shp.bbox[1]
+        lat_max = shp.bbox[3]
 
     d = lon_max - lon_min
 
