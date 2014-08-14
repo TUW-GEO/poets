@@ -375,7 +375,7 @@ class BasicSource(object):
 
             for var in variables:
                 img, _, _, meta = \
-                    nt.read_image(src_file, region, var, begin, end)
+                    nt.read_image(src_file, var, begin, end)
 
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)

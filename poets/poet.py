@@ -126,17 +126,11 @@ class Poet(object):
             End date of data to download, defaults to current datetime.
         """
 
-        #======================================================================
-        # if begin is None:
-        #     begin = self.start_date
-        # if end is None:
-        #     end = datetime.now()
-        #======================================================================
-
         for source in self.sources.keys():
+            src = self.sources[source]
             print '[INFO] Download data for source ' + source
-            self.sources[source].download_and_resample(begin=begin, end=end,
-                                                      shapefile=self.shapefile)
+            src.download_and_resample(begin=begin, end=end,
+                                      shapefile=self.shapefile)
 
         print '[SUCCESS] Download and resampling complete!'
 
