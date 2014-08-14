@@ -20,8 +20,6 @@ Created on May 19, 2014
 @author: Thomas Mistelbauer, Thomas.Mistelbauer@geo.tuwien.ac.at
 '''
 
-import poets
-
 try:
     from setuptools import setup
     have_setuptools = True
@@ -33,27 +31,34 @@ except ImportError:
 if not have_setuptools:
     setuptools_kwargs = {}
 else:
-    setuptools_kwargs = {'install_requires':[ "numpy >= 1.7",
-                                            "pandas >= 0.12",
-                                            "scipy >= 0.12",
-                                            "statsmodels >= 0.4.3",
-                                            "netcdf4 >= 1.0.1",
-                                            "GDAL >= 1.11.0",
-                                            "paramiko >= 1.14.0",
-                                            "requests >= 1.14.0",
-                                            "pillow >= 2.5.1"
-                                           ]
-                       }
+    setuptools_kwargs = {'install_requires': ["numpy >= 1.7",
+                                              "pandas >= 0.12",
+                                              "scipy >= 0.12",
+                                              "statsmodels >= 0.4.3",
+                                              "netcdf4 >= 1.0.1",
+                                              "pytesmo >= 0.2.0",
+                                              "Shapely >= 1.3.2",
+                                              "pyshp >=1.2.1",
+                                              "paramiko >= 1.14.0",
+                                              "requests >= 1.14.0",
+                                              "pillow >= 2.5.1"
+                                              ],
+                         'test_suite': 'poets/test/'
+    }
 
 setup(
     name='poets',
-    version=poets.__version__
+    version='0.1.0',
     author='poets Team',
     author_email='Thomas.Mistelbauer@geo.tuwien.ac.at',
-    packages=['poets'],
+    packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
+              'poets.timedate'],
     scripts=[''],
     url='',
     license='LICENSE.txt',
     description='python Open Earth Observation Tools',
     long_description=open('README.txt').read(),
     **setuptools_kwargs)
+
+
+
