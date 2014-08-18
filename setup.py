@@ -61,10 +61,10 @@ setup(
 
     packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
               'poets.timedate'],
-    package_data={'poets.shape': [os.path.join('ancillary', '*.dbf'),
-                                  os.path.join('ancillary', '*.README'),
-                                  os.path.join('ancillary', '*.shp'),
-                                  os.path.join('ancillary', '*.shx')]
+    package_data={'poets': [os.path.join('shape', 'ancillary', '*.dbf'),
+                            os.path.join('shape', 'ancillary', '*.README'),
+                            os.path.join('shape', 'ancillary', '*.shp'),
+                            os.path.join('shape', 'ancillary', '*.shx')]
                   },
     **setuptools_kwargs)
 

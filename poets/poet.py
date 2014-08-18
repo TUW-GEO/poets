@@ -54,6 +54,9 @@ class Poet(object):
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
         default.
+    delete_rawdata : bool, optional
+        Original files will be deleted from tmp_path if set True. Defaults
+        to False
 
     Attributes
     ----------
@@ -81,13 +84,14 @@ class Poet(object):
         default.
     sources : dict of poets.io.BasicSource objects
         Sources used by poets given as BasicSource class.
+    delete_rawdata : bool, optional
+        Original files will be deleted from tmp_path if set True.
     """
 
     def __init__(self, rootpath, regions=['global'],
-                 spatial_resolution=0.25,
-                 temporal_resolution='dekad',
-                 start_date=datetime(2000, 1, 1),
-                 nan_value=-99, shapefile=None):
+                 spatial_resolution=0.25, temporal_resolution='dekad',
+                 start_date=datetime(2000, 1, 1), nan_value=-99,
+                 shapefile=None, delete_rawdata=False):
 
         self.rootpath = rootpath
         self.regions = regions
@@ -98,6 +102,7 @@ class Poet(object):
         self.nan_value = nan_value
         self.start_date = start_date
         self.shapefile = shapefile
+        self.delete_rawdata = delete_rawdata
         self.sources = {}
 
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
@@ -114,7 +119,7 @@ class Poet(object):
 
         self.sources[name] = source
 
-    def fetch_data(self, begin=None, end=None):
+    def fetch_data(self, begin=None, end=None, delete_rawdata=None):
         """Starts download and resampling of input data.
 
         Parameters
@@ -124,7 +129,13 @@ class Poet(object):
             in poets class.
         end : datetime, optional
             End date of data to download, defaults to current datetime.
+        delete_rawdata : bool, optional
+            Original files will be deleted from tmp_path if set True. Defaults
+            to delete_rawdata attribute as set in Poet class.
         """
+
+        if not delete_rawdata:
+            delete_rawdata = self.delete_rawdata
 
         for source in self.sources.keys():
             src = self.sources[source]
