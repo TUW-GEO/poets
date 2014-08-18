@@ -29,6 +29,9 @@ from pytesmo.grid import resample
 from shapely.geometry import Point
 from poets.image.imagefile import bbox_img
 
+imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
+                '.JPG', '.jpeg', '.JPEG', '.gif', '.GIF']
+
 
 def resample_to_shape(source_file, region, sp_res, prefix=None,
                       nan_value=None, dest_nan_value=None, shapefile=None):
@@ -93,7 +96,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
         data, src_lon, src_lat, timestamp, metadata = \
             nc.clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max)
 
-    elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
+    elif fileExtension in imgfiletypes:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
                                                                region)
 

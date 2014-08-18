@@ -20,6 +20,8 @@ Created on May 19, 2014
 @author: Thomas Mistelbauer, Thomas.Mistelbauer@geo.tuwien.ac.at
 '''
 
+import os
+
 try:
     from setuptools import setup
     have_setuptools = True
@@ -43,19 +45,27 @@ else:
                                               "requests >= 1.14.0",
                                               "pillow >= 2.5.1"
                                               ],
-                         'test_suite': 'poets/test/'
-    }
+                         'test_suite': 'tests/'}
 
 setup(
     name='poets',
     version='0.1.0',
-    author='poets Team',
-    author_email='Thomas.Mistelbauer@geo.tuwien.ac.at',
-    packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
-              'poets.timedate'],
-    license='LICENSE.txt',
+
     description='python Open Earth Observation Tools',
     long_description=open('README.txt').read(),
+
+    author='poets Team',
+    author_email='Thomas.Mistelbauer@geo.tuwien.ac.at',
+
+    license='LICENSE.txt',
+
+    packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
+              'poets.timedate'],
+    package_data={'poets.shape': [os.path.join('ancillary', '*.dbf'),
+                                  os.path.join('ancillary', '*.README'),
+                                  os.path.join('ancillary', '*.shp'),
+                                  os.path.join('ancillary', '*.shx')]
+                  },
     **setuptools_kwargs)
 
 

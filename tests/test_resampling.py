@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.sp_res = 60
         self.region = 'UG'
-        self.testfilename = os.path.join(curpath(), 'data', 'test.nc')
+        self.testfilename = os.path.join(curpath(), 'data', 'tests.nc')
         self.metadata = {'data': {'Attribute1': 'Value1'}}
         self.timestamp = datetime.today()
         self.start_date = datetime.today()

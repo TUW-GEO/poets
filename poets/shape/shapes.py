@@ -61,7 +61,7 @@ class Shape(object):
         self.code = code
         if shapefile is None:
             self.shpfile = os.path.join(os.path.dirname(__file__),
-                                        'ancillary', 'boundaries',
+                                        'ancillary',
                                         'world_country_admin_boundary_'
                                         'shapefile_with_fips_codes')
         else:
