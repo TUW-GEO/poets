@@ -22,9 +22,11 @@ Sources Data Sources
 
 In order to work properly, all datasets must be provided via following 
 protocols:
+
 * HTTP
 * FTP
 * SFTP
+
 All files within a repository must be named following a certain structure, 
 this structure MUST NOT vary.
 
