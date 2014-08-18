@@ -124,6 +124,40 @@ class Poet(object):
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
                    variables=None, nan_value=None):
+        """Creates BasicSource class and adds it to `Poet.sources`.
+
+        Parameters
+        ----------
+        name : str
+            Name of the data source.
+        filename : str
+            Structure/convention of the file name.
+        filedate : dict
+            Position of date fields in filename, given as tuple.
+        temp_res : str
+            Temporal resolution of the source.
+        host : str
+            Link to data host.
+        protocol : str
+            Protocol for data transfer.
+        username : str, optional
+            Username for data access.
+        password : str, optional
+            Password for data access.
+        port : int, optional
+            Port to data host, defaults to 22.
+        directory : str, optional
+            Path to data on host.
+        dirstruct : list of strings
+            Structure of source directory, each list item represents a
+            subdirectory.
+        begin_date : datetime.date, optional
+            Date from which on data is available, defaults to 2000-01-01.
+        variables : list of strings, optional
+            Variables used from data source.
+        nan_value : int, float, optional
+            Nan value of the original data as given by the data provider.
+        """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
                              host, protocol, username, password, port,
@@ -135,7 +169,8 @@ class Poet(object):
         self.sources[name] = source
 
     def fetch_data(self, begin=None, end=None, delete_rawdata=None):
-        """Starts download and resampling of input data.
+        """Starts download and resampling of input data for sources as added
+        to `Poets.sources`.
 
         Parameters
         ----------
