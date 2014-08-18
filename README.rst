@@ -34,6 +34,7 @@ Supported File Types
 --------------------
 
 poets supports following file types:
+
 * NetCDF version >= 4.0
 * png, jpg, tif and gif image files
 
