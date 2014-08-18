@@ -20,8 +20,8 @@ Supported Datasets
 Sources Data Sources
 --------------------
 
-In order to work properly, all datasets must be provided via following 
-protocols:
+In order to work properly, all datasets must be provided via one of the 
+following protocols:
 
 * HTTP
 * FTP
