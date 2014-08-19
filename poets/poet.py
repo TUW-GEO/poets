@@ -43,6 +43,8 @@ from datetime import datetime
 from netCDF4 import Dataset
 from poets.io.source_base import BasicSource
 
+valid_temp_res = ['dekad', 'month']
+
 
 class Poet(object):
     """POETS base class.
@@ -60,8 +62,8 @@ class Poet(object):
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
-        temporal resolution of the data, possible values: day, week,
-        month, dekad, defaults to dekad
+        temporal resolution of the data, possible values: month, dekad,
+        defaults to dekad
     start_date : datetime.datetime, optional
         first date of the dataset, defaults to 2000-01-01
     nan_value : int
@@ -82,9 +84,8 @@ class Poet(object):
         used, this would be the FIPS country code. Defaults to global.
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
-    temporal_resolution : str, optional
-        temporal resolution of the data, possible values: day, week,
-        month, dekad, defaults to dekad
+    temporal_resolution : str
+        temporal resolution of the data
     tmp_path : str
         Path where temporary files and original files are stored and
         downloaded.
@@ -111,6 +112,11 @@ class Poet(object):
         self.rootpath = rootpath
         self.regions = regions
         self.spatial_resolution = spatial_resolution
+
+        if temporal_resolution not in ['dekad', 'month']:
+            raise ValueError("Temporal resulution must be one of " +
+                             str(valid_temp_res))
+
         self.temporal_resolution = temporal_resolution
         self.tmp_path = os.path.join(rootpath, 'TMP')
         self.data_path = os.path.join(rootpath, 'DATA')
@@ -119,6 +125,12 @@ class Poet(object):
         self.shapefile = shapefile
         self.delete_rawdata = delete_rawdata
         self.sources = {}
+
+        if not os.path.exists(self.tmp_path):
+            os.mkdir(self.tmp_path)
+
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
 
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
@@ -209,7 +221,8 @@ class Poet(object):
             Dataframe with gridpoint index as index, longitutes and latitudes
             as columns.
         """
-        filename = region + '_' + str(self.spatial_resolution) + '.nc'
+        filename = (region + '_' + str(self.spatial_resolution) + '_' +
+                    str(self.temporal_resolution) + '.nc')
         ncfile = os.path.join(self.data_path, filename)
 
         with Dataset(ncfile, 'r+', format='NETCDF4') as nc:

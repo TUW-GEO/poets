@@ -300,7 +300,7 @@ def bbox_img(source_file, region, shapefile=None):
         lon_min, lon_max = dateline_country(region)
 
     # get 2 pairs of points (upper left, lower right of bbox)
-    if d > 350 and region != 'AY':
+    if d > 350 and region not in ['AY', 'global']:
         orig_img = rearrange_img(orig_img)
         row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
         row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)

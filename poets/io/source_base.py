@@ -41,7 +41,8 @@ import numpy as np
 import pandas as pd
 import poets.image.netcdf as nt
 from poets.image.resampling import resample_to_shape, average_layers
-from poets.io.download import download_http, download_ftp, download_sftp, get_file_date
+from poets.io.download import download_http, download_ftp, download_sftp, \
+    get_file_date
 import poets.timedate.dateindex as dt
 from poets.timedate.dekad import check_dekad
 
@@ -197,7 +198,8 @@ class BasicSource(object):
 
         for region in self.dest_regions:
             nc_name = os.path.join(self.data_path, region + '_'
-                                   + str(self.dest_sp_res) + '.nc')
+                                   + str(self.dest_sp_res) + '_'
+                                   + str(self.dest_temp_res) + '.nc')
             if os.path.exists(nc_name):
                 dates[region] = {}
                 for var in self.variables:
@@ -283,7 +285,7 @@ class BasicSource(object):
             Path to the temporary direcotry
         """
         filename = ('_' + prefix + '_' + region + '_' + str(self.dest_sp_res)
-                    + '.nc')
+                    + '_' + str(self.dest_temp_res) + '.nc')
         return os.path.join(self.tmp_path, filename)
 
     def _resample_spatial(self, region, begin, end, delete_rawdata,
@@ -335,7 +337,8 @@ class BasicSource(object):
                 timestamp = get_file_date(item, self.filedate)
 
             if self.temp_res is 'dekad':
-                filename = region + '_' + str(self.dest_sp_res) + '.nc'
+                filename = (region + '_' + str(self.dest_sp_res) + '_'
+                            + str(self.dest_temp_res) + '.nc')
                 dfile = os.path.join(self.data_path, filename)
                 nt.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
@@ -355,12 +358,12 @@ class BasicSource(object):
 
         Parameters:
         region : str
-            Identifier of the region in the shapefile. If the default shapefile is
-            used, this would be the FIPS country code.
+            Identifier of the region in the shapefile. If the default shapefile
+            is used, this would be the FIPS country code.
 
         shapefile : str, optional
-            Path to shape file, uses "world country admin boundary shapefile" by
-            default.
+            Path to shape file, uses "world country admin boundary shapefile"
+            by default.
         """
 
         src_file = self._get_tmp_filepath('spatial', region)
@@ -372,18 +375,30 @@ class BasicSource(object):
         data = {}
         variables, _, period = nt.get_properties(src_file)
 
-        if self.dest_temp_res is 'dekad':
-            dtindex = dt.dekad_index(period[0], end=period[1])
+        dtindex = dt.get_dtindex(self.dest_temp_res, period[0], period[1])
 
         for date in dtindex:
+            if date > period[1]:
+                continue
             print date
-            # print '.',
-            if date.day < 21:
-                begin = datetime.datetime(date.year, date.month,
-                                          date.day - 10 + 1)
+            if self.dest_temp_res == 'dekad':
+                if date.day < 21:
+                    begin = datetime.datetime(date.year, date.month,
+                                              date.day - 10 + 1)
+                else:
+                    begin = datetime.datetime(date.year, date.month, 21)
+                end = date
+                dat = date
             else:
-                begin = datetime.datetime(date.year, date.month, 21)
-            end = date
+                if self.dest_temp_res == 'month':
+                    begin = period[0]
+                    end = date
+                else:
+                    begin = date
+                    end = date + datetime.timedelta(date.offset.delta.days - 1)
+                if end > period[1]:
+                    end = period[1]
+                dat = end
 
             data = {}
             metadata = {}
@@ -395,12 +410,13 @@ class BasicSource(object):
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)
 
-            filename = region + '_' + str(self.dest_sp_res) + '.nc'
+            filename = (region + '_' + str(self.dest_sp_res) + '_'
+                        + str(self.dest_temp_res) + '.nc')
             dest_file = os.path.join(self.data_path, filename)
 
-            nt.save_image(data, date, region, metadata, dest_file,
+            nt.save_image(data, dat, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
-                          self.dest_nan_value, shapefile)
+                          self.dest_nan_value, shapefile, self.dest_temp_res)
 
         # delete intermediate netCDF file
         print ''
@@ -490,11 +506,9 @@ class BasicSource(object):
         delete_rawdata : bool, optional
             Original files will be deleted from tmp_path if set True
         shapefile : str, optional
-            Path to shape file, uses "world country admin boundary shapefile" by
-            default.
+            Path to shape file, uses "world country admin boundary shapefile"
+            by default.
         """
-
-        self._get_download_date()
 
         if begin is None:
             if self.dest_start_date < self.begin_date:
@@ -511,11 +525,20 @@ class BasicSource(object):
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
         for i, date in enumerate(drange):
+            if date > end:
+                continue
             if i == 0:
                 start = begin
             else:
-                start = drange[i - 1] + datetime.timedelta(days=1)
-            stop = date
+                if self.dest_temp_res == 'dekad':
+                    start = drange[i - 1] + datetime.timedelta(days=1)
+                else:
+                    start = date
+
+            if self.dest_temp_res in ['dekad', 'month', 'monthly']:
+                stop = date
+            else:
+                stop = date + datetime.timedelta(date.offset.delta.days - 1)
 
             filecheck = self.download(download_path, start, stop)
             if filecheck is True:
@@ -550,8 +573,8 @@ class BasicSource(object):
             variable = [variable]
 
         source_file = os.path.join(self.data_path,
-                                   region + '_' + str(self.dest_sp_res)
-                                   + '.nc')
+                                   region + '_' + str(self.dest_sp_res) + '_'
+                                   + str(self.dest_temp_res) + '.nc')
 
         var_dates = self._check_current_date()
 
@@ -573,13 +596,6 @@ class BasicSource(object):
                 df[ncvar] = np.NAN
                 for i in range(begin, end + 1):
                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
-#==============================================================================
-#                 values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
-#                 df[ncvar][begin:end + 1] = values
-#
-# Replaces NAN value with np.NAN
-#                 df[ncvar][df[ncvar] == Settings.nan_value] = np.NAN
-#==============================================================================
 
         return df
 
@@ -609,7 +625,7 @@ class BasicSource(object):
 
         source_file = os.path.join(self.data_path,
                                    region + '_' + str(self.dest_sp_res)
-                                   + '.nc')
+                                   + '_' + str(self.dest_temp_res) + '.nc')
 
         # get dekad of date:
         date = check_dekad(date)
