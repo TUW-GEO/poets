@@ -42,6 +42,7 @@ import pandas as pd
 from datetime import datetime
 from netCDF4 import Dataset
 from poets.io.source_base import BasicSource
+from poets.grid.grids import ShapeGrid
 
 valid_temp_res = ['dekad', 'month']
 
@@ -207,7 +208,7 @@ class Poet(object):
 
         print '[SUCCESS] Download and resampling complete!'
 
-    def get_gridpoints(self, region):
+    def get_gridpoints(self):
         """Returns gridpoints from NetCDF file.
 
         Parameters
@@ -217,26 +218,36 @@ class Poet(object):
 
         Returns
         -------
-        gridpoints : pandas.DataFrame
-            Dataframe with gridpoint index as index, longitutes and latitudes
-            as columns.
+        gridpoints : dict of pandas.DataFrame
+            Dict containing Dataframes with gridpoint index as index,
+            longitutes and latitudes as columns for each region.
         """
-        filename = (region + '_' + str(self.spatial_resolution) + '_' +
-                    str(self.temporal_resolution) + '.nc')
-        ncfile = os.path.join(self.data_path, filename)
 
-        with Dataset(ncfile, 'r+', format='NETCDF4') as nc:
-            gpis = nc.variables['gpi'][:]
-            lons = nc.variables['lon'][:]
-            lats = nc.variables['lat'][:]
-            gpis = gpis.flatten()
-            lons, lats = np.meshgrid(lons, lats)
-            lons = lons.flatten()
-            lats = lats.flatten()
+        gridpoints = {}
 
-        gridpoints = pd.DataFrame(index=gpis)
-        gridpoints['lon'] = lons
-        gridpoints['lat'] = lats
+        if self.regions == ['global']:
+            filename = (self.regions[0] + '_' + str(self.spatial_resolution)
+                        + '_' + str(self.temporal_resolution) + '.nc')
+            ncfile = os.path.join(self.data_path, filename)
+
+            with Dataset(ncfile, 'r+', format='NETCDF4') as nc:
+                gpis = nc.variables['gpi'][:]
+                lons = nc.variables['lon'][:]
+                lats = nc.variables['lat'][:]
+                gpis = gpis.flatten()
+                lons, lats = np.meshgrid(lons, lats)
+                lons = lons.flatten()
+                lats = lats.flatten()
+
+            points = pd.DataFrame(index=gpis)
+            points['lon'] = lons
+            points['lat'] = lats
+            gridpoints['global'] = points
+        else:
+            for region in self.regions:
+                grid = ShapeGrid(region, self.spatial_resolution)
+                points = grid.get_gridpoints()
+                gridpoints[region] = points
 
         return gridpoints
 
