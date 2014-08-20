@@ -92,7 +92,8 @@ class BasicSource(object):
         Spatial resolution of the destination NetCDF file, defaults to 0.25
         degree.
     dest_temp_res : string, optional
-        Temporal resolution of the destination NetCDF file, defaults to dekad.
+        Temporal resolution of the destination NetCDF file, possible values:
+        ('month', 'dekad'), defaults to dekad.
     dest_start_date : datetime.datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
 
@@ -139,7 +140,7 @@ class BasicSource(object):
     dest_sp_res : int, float
         Spatial resolution of the destination NetCDF file.
     dest_temp_res : string
-        Temporal resolution of the destination NetCDF file, defaults to dekad.
+        Temporal resolution of the destination NetCDF file.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
@@ -336,7 +337,7 @@ class BasicSource(object):
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)
 
-            if self.temp_res is 'dekad':
+            if self.temp_res == self.dest_temp_res:
                 filename = (region + '_' + str(self.dest_sp_res) + '_'
                             + str(self.dest_temp_res) + '.nc')
                 dfile = os.path.join(self.data_path, filename)
@@ -388,17 +389,9 @@ class BasicSource(object):
                 else:
                     begin = datetime.datetime(date.year, date.month, 21)
                 end = date
-                dat = date
             else:
-                if self.dest_temp_res == 'month':
-                    begin = period[0]
-                    end = date
-                else:
-                    begin = date
-                    end = date + datetime.timedelta(date.offset.delta.days - 1)
-                if end > period[1]:
-                    end = period[1]
-                dat = end
+                begin = period[0]
+                end = date
 
             data = {}
             metadata = {}
@@ -414,7 +407,7 @@ class BasicSource(object):
                         + str(self.dest_temp_res) + '.nc')
             dest_file = os.path.join(self.data_path, filename)
 
-            nt.save_image(data, dat, region, metadata, dest_file,
+            nt.save_image(data, date, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
                           self.dest_nan_value, shapefile, self.dest_temp_res)
 
@@ -484,7 +477,7 @@ class BasicSource(object):
             self._resample_spatial(region, begin, end, delete_rawdata,
                                    shapefile)
 
-            if self.temp_res is 'dekad':
+            if self.temp_res == self.dest_temp_res:
                 print '[INFO] skipping temporal resampling'
             else:
                 print '[INFO] performing temporal resampling ',
@@ -535,10 +528,7 @@ class BasicSource(object):
                 else:
                     start = date
 
-            if self.dest_temp_res in ['dekad', 'month', 'monthly']:
-                stop = date
-            else:
-                stop = date + datetime.timedelta(date.offset.delta.days - 1)
+            stop = date
 
             filecheck = self.download(download_path, start, stop)
             if filecheck is True:
@@ -615,6 +605,10 @@ class BasicSource(object):
         -------
         img : numpy.ndarray
             Image of selected date.
+        lon : numpy.array
+            Array with longitudes.
+        lat : numpy.array
+            Array with latitudes.
         """
 
         if region is None:
