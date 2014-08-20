@@ -12,7 +12,9 @@ Contents:
    :maxdepth: 4
    
    introduction.rst
-
+   examples.rst
+   
+   poets
 
 Indices and tables
 ==================

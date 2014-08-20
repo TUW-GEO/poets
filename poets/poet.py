@@ -80,13 +80,12 @@ class Poet(object):
     ----------
     rootpath : str
         path to the directory where data should be stored
-    regions : list of str, optional
-        Identifier of the region in the shapefile. If the default shapefile is
-        used, this would be the FIPS country code. Defaults to global.
-    spatial_resolution : float, optional
-        spatial resolution in degree, defaults to 0.25
+    regions : list of str
+        Identifier of the region in the shapefile.
+    spatial_resolution : float
+        Spatial resolution in degree.
     temporal_resolution : str
-        temporal resolution of the data
+        Temporal resolution of the data.
     tmp_path : str
         Path where temporary files and original files are stored and
         downloaded.
@@ -94,15 +93,14 @@ class Poet(object):
         Path where resampled NetCDF file is stored.
     nan_value : int
         NaN value to use, defaults to -99.
-    start_date : datetime.datetime, optional
-        First date of the dataset, defaults to 2000-01-01.
-    shapefile : str, optional
-        Path to shape file, uses "world country admin boundary shapefile" by
-        default.
+    start_date : datetime.datetime
+        First date of the dataset.
+    shapefile : str
+        Path to shape file.
     sources : dict of poets.io.BasicSource objects
         Sources used by poets given as BasicSource class.
-    delete_rawdata : bool, optional
-        Original files will be deleted from tmp_path if set True.
+    delete_rawdata : bool
+        Original files will be deleted from tmp_path if True.
     """
 
     def __init__(self, rootpath, regions=['global'],
