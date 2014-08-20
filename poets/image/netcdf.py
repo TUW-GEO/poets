@@ -173,13 +173,13 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
             else:
                 var = ncfile.variables[key]
 
-            if np.where(times[:] == numdate)[0].size > 0:
-                t_index = np.where(times[:] == numdate)[0][0]
-                var_index = t_index
+            if times.shape[0] == 0:
+                times[0] = numdate
+                var_index = 0
             else:
-                if times[:].size == 0:
-                    times[0] = numdate
-                    var_index = 0
+                if numdate in times[:]:
+                    t_index = np.where(times[:] == numdate)[0][0]
+                    var_index = t_index
                 else:
                     times[times[:].size] = numdate
                     var_index = times[:].size - 1
