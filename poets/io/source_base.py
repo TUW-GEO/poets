@@ -48,7 +48,6 @@ from poets.timedate.dekad import check_dekad
 
 
 class BasicSource(object):
-
     """Base Class for data sources.
 
     Parameters
@@ -81,7 +80,7 @@ class BasicSource(object):
     begin_date : datetime.date, optional
         Date from which on data is available, defaults to 2000-01-01.
     variables : list of strings, optional
-        Variables used from data source.
+        Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
         Nan value of the original data as given by the data provider.
     dest_nan_value : int, float, optional
@@ -146,7 +145,8 @@ class BasicSource(object):
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime.datetime(2000, 1, 1), variables=None,
+                 begin_date=datetime.datetime(2000, 1, 1),
+                 variables=['dataset'],
                  nan_value=None, dest_nan_value=-99, dest_regions=None,
                  dest_sp_res=0.25, dest_temp_res='dekad',
                  dest_start_date=datetime.datetime(2000, 1, 1)):

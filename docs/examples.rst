@@ -3,7 +3,7 @@ Examples
 ========
 
 Some notes before we start
---------------------------
+==========================
 This version of poets only supports resampling to a monthly or dekadal interval, with values at the period end.
 Dekadal resolution provides 3 values per month at day 10, day 20 and the last day of the month.
 

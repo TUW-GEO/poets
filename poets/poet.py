@@ -134,7 +134,7 @@ class Poet(object):
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
-                   variables=None, nan_value=None):
+                   variables=['dataset'], nan_value=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -165,7 +165,7 @@ class Poet(object):
         begin_date : datetime.date, optional
             Date from which on data is available, defaults to 2000-01-01.
         variables : list of strings, optional
-            Variables used from data source.
+            Variables used from data source, defaults to ['dataset'].
         nan_value : int, float, optional
             Nan value of the original data as given by the data provider.
         """

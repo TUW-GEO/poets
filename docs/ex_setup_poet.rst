@@ -40,11 +40,10 @@ In[2]::
    protocol = 'FTP'
    directory = "/gs/MOD11C1_D_LSTDA/"
    begin_date = datetime(2000, 1, 1)
-   variables = ['dataset']
    nan_value = 255
    
    # initializing the data source:
    p.add_source(name, filename, filedate, temp_res, host, protocol,
                 directory=directory, begin_date=begin_date,
-                variables=variables, nan_value=nan_value)
+                nan_value=nan_value)
 

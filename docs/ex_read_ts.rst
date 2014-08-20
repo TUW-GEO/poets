@@ -24,5 +24,6 @@ In[10]::
    ts.plot()
    plt.show()
 
+And this is how the result will look like:
 
 .. image:: images/read_ts_austria.png
