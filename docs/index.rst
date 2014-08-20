@@ -6,7 +6,8 @@
 Welcome to poets's documentation!
 =================================
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 4
@@ -17,7 +18,7 @@ Contents:
    poets
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
