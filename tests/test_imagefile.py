@@ -37,7 +37,6 @@ import os
 from poets.image.imagefile import bbox_img
 import numpy as np
 import numpy.testing as nptest
-from PIL import Image
 
 
 def curpath():
