@@ -29,45 +29,33 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-27
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-07-08
 
-import pandas as pd
-from datetime import datetime
-from poets.timedate.dekad import dekad_index
+import unittest
+from poets.shape.shapes import Shape
 
 
-def get_dtindex(interval, begin, end=None):
-    """Creates a pandas datetime index for a given interval.
+class Test(unittest.TestCase):
 
-    Parameters
-    ----------
-    interval : str or int
-        Interval of the datetime index. Integer values will be treated as days.
-    begin : datetime
-        Datetime index start date.
-    end : datetime, optional
-        Datetime index end date, defaults to current date.
+    def setUp(self):
+        self.region = 'AU'
+        self.name = 'Austria'
 
-    Returns
-    -------
-    dtindex : pandas.tseries.index.DatetimeIndex
-        Datetime index.
-    """
+    def tearDown(self):
+        pass
 
-    if end is None:
-        end = datetime.now()
+    def test_Shape(self):
 
-    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
-        dtindex = dekad_index(begin, end)
-    elif interval in ['daily', 'day', '1']:
-        dtindex = pd.date_range(begin, end, freq='D')
-    elif interval in ['weekly', 'week', '7']:
-        dtindex = pd.date_range(begin, end, freq='7D')
-    elif interval in ['monthly', 'month']:
-        dtindex = pd.date_range(begin, end, freq='M')
+        bbox = (9.5335693359375, 46.407493591308594, 17.166385650634766,
+                49.01874542236328)
 
-    if type(interval) is int:
-        dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
+        shp = Shape(self.region)
 
-    return dtindex
+        assert shp.code == self.region
+        assert shp.name == self.name
+        assert shp.bbox == bbox
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

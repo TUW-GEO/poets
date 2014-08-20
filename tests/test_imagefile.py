@@ -29,45 +29,53 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-27
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-08-14
 
-import pandas as pd
-from datetime import datetime
-from poets.timedate.dekad import dekad_index
+import unittest
+import os
+from poets.image.imagefile import bbox_img
+import numpy as np
+import numpy.testing as nptest
 
 
-def get_dtindex(interval, begin, end=None):
-    """Creates a pandas datetime index for a given interval.
+def curpath():
+    pth, _ = os.path.split(os.path.abspath(__file__))
+    return pth
 
-    Parameters
-    ----------
-    interval : str or int
-        Interval of the datetime index. Integer values will be treated as days.
-    begin : datetime
-        Datetime index start date.
-    end : datetime, optional
-        Datetime index end date, defaults to current date.
 
-    Returns
-    -------
-    dtindex : pandas.tseries.index.DatetimeIndex
-        Datetime index.
-    """
+class Test(unittest.TestCase):
 
-    if end is None:
-        end = datetime.now()
+    def setUp(self):
+        self.testfilename = os.path.join(curpath(), 'data', 'test.png')
+        self.region = 'NZ'
 
-    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
-        dtindex = dekad_index(begin, end)
-    elif interval in ['daily', 'day', '1']:
-        dtindex = pd.date_range(begin, end, freq='D')
-    elif interval in ['weekly', 'week', '7']:
-        dtindex = pd.date_range(begin, end, freq='7D')
-    elif interval in ['monthly', 'month']:
-        dtindex = pd.date_range(begin, end, freq='M')
+        self.lon = np.array([165., 166., 167., 168., 169., 170., 171., 172.,
+                             173., 174., 175., 176., 177., 178., 179., -180.,
+                             - 179., -178., -177., -176.])
 
-    if type(interval) is int:
-        dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
+        self.lat = np.array([-34., -35., -36., -37., -38., -39., -40., -41.,
+                             - 42., -43., -44., -45., -46., -47., -48., -49.,
+                             - 50., -51., -52.])
 
-    return dtindex
+    def tearDown(self):
+        pass
+
+    def test_bbox_img(self):
+
+        datamean = 244.88947368421051
+        datamin = 112
+        datamax = 255
+
+        data, lon_new, lat_new, _, _ = bbox_img(self.testfilename, self.region)
+
+        nptest.assert_array_equal(lon_new, self.lon)
+        nptest.assert_array_equal(lat_new, self.lat)
+        assert data['dataset'].mean() == datamean
+        assert data['dataset'].min() == datamin
+        assert data['dataset'].max() == datamax
+
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

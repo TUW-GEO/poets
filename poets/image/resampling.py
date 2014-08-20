@@ -2,6 +2,21 @@
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the Vienna University of Technology - Department of
+#   Geodesy and Geoinformation nor the names of its contributors may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,6 +43,9 @@ from poets.grid.grids import ShapeGrid, RegularGrid
 from pytesmo.grid import resample
 from shapely.geometry import Point
 from poets.image.imagefile import bbox_img
+
+imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
+                '.JPG', '.jpeg', '.JPEG', '.gif', '.GIF']
 
 
 def resample_to_shape(source_file, region, sp_res, prefix=None,
@@ -71,29 +89,27 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     if prefix is not None:
         prefix += '_'
 
+    _, fileExtension = os.path.splitext(source_file)
+
     if region == 'global':
         lon_min = -180
         lon_max = 180
         lat_min = -90
         lat_max = 90
+        grid = gr.RegularGrid(sp_res=sp_res)
     else:
         shp = Shape(region, shapefile)
         lon_min = shp.bbox[0]
         lon_max = shp.bbox[2]
         lat_min = shp.bbox[1]
         lat_max = shp.bbox[3]
-
-    shp = Shape(region, shapefile)
-
-    _, fileExtension = os.path.splitext(source_file)
-
-    lon_min, lat_min, lon_max, lat_max
+        grid = gr.ShapeGrid(region, sp_res, shapefile)
 
     if fileExtension in ['.nc', '.nc3', '.nc4']:
         data, src_lon, src_lat, timestamp, metadata = \
             nc.clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max)
 
-    elif fileExtension in ['.png', '.PNG', '.tif', '.tiff']:
+    elif fileExtension in imgfiletypes:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
                                                                region)
 
@@ -102,7 +118,6 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
             data[key] = np.ma.array(data[key], mask=(data[key] == 255))
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
-    grid = gr.ShapeGrid(region, sp_res, shapefile)
 
     lons = grid.arrlon[0:grid.shape[1]]
     dest_lon, dest_lat = np.meshgrid(lons, np.unique(grid.arrlat)[::-1])
@@ -110,26 +125,33 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),
                                      grid.arrlon.min(), grid.arrlon.max())
 
+    search_rad = 180000 * sp_res
+
     data = resample.resample_to_grid(data, src_lon, src_lat, dest_lon,
-                                     dest_lat)
+                                     dest_lat, search_rad=search_rad)
 
     mask = np.zeros(shape=grid.shape, dtype=np.bool)
 
-    poly = shp.polygon
+    if region != 'global':
+        poly = shp.polygon
 
-    for i in range(0, grid.shape[0]):
-        for j in range(0, grid.shape[1]):
-            p = Point(dest_lon[i][j], dest_lat[i][j])
-            if not p.within(poly):
-                mask[i][j] = True
-            if data[data.keys()[0]].mask[i][j]:
-                mask[i][j] = True
+        for i in range(0, grid.shape[0]):
+            for j in range(0, grid.shape[1]):
+                p = Point(dest_lon[i][j], dest_lat[i][j])
+                if not p.within(poly):
+                    mask[i][j] = True
+                if data[data.keys()[0]].mask[i][j]:
+                    mask[i][j] = True
 
     for key in data.keys():
         if prefix is None:
             var = key
         else:
             var = prefix + key
+
+        if region == 'global':
+            mask = data[key].mask
+
         if metadata is not None:
             metadata[var] = metadata[key]
             if var != key:

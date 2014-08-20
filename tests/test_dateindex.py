@@ -30,44 +30,57 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-27
+# Creation date: 2014-08-13
 
-import pandas as pd
+import unittest
 from datetime import datetime
-from poets.timedate.dekad import dekad_index
+from poets.timedate.dateindex import get_dtindex
 
 
-def get_dtindex(interval, begin, end=None):
-    """Creates a pandas datetime index for a given interval.
+class Test(unittest.TestCase):
 
-    Parameters
-    ----------
-    interval : str or int
-        Interval of the datetime index. Integer values will be treated as days.
-    begin : datetime
-        Datetime index start date.
-    end : datetime, optional
-        Datetime index end date, defaults to current date.
+    def setUp(self):
+        self.begin = datetime(2004, 2, 1)
+        self.end = datetime(2004, 3, 31)
 
-    Returns
-    -------
-    dtindex : pandas.tseries.index.DatetimeIndex
-        Datetime index.
-    """
+    def tearDown(self):
+        pass
 
-    if end is None:
-        end = datetime.now()
+    def test_get_dtindex(self):
 
-    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
-        dtindex = dekad_index(begin, end)
-    elif interval in ['daily', 'day', '1']:
-        dtindex = pd.date_range(begin, end, freq='D')
-    elif interval in ['weekly', 'week', '7']:
-        dtindex = pd.date_range(begin, end, freq='7D')
-    elif interval in ['monthly', 'month']:
-        dtindex = pd.date_range(begin, end, freq='M')
+        interval1 = 'dekad'
+        interval2 = 'day'
+        interval3 = 'week'
+        interval4 = 'month'
+        interval5 = 8
 
-    if type(interval) is int:
-        dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
+        dtindex1 = get_dtindex(interval1, self.begin, self.end)
+        dtindex2 = get_dtindex(interval2, self.begin, self.end)
+        dtindex3 = get_dtindex(interval3, self.begin, self.end)
+        dtindex4 = get_dtindex(interval4, self.begin, self.end)
+        dtindex5 = get_dtindex(interval5, self.begin, self.end)
 
-    return dtindex
+        assert dtindex1.size == 6
+        assert dtindex1[0] == datetime(2004, 2, 10)
+        assert dtindex1[-1] == datetime(2004, 3, 31)
+
+        assert dtindex2.size == 60
+        assert dtindex2[0] == datetime(2004, 2, 1)
+        assert dtindex2[-1] == datetime(2004, 3, 31)
+
+        assert dtindex3.size == 9
+        assert dtindex3[0] == datetime(2004, 2, 1)
+        assert dtindex3[-1] == datetime(2004, 3, 28)
+
+        assert dtindex4.size == 2
+        assert dtindex4[0] == datetime(2004, 2, 29)
+        assert dtindex4[-1] == datetime(2004, 3, 31)
+
+        assert dtindex5.size == 8
+        assert dtindex5[0] == datetime(2004, 2, 1)
+        assert dtindex5[-1] == datetime(2004, 3, 28)
+
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

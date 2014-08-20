@@ -29,45 +29,54 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-27
+# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
+# Creation date: 2014-07-07
 
-import pandas as pd
-from datetime import datetime
-from poets.timedate.dekad import dekad_index
+import unittest
+from poets.grid.grids import ShapeGrid, RegularGrid
 
 
-def get_dtindex(interval, begin, end=None):
-    """Creates a pandas datetime index for a given interval.
+class Test(unittest.TestCase):
 
-    Parameters
-    ----------
-    interval : str or int
-        Interval of the datetime index. Integer values will be treated as days.
-    begin : datetime
-        Datetime index start date.
-    end : datetime, optional
-        Datetime index end date, defaults to current date.
+    def setUp(self):
+        self.region = 'AU'
+        self.sp_res = 0.25
+        self.sp_res1 = 0.5
 
-    Returns
-    -------
-    dtindex : pandas.tseries.index.DatetimeIndex
-        Datetime index.
-    """
+    def tearDown(self):
+        pass
 
-    if end is None:
-        end = datetime.now()
+    def test_ShapeGrid(self):
+        points_number = 290
+        bbox = (46.625, 48.875, 9.875, 16.875)
+        cpoints_shape = (158, 2)
 
-    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
-        dtindex = dekad_index(begin, end)
-    elif interval in ['daily', 'day', '1']:
-        dtindex = pd.date_range(begin, end, freq='D')
-    elif interval in ['weekly', 'week', '7']:
-        dtindex = pd.date_range(begin, end, freq='7D')
-    elif interval in ['monthly', 'month']:
-        dtindex = pd.date_range(begin, end, freq='M')
+        cgrid = ShapeGrid(self.region, sp_res=self.sp_res)
+        grid_bbox = (cgrid.arrlat.min(), cgrid.arrlat.max(),
+                     cgrid.arrlon.min(), cgrid.arrlon.max())
 
-    if type(interval) is int:
-        dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
+        grid_points_number = cgrid.get_grid_points()[0].size
 
-    return dtindex
+        country_points_shape = cgrid.get_gridpoints().shape
+
+        assert points_number == grid_points_number
+        assert bbox == grid_bbox
+        assert cpoints_shape == country_points_shape
+
+    def test_RegularGrid(self):
+        points_number = 259200
+        bbox = (-89.75, 89.75, -179.75, 179.75)
+        grid_shape = (360, 720)
+
+        grid = RegularGrid(sp_res=self.sp_res1)
+
+        grid_bbox = (grid.arrlat.min(), grid.arrlat.max(),
+                     grid.arrlon.min(), grid.arrlon.max())
+
+        assert grid.get_grid_points()[0].size == points_number
+        assert grid_bbox == bbox
+        assert grid.shape == grid_shape
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()

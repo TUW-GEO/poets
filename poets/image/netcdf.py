@@ -2,6 +2,21 @@
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the Vienna University of Technology - Department of
+#   Geodesy and Geoinformation nor the names of its contributors may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -158,13 +173,13 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
             else:
                 var = ncfile.variables[key]
 
-            if np.where(times[:] == numdate)[0].size > 0:
-                t_index = np.where(times[:] == numdate)[0][0]
-                var_index = t_index
+            if times.shape[0] == 0:
+                times[0] = numdate
+                var_index = 0
             else:
-                if times[:].size == 0:
-                    times[0] = numdate
-                    var_index = 0
+                if numdate in times[:]:
+                    t_index = np.where(times[:] == numdate)[0][0]
+                    var_index = t_index
                 else:
                     times[times[:].size] = numdate
                     var_index = times[:].size - 1

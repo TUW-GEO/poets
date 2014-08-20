@@ -2,6 +2,21 @@
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the Vienna University of Technology - Department of
+#   Geodesy and Geoinformation nor the names of its contributors may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,7 +49,7 @@ def lonlat2px(img, lon, lat):
     Converts a pair of lon and lat to its corresponding pixel
     value in an image file.
 
-    Parameters:
+    Parameters
     ----------
     img : Image File, e.g. PNG, TIFF
         Input image file
@@ -43,7 +58,7 @@ def lonlat2px(img, lon, lat):
     lat : float
         Latitude
 
-    Returns:
+    Returns
     -------
     Row : float
         corresponding pixel value
@@ -66,7 +81,7 @@ def lonlat2px_rearr(img, lon, lat):
     Converts a pair of lon and lat to its corresponding pixel
     value in a rearranged image file (see rearrange_img).
 
-    Parameters:
+    Parameters
     ----------
     img : Image File, e.g. PNG, TIFF
         Input image file
@@ -75,7 +90,7 @@ def lonlat2px_rearr(img, lon, lat):
     lat : float
         Latitude
 
-    Returns:
+    Returns
     -------
     Row : float
         corresponding pixel value
@@ -102,8 +117,8 @@ def px2lonlat(img, lon_px, lat_px):
     Converts two arrays of row and column pixels into their
     corresponding lon and lat arrays
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     img : Image file
         Image which the pixel values refer to
     lon_px : np.array
@@ -111,8 +126,8 @@ def px2lonlat(img, lon_px, lat_px):
     lat_px : np.array
         array of row pixels
 
-    Returns:
-    --------
+    Returns
+    -------
     lon_new : np.array
         List of corresponding longitude values
     lat_new: np.array
@@ -140,8 +155,8 @@ def px2lonlat_rearr(img, lon_px, lat_px):
     Converts two arrays of row and column pixels into their
     corresponding lon and lat arrays
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     img : Image file
         Image which the pixel values refer to (rearranged image)
     lon_px : np.array
@@ -149,8 +164,8 @@ def px2lonlat_rearr(img, lon_px, lat_px):
     lat_px : np.array
         array of row pixels
 
-    Returns:
-    --------
+    Returns
+    -------
     lon_new : np.array
         List of corresponding longitude values
     lat_new: np.array
@@ -182,13 +197,13 @@ def rearrange_img(img):
     Used when area around the +- 180 degree Meridian is of interest
     (eastern Russia, Alaska, New Zealand...).
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     img : Image File, e.g. PNG, TIFF
         Image to be rearranged
 
-    Returns:
-    --------
+    Returns
+    -------
     img : Image file
         Rearranged image
     """
@@ -214,7 +229,7 @@ def dateline_country(country):
     Min and max longitude for countries that spread across the
     international dateline.
 
-    Returns:
+    Returns
     -------
     lon_min, lon_max : float
         Min and max longitude.
@@ -285,7 +300,7 @@ def bbox_img(source_file, region, shapefile=None):
         lon_min, lon_max = dateline_country(region)
 
     # get 2 pairs of points (upper left, lower right of bbox)
-    if d > 350 and region != 'AY':
+    if d > 350 and region not in ['AY', 'global']:
         orig_img = rearrange_img(orig_img)
         row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
         row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)

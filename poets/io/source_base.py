@@ -2,6 +2,21 @@
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the Vienna University of Technology - Department of
+#   Geodesy and Geoinformation nor the names of its contributors may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,13 +41,13 @@ import numpy as np
 import pandas as pd
 import poets.image.netcdf as nt
 from poets.image.resampling import resample_to_shape, average_layers
-from poets.io.download import download_http, download_ftp, download_sftp, get_file_date
+from poets.io.download import download_http, download_ftp, download_sftp, \
+    get_file_date
 import poets.timedate.dateindex as dt
 from poets.timedate.dekad import check_dekad
 
 
 class BasicSource(object):
-
     """Base Class for data sources.
 
     Parameters
@@ -65,7 +80,7 @@ class BasicSource(object):
     begin_date : datetime.date, optional
         Date from which on data is available, defaults to 2000-01-01.
     variables : list of strings, optional
-        Variables used from data source.
+        Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
         Nan value of the original data as given by the data provider.
     dest_nan_value : int, float, optional
@@ -76,7 +91,8 @@ class BasicSource(object):
         Spatial resolution of the destination NetCDF file, defaults to 0.25
         degree.
     dest_temp_res : string, optional
-        Temporal resolution of the destination NetCDF file, defaults to dekad.
+        Temporal resolution of the destination NetCDF file, possible values:
+        ('month', 'dekad'), defaults to dekad.
     dest_start_date : datetime.datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
 
@@ -123,13 +139,14 @@ class BasicSource(object):
     dest_sp_res : int, float
         Spatial resolution of the destination NetCDF file.
     dest_temp_res : string
-        Temporal resolution of the destination NetCDF file, defaults to dekad.
+        Temporal resolution of the destination NetCDF file.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime.datetime(2000, 1, 1), variables=None,
+                 begin_date=datetime.datetime(2000, 1, 1),
+                 variables=['dataset'],
                  nan_value=None, dest_nan_value=-99, dest_regions=None,
                  dest_sp_res=0.25, dest_temp_res='dekad',
                  dest_start_date=datetime.datetime(2000, 1, 1)):
@@ -182,7 +199,8 @@ class BasicSource(object):
 
         for region in self.dest_regions:
             nc_name = os.path.join(self.data_path, region + '_'
-                                   + str(self.dest_sp_res) + '.nc')
+                                   + str(self.dest_sp_res) + '_'
+                                   + str(self.dest_temp_res) + '.nc')
             if os.path.exists(nc_name):
                 dates[region] = {}
                 for var in self.variables:
@@ -268,7 +286,7 @@ class BasicSource(object):
             Path to the temporary direcotry
         """
         filename = ('_' + prefix + '_' + region + '_' + str(self.dest_sp_res)
-                    + '.nc')
+                    + '_' + str(self.dest_temp_res) + '.nc')
         return os.path.join(self.tmp_path, filename)
 
     def _resample_spatial(self, region, begin, end, delete_rawdata,
@@ -319,8 +337,9 @@ class BasicSource(object):
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)
 
-            if self.temp_res is 'dekad':
-                filename = region + '_' + str(self.dest_sp_res) + '.nc'
+            if self.temp_res == self.dest_temp_res:
+                filename = (region + '_' + str(self.dest_sp_res) + '_'
+                            + str(self.dest_temp_res) + '.nc')
                 dfile = os.path.join(self.data_path, filename)
                 nt.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
@@ -340,12 +359,12 @@ class BasicSource(object):
 
         Parameters:
         region : str
-            Identifier of the region in the shapefile. If the default shapefile is
-            used, this would be the FIPS country code.
+            Identifier of the region in the shapefile. If the default shapefile
+            is used, this would be the FIPS country code.
 
         shapefile : str, optional
-            Path to shape file, uses "world country admin boundary shapefile" by
-            default.
+            Path to shape file, uses "world country admin boundary shapefile"
+            by default.
         """
 
         src_file = self._get_tmp_filepath('spatial', region)
@@ -357,18 +376,22 @@ class BasicSource(object):
         data = {}
         variables, _, period = nt.get_properties(src_file)
 
-        if self.dest_temp_res is 'dekad':
-            dtindex = dt.dekad_index(period[0], end=period[1])
+        dtindex = dt.get_dtindex(self.dest_temp_res, period[0], period[1])
 
         for date in dtindex:
+            if date > period[1]:
+                continue
             print date
-            # print '.',
-            if date.day < 21:
-                begin = datetime.datetime(date.year, date.month,
-                                          date.day - 10 + 1)
+            if self.dest_temp_res == 'dekad':
+                if date.day < 21:
+                    begin = datetime.datetime(date.year, date.month,
+                                              date.day - 10 + 1)
+                else:
+                    begin = datetime.datetime(date.year, date.month, 21)
+                end = date
             else:
-                begin = datetime.datetime(date.year, date.month, 21)
-            end = date
+                begin = period[0]
+                end = date
 
             data = {}
             metadata = {}
@@ -380,12 +403,13 @@ class BasicSource(object):
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)
 
-            filename = region + '_' + str(self.dest_sp_res) + '.nc'
+            filename = (region + '_' + str(self.dest_sp_res) + '_'
+                        + str(self.dest_temp_res) + '.nc')
             dest_file = os.path.join(self.data_path, filename)
 
             nt.save_image(data, date, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
-                          self.dest_nan_value, shapefile)
+                          self.dest_nan_value, shapefile, self.dest_temp_res)
 
         # delete intermediate netCDF file
         print ''
@@ -453,7 +477,7 @@ class BasicSource(object):
             self._resample_spatial(region, begin, end, delete_rawdata,
                                    shapefile)
 
-            if self.temp_res is 'dekad':
+            if self.temp_res == self.dest_temp_res:
                 print '[INFO] skipping temporal resampling'
             else:
                 print '[INFO] performing temporal resampling ',
@@ -475,11 +499,9 @@ class BasicSource(object):
         delete_rawdata : bool, optional
             Original files will be deleted from tmp_path if set True
         shapefile : str, optional
-            Path to shape file, uses "world country admin boundary shapefile" by
-            default.
+            Path to shape file, uses "world country admin boundary shapefile"
+            by default.
         """
-
-        self._get_download_date()
 
         if begin is None:
             if self.dest_start_date < self.begin_date:
@@ -496,10 +518,16 @@ class BasicSource(object):
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
         for i, date in enumerate(drange):
+            if date > end:
+                continue
             if i == 0:
                 start = begin
             else:
-                start = drange[i - 1] + datetime.timedelta(days=1)
+                if self.dest_temp_res == 'dekad':
+                    start = drange[i - 1] + datetime.timedelta(days=1)
+                else:
+                    start = date
+
             stop = date
 
             filecheck = self.download(download_path, start, stop)
@@ -535,8 +563,8 @@ class BasicSource(object):
             variable = [variable]
 
         source_file = os.path.join(self.data_path,
-                                   region + '_' + str(self.dest_sp_res)
-                                   + '.nc')
+                                   region + '_' + str(self.dest_sp_res) + '_'
+                                   + str(self.dest_temp_res) + '.nc')
 
         var_dates = self._check_current_date()
 
@@ -558,13 +586,6 @@ class BasicSource(object):
                 df[ncvar] = np.NAN
                 for i in range(begin, end + 1):
                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
-#==============================================================================
-#                 values = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
-#                 df[ncvar][begin:end + 1] = values
-#
-# Replaces NAN value with np.NAN
-#                 df[ncvar][df[ncvar] == Settings.nan_value] = np.NAN
-#==============================================================================
 
         return df
 
@@ -584,6 +605,10 @@ class BasicSource(object):
         -------
         img : numpy.ndarray
             Image of selected date.
+        lon : numpy.array
+            Array with longitudes.
+        lat : numpy.array
+            Array with latitudes.
         """
 
         if region is None:
@@ -594,7 +619,7 @@ class BasicSource(object):
 
         source_file = os.path.join(self.data_path,
                                    region + '_' + str(self.dest_sp_res)
-                                   + '.nc')
+                                   + '_' + str(self.dest_temp_res) + '.nc')
 
         # get dekad of date:
         date = check_dekad(date)

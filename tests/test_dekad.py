@@ -30,44 +30,66 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-27
+# Creation date: 2014-08-13
 
-import pandas as pd
+import unittest
+import poets.timedate.dekad as dk
 from datetime import datetime
-from poets.timedate.dekad import dekad_index
 
 
-def get_dtindex(interval, begin, end=None):
-    """Creates a pandas datetime index for a given interval.
+class Test(unittest.TestCase):
 
-    Parameters
-    ----------
-    interval : str or int
-        Interval of the datetime index. Integer values will be treated as days.
-    begin : datetime
-        Datetime index start date.
-    end : datetime, optional
-        Datetime index end date, defaults to current date.
+    def setUp(self):
+        self.begin = datetime(2000, 1, 5)
+        self.end = datetime(2000, 3, 15)
 
-    Returns
-    -------
-    dtindex : pandas.tseries.index.DatetimeIndex
-        Datetime index.
-    """
+        self.date1 = datetime(2000, 2, 1)
+        self.date2 = datetime(2000, 2, 13)
+        self.date3 = datetime(2000, 2, 28)
 
-    if end is None:
-        end = datetime.now()
+    def tearDown(self):
+        pass
 
-    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
-        dtindex = dekad_index(begin, end)
-    elif interval in ['daily', 'day', '1']:
-        dtindex = pd.date_range(begin, end, freq='D')
-    elif interval in ['weekly', 'week', '7']:
-        dtindex = pd.date_range(begin, end, freq='7D')
-    elif interval in ['monthly', 'month']:
-        dtindex = pd.date_range(begin, end, freq='M')
+    def test_dekad_index(self):
+        firstdate = datetime(2000, 1, 10)
+        lastdate = datetime(2000, 3, 20)
+        items = 8
 
-    if type(interval) is int:
-        dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
+        dkindex = dk.dekad_index(self.begin, self.end)
 
-    return dtindex
+        assert dkindex[0] == firstdate
+        assert dkindex[-1] == lastdate
+        assert dkindex.size == items
+
+    def test_check_dekad(self):
+        dekad1 = dk.check_dekad(self.date1)
+        dekad2 = dk.check_dekad(self.date2)
+        dekad3 = dk.check_dekad(self.date3)
+
+        assert dekad1 == datetime(2000, 2, 10)
+        assert dekad2 == datetime(2000, 2, 20)
+        assert dekad3 == datetime(2000, 2, 29)
+
+    def test_dekad2day(self):
+
+        day = dk.dekad2day(2000, 2, 3)
+
+        assert day == 29
+
+    def test_day2dekad(self):
+
+        dekad = dk.day2dekad(29)
+
+        assert dekad == 3
+
+    def test_get_dekad_period(self):
+
+        dates = [self.date1, self.date2, self.date3]
+
+        periods = dk.get_dekad_period(dates)
+
+        assert periods == [4, 5, 6]
+
+if __name__ == "__main__":
+    # import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()
