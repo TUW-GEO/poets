@@ -32,19 +32,18 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-06-30
 
-import datetime
 import os
-
 from netCDF4 import Dataset, num2date, date2num
-
+from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import poets.image.netcdf as nt
+import poets.timedate.dateindex as dt
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date
-import poets.timedate.dateindex as dt
 from poets.timedate.dekad import check_dekad
+from poets.image.netcdf import get_properties
 
 
 class BasicSource(object):
@@ -77,7 +76,7 @@ class BasicSource(object):
     dirstruct : list of strings
         Structure of source directory, each list item represents a
         subdirectory.
-    begin_date : datetime.date, optional
+    begin_date : datetime, optional
         Date from which on data is available, defaults to 2000-01-01.
     variables : list of strings, optional
         Variables used from data source, defaults to ['dataset'].
@@ -93,7 +92,7 @@ class BasicSource(object):
     dest_temp_res : string, optional
         Temporal resolution of the destination NetCDF file, possible values:
         ('month', 'dekad'), defaults to dekad.
-    dest_start_date : datetime.datetime, optional
+    dest_start_date : datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
 
     Attributes
@@ -121,7 +120,7 @@ class BasicSource(object):
     dirstruct : list of strings
         Structure of source directory, each list item represents a
         subdirectory.
-    begin_date : datetime.date
+    begin_date : datetime
         Date from which on data is available.
     variables : list of strings
         Variables used from data source.
@@ -145,11 +144,11 @@ class BasicSource(object):
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime.datetime(2000, 1, 1),
-                 variables=['dataset'],
+                 begin_date=datetime(2000, 1, 1),
+                 variables=None,
                  nan_value=None, dest_nan_value=-99, dest_regions=None,
                  dest_sp_res=0.25, dest_temp_res='dekad',
-                 dest_start_date=datetime.datetime(2000, 1, 1)):
+                 dest_start_date=datetime(2000, 1, 1)):
 
         self.name = name
         self.filename = filename
@@ -203,47 +202,43 @@ class BasicSource(object):
                                    + str(self.dest_temp_res) + '.nc')
             if os.path.exists(nc_name):
                 dates[region] = {}
-                for var in self.variables:
-                    ncvar = self.name + '_' + var
-                    dates[region][var] = []
-                    with Dataset(nc_name, 'r', format='NETCDF4') as nc:
+
+                variables = self.get_variables()
+
+                with Dataset(nc_name, 'r', format='NETCDF4') as nc:
+                    for var in variables:
+                        dates[region][var] = []
                         if begin:
-                            # check first date of data
-                            if ncvar in nc.variables.keys():
-                                for i in range(0, nc.variables['time'].size - 1):
-                                    if nc.variables[ncvar][i].mask.min():
-                                        continue
-                                    else:
-                                        times = nc.variables['time']
-                                        dat = num2date(nc.variables['time'][i],
-                                                       units=times.units,
-                                                       calendar=times.calendar)
-                                        dates[region][var].append(dat)
-                                        break
-                            else:
-                                dates[region][var].append(None)
+                            for i in range(0, nc.variables['time'].size - 1):
+                                if nc.variables[var][i].mask.min():
+                                    continue
+                                else:
+                                    times = nc.variables['time']
+                                    dat = num2date(nc.variables['time'][i],
+                                                   units=times.units,
+                                                   calendar=times.calendar)
+                                    dates[region][var].append(dat)
+                                    break
                         else:
                             dates[region][var].append(None)
 
-                        if end is True:
-                            # check last date of data
-                            if ncvar in nc.variables.keys():
-                                for i in range(nc.variables['time'].size - 1,
-                                               - 1, -1):
-                                    if nc.variables[ncvar][i].mask.min():
-                                        continue
-                                    else:
-                                        times = nc.variables['time']
-                                        dat = num2date(nc.variables['time'][i],
-                                                       units=times.units,
-                                                       calendar=times.calendar)
-                                        dates[region][var].append(dat)
-                                        break
-                            else:
-                                dates[region][var].append(None)
+                        if end:
+                            for i in range(nc.variables['time'].size - 1,
+                                           - 1, -1):
+                                if nc.variables[var][i].mask.min():
+                                    continue
+                                else:
+                                    times = nc.variables['time']
+                                    dat = num2date(nc.variables['time'][i],
+                                                   units=times.units,
+                                                   calendar=times.calendar)
+                                    dates[region][var].append(dat)
+                                    break
                         else:
                             dates[region][var].append(None)
 
+                        if dates[region][var] in [[None], []]:
+                            dates[region][var] = [None, None]
             else:
                 dates = None
                 break
@@ -255,23 +250,29 @@ class BasicSource(object):
 
         Returns
         -------
-        begin : datetime.datetime
+        begin : datetime
             date from which to start the data download.
         """
+
         dates = self._check_current_date(begin=False)
+
         if dates is not None:
-            begin = datetime.datetime.now()
+            begin = datetime.now()
             for region in self.dest_regions:
-                for var in self.variables:
-                    if dates[region][var][1] is not None:
-                        if dates[region][var][1] < begin:
-                            begin = dates[region][var][1]
-                            begin += datetime.timedelta(days=1)
-                    else:
-                        if self.dest_start_date < self.begin_date:
-                            begin = self.begin_date
+                variables = self.get_variables()
+                if variables == []:
+                    begin = self.dest_start_date
+                else:
+                    for var in variables:
+                        if dates[region][var][1] is not None:
+                            if dates[region][var][1] < begin:
+                                begin = dates[region][var][1]
+                                begin += timedelta(days=1)
                         else:
-                            begin = self.dest_start_date
+                            if self.dest_start_date < self.begin_date:
+                                begin = self.begin_date
+                            else:
+                                begin = self.dest_start_date
         else:
             begin = self.begin_date
 
@@ -296,9 +297,9 @@ class BasicSource(object):
         Parameters:
         region : str
             FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
-        begin : datetime.datetime
+        begin : datetime
             Start date of resampling
-        end : datetime.datetime
+        end : datetime
             End date of resampling
         delete_rawdata : bool
             True if original downloaded files should be deleted after
@@ -326,13 +327,14 @@ class BasicSource(object):
             if end is not None:
                 if fdate > end:
                     continue
-            else:
-                print '.',
+
+            print '.',
 
             image, _, _, _, timestamp, metadata = \
                 resample_to_shape(src_file, region, self.dest_sp_res,
                                   self.name, self.nan_value,
-                                  self.dest_nan_value, shapefile)
+                                  self.dest_nan_value, self.variables,
+                                  shapefile)
 
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)
@@ -384,10 +386,10 @@ class BasicSource(object):
             print date
             if self.dest_temp_res == 'dekad':
                 if date.day < 21:
-                    begin = datetime.datetime(date.year, date.month,
+                    begin = datetime(date.year, date.month,
                                               date.day - 10 + 1)
                 else:
-                    begin = datetime.datetime(date.year, date.month, 21)
+                    begin = datetime(date.year, date.month, 21)
                 end = date
             else:
                 begin = period[0]
@@ -420,9 +422,9 @@ class BasicSource(object):
 
         Parameters
         ----------
-        begin : datetime.datetime, optional
+        begin : datetime, optional
             start date of download, default to None
-        end : datetime.datetime, optional
+        end : datetime, optional
             start date of download, default to None
         """
 
@@ -458,9 +460,9 @@ class BasicSource(object):
 
         Parameters
         ----------
-        begin : datetime.datetime
+        begin : datetime
             Start date of resampling.
-        end : datetime.datetime
+        end : datetime
             End date of resampling.
         delete_rawdata : bool
             Original files will be deleted from tmp_path if set 'True'.
@@ -513,7 +515,11 @@ class BasicSource(object):
                 begin = self._get_download_date()
 
         if end is None:
-            end = datetime.datetime.now()
+            end = datetime.now()
+
+        if begin > end:
+            print '[INFO] everything up to date'
+            return '[INFO] everything up to date'
 
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
@@ -524,7 +530,7 @@ class BasicSource(object):
                 start = begin
             else:
                 if self.dest_temp_res == 'dekad':
-                    start = drange[i - 1] + datetime.timedelta(days=1)
+                    start = drange[i - 1] + timedelta(days=1)
                 else:
                     start = date
 
@@ -558,7 +564,10 @@ class BasicSource(object):
             region = self.dest_regions[0]
 
         if variable is None:
-            variable = self.variables
+            if self.variables is None:
+                variable = self.get_variables()
+            else:
+                variable = self.variables
         else:
             variable = [variable]
 
@@ -582,7 +591,10 @@ class BasicSource(object):
                 end = np.where(dates == var_dates[region][var][1])[0][0]
 
                 # Renames variable name to SOURCE_variable
-                ncvar = self.name + '_' + var
+                if self.name not in var:
+                    ncvar = self.name + '_' + var
+                else:
+                    ncvar = var
                 df[ncvar] = np.NAN
                 for i in range(begin, end + 1):
                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
@@ -594,7 +606,7 @@ class BasicSource(object):
 
         Parameters
         ----------
-        date : datetime.datetime
+        date : datetime
             Date of the image.
         region : str, optional
             Region of interest, set to first defined region if not set.
@@ -615,7 +627,12 @@ class BasicSource(object):
             region = self.dest_regions[0]
 
         if variable is None:
-            variable = self.name + '_' + self.variables[0]
+            if self.variables is None:
+                variable = self.get_variables()[0]
+            else:
+                variable = self.name + '_' + self.variables[0]
+        else:
+            variable = self.name + '_' + variable
 
         source_file = os.path.join(self.data_path,
                                    region + '_' + str(self.dest_sp_res)
@@ -636,6 +653,30 @@ class BasicSource(object):
             lat = nc.variables['lat'][:]
 
         return img, lon, lat
+
+    def get_variables(self):
+        """
+        Gets all variables from source given in the NetCDF file.
+
+        Returns
+        -------
+        variables : list of str
+            Variables from source given in NetCDF file.
+        """
+
+        nc_name = os.path.join(self.data_path, self.dest_regions[0] + '_'
+                               + str(self.dest_sp_res) + '_'
+                               + str(self.dest_temp_res) + '.nc')
+
+        nc_vars, _, _ = get_properties(nc_name)
+
+        variables = []
+
+        for var in nc_vars:
+            if self.name in var:
+                variables.append(var)
+
+        return variables
 
 if __name__ == "__main__":
     pass
