@@ -134,7 +134,7 @@ class Poet(object):
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
-                   variables=['dataset'], nan_value=None):
+                   variables=None, nan_value=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -165,7 +165,7 @@ class Poet(object):
         begin_date : datetime.date, optional
             Date from which on data is available, defaults to 2000-01-01.
         variables : list of strings, optional
-            Variables used from data source, defaults to ['dataset'].
+            Variables used from data source.
         nan_value : int, float, optional
             Nan value of the original data as given by the data provider.
         """
@@ -248,6 +248,59 @@ class Poet(object):
                 gridpoints[region] = points
 
         return gridpoints
+
+    def read_image(self, date, region, source, variable):
+        """Gets images from netCDF file for certain date
+
+        Parameters
+        ----------
+        date : datetime
+            Date of the image.
+        region : str
+            Region of interest, set to first defined region if not set.
+        source : str
+            Data source from which image should be read.
+        variable : str
+            Variable to display.
+
+        Returns
+        -------
+        img : numpy.ndarray
+            Image of selected date.
+        lon : numpy.array
+            Array with longitudes.
+        lat : numpy.array
+            Array with latitudes.
+        """
+
+        img, lon, lat = self.sources[source].read_img(date, region, variable)
+
+        return img, lon, lat
+
+    def read_timeseries(self, region, gp, source, variable=None):
+        """
+        Gets timeseries from netCDF file for a gridpoint.
+
+        Parameters
+        ----------
+        region : str
+            Region of interest.
+        gp : int
+            Grid point index.
+        source : str
+            Data source from which time series should be read.
+        variable : str, optional
+            Variable to display, selects all available variables if None.
+
+        Returns
+        -------
+        ts : pd.DataFrame
+            Timeseries for the selected data.
+        """
+
+        ts = self.sources[source].read_ts(gp, region, variable)
+
+        return ts
 
 if __name__ == "__main__":
     pass
