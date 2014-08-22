@@ -76,6 +76,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
     interest_period : list of int, optional
         interest periods used to calculate drought index,
         defaults to [6, 12, 24]
+    scale_zero : boolean
+        Time series is shifted
     """
 
     ts_date = data.index
