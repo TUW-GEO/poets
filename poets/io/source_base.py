@@ -78,7 +78,7 @@ class BasicSource(object):
         subdirectory.
     begin_date : datetime, optional
         Date from which on data is available, defaults to 2000-01-01.
-    variables : list of strings, optional
+    variables : string or list of strings, optional
         Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
         Nan value of the original data as given by the data provider.
@@ -162,7 +162,10 @@ class BasicSource(object):
         self.directory = directory
         self.dirstruct = dirstruct
         self.begin_date = begin_date
-        self.variables = variables
+        if type(variables) == str:
+            self.variables = [variables]
+        else:
+            self.variables = variables
         self.nan_value = nan_value
         self.dest_nan_value = dest_nan_value
         self.dest_regions = dest_regions
@@ -345,7 +348,8 @@ class BasicSource(object):
                 dfile = os.path.join(self.data_path, filename)
                 nt.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
-                              self.dest_nan_value, shapefile)
+                              self.dest_nan_value, shapefile,
+                              self.dest_temp_res)
             else:
                 nt.write_tmp_file(image, timestamp, region, metadata,
                                   dest_file, self.dest_start_date,
@@ -587,14 +591,12 @@ class BasicSource(object):
             df = pd.DataFrame(index=pd.DatetimeIndex(dates))
 
             for var in variable:
-                begin = np.where(dates == var_dates[region][var][0])[0][0]
-                end = np.where(dates == var_dates[region][var][1])[0][0]
-
-                # Renames variable name to SOURCE_variable
                 if self.name not in var:
                     ncvar = self.name + '_' + var
                 else:
                     ncvar = var
+                begin = np.where(dates == var_dates[region][ncvar][0])[0][0]
+                end = np.where(dates == var_dates[region][ncvar][1])[0][0]
                 df[ncvar] = np.NAN
                 for i in range(begin, end + 1):
                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
@@ -632,7 +634,9 @@ class BasicSource(object):
             else:
                 variable = self.name + '_' + self.variables[0]
         else:
-            variable = self.name + '_' + variable
+            # Renames variable name to SOURCE_variable
+            if self.name not in variable:
+                variable = self.name + '_' + variable
 
         source_file = os.path.join(self.data_path,
                                    region + '_' + str(self.dest_sp_res)

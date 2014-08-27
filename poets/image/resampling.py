@@ -138,10 +138,10 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     res_data = {}
 
     for key in data.keys():
-
-        if (variables is not None) and (key not in variables):
-            del metadata[key]
-            continue
+        if variables is not None:
+            if key not in variables:
+                del metadata[key]
+                continue
 
         if region != 'global':
             poly = shp.polygon
@@ -168,6 +168,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
                 del metadata[key]
         res_data[var] = np.ma.masked_array(data[key], mask=mask,
                                            fill_value=dest_nan_value)
+
         dat = np.copy(res_data[var].data)
         dat[mask == True] = dest_nan_value
         res_data[var] = np.ma.masked_array(dat, mask=mask,

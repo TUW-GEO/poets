@@ -164,7 +164,7 @@ class Poet(object):
             subdirectory.
         begin_date : datetime.date, optional
             Date from which on data is available, defaults to 2000-01-01.
-        variables : list of strings, optional
+        variables : string or list of strings, optional
             Variables used from data source.
         nan_value : int, float, optional
             Nan value of the original data as given by the data provider.
