@@ -178,8 +178,7 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
                 var_index = 0
             else:
                 if numdate in times[:]:
-                    t_index = np.where(times[:] == numdate)[0][0]
-                    var_index = t_index
+                    var_index = np.where(times[:] == numdate)[0][0]
                 else:
                     times[times[:].size] = numdate
                     var_index = times[:].size - 1
