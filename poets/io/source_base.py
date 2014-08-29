@@ -129,8 +129,9 @@ class BasicSource(object):
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     tmp_path : str
-        Path where temporary files and original files are stored and
-        downloaded.
+        Path where temporary files are stored.
+    rawdata_path : str
+        Path where original files are stored.
     data_path : str
         Path where resampled NetCDF file is stored.
     dest_regions : list of str
@@ -172,7 +173,8 @@ class BasicSource(object):
         self.dest_sp_res = dest_sp_res
         self.dest_temp_res = dest_temp_res
         self.dest_start_date = dest_start_date
-        self.tmp_path = os.path.join(rootpath, 'TMP', name)
+        self.rawdata_path = os.path.join(rootpath, 'RAWDATA', name)
+        self.tmp_path = os.path.join(rootpath, 'TMP')
         self.data_path = os.path.join(rootpath, 'DATA')
 
         if self.host[-1] != '/':
@@ -314,12 +316,12 @@ class BasicSource(object):
         # filename if tmp file is used
         dest_file = self._get_tmp_filepath('spatial', region)
 
-        dirList = os.listdir(self.tmp_path)
+        dirList = os.listdir(self.rawdata_path)
         dirList.sort()
 
         for item in dirList:
 
-            src_file = os.path.join(self.tmp_path, item)
+            src_file = os.path.join(self.rawdata_path, item)
             raw_files.append(src_file)
 
             fdate = get_file_date(item, self.filedate)
@@ -356,8 +358,6 @@ class BasicSource(object):
                                   self.dest_sp_res, self.dest_nan_value,
                                   shapefile)
 
-            if delete_rawdata:
-                os.unlink(src_file)
         print ''
 
     def _resample_temporal(self, region, shapefile=None):
@@ -390,8 +390,7 @@ class BasicSource(object):
             print date
             if self.dest_temp_res == 'dekad':
                 if date.day < 21:
-                    begin = datetime(date.year, date.month,
-                                              date.day - 10 + 1)
+                    begin = datetime(date.year, date.month, date.day - 10 + 1)
                 else:
                     begin = datetime(date.year, date.month, 21)
                 end = date
@@ -439,16 +438,16 @@ class BasicSource(object):
                 begin = self.dest_start_date
 
         if self.protocol in ['HTTP', 'http']:
-            check = download_http(self.tmp_path, self.host,
+            check = download_http(self.rawdata_path, self.host,
                                   self.directory, self.filename, self.filedate,
                                   self.dirstruct, begin, end=end)
         elif self.protocol in ['FTP', 'ftp']:
-            check = download_ftp(self.tmp_path, self.host, self.directory,
+            check = download_ftp(self.rawdata_path, self.host, self.directory,
                                  self.port, self.username, self.password,
                                  self.filedate, self.dirstruct, begin, end=end)
 
         elif self.protocol in ['SFTP', 'sftp']:
-            check = download_sftp(self.tmp_path, self.host,
+            check = download_sftp(self.rawdata_path, self.host,
                                   self.directory, self.port, self.username,
                                   self.password, self.filedate, self.dirstruct,
                                   begin, end=end)
@@ -469,7 +468,7 @@ class BasicSource(object):
         end : datetime
             End date of resampling.
         delete_rawdata : bool
-            Original files will be deleted from tmp_path if set 'True'.
+            Original files will be deleted from rawdata_path if set 'True'.
         shapefile : str, optional
             Path to shape file, uses "world country admin boundary shapefile"
             by default.
@@ -489,6 +488,15 @@ class BasicSource(object):
                 print '[INFO] performing temporal resampling ',
                 self._resample_temporal(region, shapefile)
 
+        if delete_rawdata:
+            print '[INFO] Cleaning up rawdata'
+            dirList = os.listdir(self.rawdata_path)
+            dirList.sort()
+
+            for item in dirList:
+                src_file = os.path.join(self.rawdata_path, item)
+                os.unlink(src_file)
+
     def download_and_resample(self, download_path=None, begin=None, end=None,
                               delete_rawdata=False, shapefile=None):
         """Downloads and resamples data.
@@ -503,7 +511,7 @@ class BasicSource(object):
         end : datetime.date, optional
             set to today if none given
         delete_rawdata : bool, optional
-            Original files will be deleted from tmp_path if set True
+            Original files will be deleted from rawdata_path if set True
         shapefile : str, optional
             Path to shape file, uses "world country admin boundary shapefile"
             by default.

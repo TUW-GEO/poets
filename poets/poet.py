@@ -73,7 +73,7 @@ class Poet(object):
         Path to shape file, uses "world country admin boundary shapefile" by
         default.
     delete_rawdata : bool, optional
-        Original files will be deleted from tmp_path if set True. Defaults
+        Original files will be deleted from rawdata_path if set True. Defaults
         to False
 
     Attributes
@@ -86,11 +86,12 @@ class Poet(object):
         Spatial resolution in degree.
     temporal_resolution : str
         Temporal resolution of the data.
-    tmp_path : str
-        Path where temporary files and original files are stored and
-        downloaded.
     data_path : str
         Path where resampled NetCDF file is stored.
+    rawdata_path : str
+        Path where original files are stored and downloaded.
+    tmp_path : str
+        Path where temporary files are stored.
     nan_value : int
         NaN value to use, defaults to -99.
     start_date : datetime.datetime
@@ -100,7 +101,7 @@ class Poet(object):
     sources : dict of poets.io.BasicSource objects
         Sources used by poets given as BasicSource class.
     delete_rawdata : bool
-        Original files will be deleted from tmp_path if True.
+        Original files will be deleted from rawdata_path if True.
     """
 
     def __init__(self, rootpath, regions=['global'],
@@ -117,17 +118,19 @@ class Poet(object):
                              str(valid_temp_res))
 
         self.temporal_resolution = temporal_resolution
-        self.tmp_path = os.path.join(rootpath, 'TMP')
+        self.rawdata_path = os.path.join(rootpath, 'RAWDATA')
         self.data_path = os.path.join(rootpath, 'DATA')
+        self.tmp_path = os.path.join(rootpath, 'TMP')
         self.nan_value = nan_value
         self.start_date = start_date
         self.shapefile = shapefile
         self.delete_rawdata = delete_rawdata
         self.sources = {}
 
+        if not os.path.exists(self.rawdata_path):
+            os.mkdir(self.rawdata_path)
         if not os.path.exists(self.tmp_path):
             os.mkdir(self.tmp_path)
-
         if not os.path.exists(self.data_path):
             os.mkdir(self.data_path)
 
@@ -191,18 +194,19 @@ class Poet(object):
         end : datetime, optional
             End date of data to download, defaults to current datetime.
         delete_rawdata : bool, optional
-            Original files will be deleted from tmp_path if set True. Defaults
-            to delete_rawdata attribute as set in Poet class.
+            Original files will be deleted from rawdata_path if set True.
+            Defaults to value of delete_rawdata attribute as set in Poet class.
         """
 
-        if not delete_rawdata:
+        if delete_rawdata is None:
             delete_rawdata = self.delete_rawdata
 
         for source in self.sources.keys():
             src = self.sources[source]
             print '[INFO] Download data for source ' + source
             src.download_and_resample(begin=begin, end=end,
-                                      shapefile=self.shapefile)
+                                      shapefile=self.shapefile,
+                                      delete_rawdata=delete_rawdata)
 
         print '[SUCCESS] Download and resampling complete!'
 
