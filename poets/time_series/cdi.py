@@ -37,16 +37,17 @@ import numpy as np
 from poets.timedate.dekad import get_dekad_period
 
 
-def calc_CDI(data, weights):
+def calc_CDI(data, weights=None):
     """
     Calculates a weighted average over all columns of a pandas DataFrame.
 
     Parameters
     ----------
     data : pandas.DataFrame
-        Pandas DataFrame containing data to be averaged
-    weights : list of int
-        An list of weights associated with the values in data
+        Pandas DataFrame containing data to be averaged.
+    weights : list of int, optional
+        A list of weights associated with the values in data. Values will be
+        weighted equally if not given.
 
     Returns
     -------
@@ -56,7 +57,10 @@ def calc_CDI(data, weights):
     cols = data.keys()
     dat = np.array(data[cols])
     dat = np.ma.masked_invalid(dat)
-    avg = np.ma.average(dat, axis=1, weights=weights)
+    if weights is None:
+        avg = np.ma.average(dat, axis=1)
+    else:
+        avg = np.ma.average(dat, axis=1, weights=weights)
     df = pd.DataFrame(avg, columns=['CDI'], index=data.index)
 
     return df
@@ -64,7 +68,7 @@ def calc_CDI(data, weights):
 
 def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
     """
-    Calculates a Drought Index based on an algorythm developed by FAO SWALIM
+    Calculates a Drought Index based on an algorithm developed by FAO SWALIM.
 
     Parameters
     ----------
@@ -88,11 +92,9 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
 
         if parameter == 'precipitation':
             data['modf'] = data[var] + 1
-            data[parameter] = data[var]
             del data[var]
         elif parameter == 'temperature':
             data['modf'] = ((data[var].max() + 1) - data[var])
-            data[parameter] = data[var]
             del data[var]
         else:
             data['modf'] = data[var]
@@ -105,7 +107,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
         data['exc'] = np.choose((data['modf_avg'] / data['modf']) >= 1, [0, 1])
 
         # Run length
-        # Maximum number of successive dekads below long term average precipitation
+        # Maximum number of successive dekads below long term average
+        # precipitation
         rlen = lambda x: len(max((''.join(str(j) for j in map(int, x))).split('0')))
 
         for ip in interest_period:
@@ -148,7 +151,7 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
                  data['form' + str(ip)])
 
         # deletes not further relevant columns
-        del (data['period'], data['modf'], data[parameter], data['modf_avg'],
+        del (data['period'], data['modf'], data['modf_avg'],
              data['exc'])
 
     return data
