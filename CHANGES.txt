@@ -2,6 +2,6 @@ v0.1.0, 2014-08-18
 * Initial release.
 
 v0.2.0, 2014-XX-XX
-* Added time_series package with features such as deseasonalizing
 * Added methods to read images and time series directly from poets base class
+* Added time_series package with features such as deseasonalizing
 * Fixed bugs that occured on resampling
