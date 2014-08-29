@@ -253,19 +253,19 @@ class Poet(object):
 
         return gridpoints
 
-    def read_image(self, date, region, source, variable):
+    def read_image(self, source, date, region=None, variable=None):
         """Gets images from netCDF file for certain date
 
         Parameters
         ----------
         date : datetime
             Date of the image.
-        region : str
-            Region of interest, set to first defined region if not set.
         source : str
             Data source from which image should be read.
-        variable : str
-            Variable to display.
+        region : str, optional
+            Region of interest, set to first defined region if None.
+        variable : str, optional
+            Variable to display, set to first variable of source if None.
 
         Returns
         -------
@@ -281,21 +281,21 @@ class Poet(object):
 
         return img, lon, lat
 
-    def read_timeseries(self, region, location, source, variable=None):
+    def read_timeseries(self, source, location, region=None, variable=None):
         """
         Gets timeseries from netCDF file for a gridpoint.
 
         Parameters
         ----------
-        region : str
-            Region of interest.
+        source : str
+            Data source from which time series should be read.
         location : int or tuple of floats
             Either Grid point index as integer value or Longitude/Latitude
             given as tuple.
-        source : str
-            Data source from which time series should be read.
+        region : str, optional
+            Region of interest, set to first defined region if None.
         variable : str, optional
-            Variable to display, selects all available variables if None.
+            Variable to display, set to first variable of source if None.
 
         Returns
         -------
