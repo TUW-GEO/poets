@@ -1,2 +1,9 @@
 v0.1.0, 2014-08-18
 * Initial release.
+
+v0.2.0, 2014-08-29
+* Added methods to read images and time series directly from poets base class
+* Functions for reading time series are now callable with gridpoint index or
+longitude/latitude
+* Added time_series package with features such as deseasonalizing
+* Fixed bugs that occured on resampling

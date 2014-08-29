@@ -49,7 +49,8 @@ imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
 
 
 def resample_to_shape(source_file, region, sp_res, prefix=None,
-                      nan_value=None, dest_nan_value=None, shapefile=None):
+                      nan_value=None, dest_nan_value=None, variables=None,
+                      shapefile=None):
     """
     Resamples images and clips country boundaries
 
@@ -67,7 +68,9 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     nan_value : int, float, optional
         Not a number value of the original data as given by the data provider
     dest_nan_value : int or float, optional
-        NaN value used in the final NetCDF file
+        NaN value used in the final NetCDF file.
+    variables : list of str, optional
+        Variables to resample from original file.
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
         default.
@@ -115,7 +118,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
 
     if nan_value is not None:
         for key in data.keys():
-            data[key] = np.ma.array(data[key], mask=(data[key] == 255))
+            data[key] = np.ma.array(data[key], mask=(data[key] == nan_value))
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
 
@@ -132,18 +135,26 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
 
     mask = np.zeros(shape=grid.shape, dtype=np.bool)
 
-    if region != 'global':
-        poly = shp.polygon
-
-        for i in range(0, grid.shape[0]):
-            for j in range(0, grid.shape[1]):
-                p = Point(dest_lon[i][j], dest_lat[i][j])
-                if not p.within(poly):
-                    mask[i][j] = True
-                if data[data.keys()[0]].mask[i][j]:
-                    mask[i][j] = True
+    res_data = {}
 
     for key in data.keys():
+
+        if variables is not None:
+            if key not in variables:
+                del metadata[key]
+                continue
+
+        if region != 'global':
+            poly = shp.polygon
+
+            for i in range(0, grid.shape[0]):
+                for j in range(0, grid.shape[1]):
+                    p = Point(dest_lon[i][j], dest_lat[i][j])
+                    if not p.within(poly):
+                        mask[i][j] = True
+                    if data[key].mask[i][j]:
+                        mask[i][j] = True
+
         if prefix is None:
             var = key
         else:
@@ -156,16 +167,16 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
             metadata[var] = metadata[key]
             if var != key:
                 del metadata[key]
-        data[var] = np.ma.masked_array(data[key], mask=mask,
-                                       fill_value=dest_nan_value)
-        dat = np.copy(data[var].data)
-        dat[mask == True] = dest_nan_value
-        data[var] = np.ma.masked_array(dat, mask=mask,
-                                       fill_value=dest_nan_value)
-        if prefix is not None:
-            del data[key]
+        res_data[var] = np.ma.masked_array(data[key], mask=np.copy(mask),
+                                           fill_value=dest_nan_value)
 
-    return data, dest_lon, dest_lat, gpis, timestamp, metadata
+        dat = np.copy(res_data[var].data)
+        dat[mask == True] = dest_nan_value
+
+        res_data[var] = np.ma.masked_array(dat, mask=np.copy(mask),
+                                           fill_value=dest_nan_value)
+
+    return res_data, dest_lon, dest_lat, gpis, timestamp, metadata
 
 
 def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
