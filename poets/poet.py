@@ -281,7 +281,7 @@ class Poet(object):
 
         return img, lon, lat
 
-    def read_timeseries(self, region, gp, source, variable=None):
+    def read_timeseries(self, region, location, source, variable=None):
         """
         Gets timeseries from netCDF file for a gridpoint.
 
@@ -289,8 +289,9 @@ class Poet(object):
         ----------
         region : str
             Region of interest.
-        gp : int
-            Grid point index.
+        location : int or tuple of floats
+            Either Grid point index as integer value or Longitude/Latitude
+            given as tuple.
         source : str
             Data source from which time series should be read.
         variable : str, optional
@@ -302,7 +303,7 @@ class Poet(object):
             Timeseries for the selected data.
         """
 
-        ts = self.sources[source].read_ts(gp, region, variable)
+        ts = self.sources[source].read_ts(location, region, variable)
 
         return ts
 

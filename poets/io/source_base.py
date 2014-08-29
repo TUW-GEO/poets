@@ -44,6 +44,7 @@ from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date
 from poets.timedate.dekad import check_dekad
 from poets.image.netcdf import get_properties
+from poets.grid.grids import ShapeGrid, RegularGrid
 
 
 class BasicSource(object):
@@ -554,13 +555,14 @@ class BasicSource(object):
             else:
                 print '[WARNING] no data available for this date'
 
-    def read_ts(self, gp, region=None, variable=None):
+    def read_ts(self, location, region=None, variable=None):
         """Gets timeseries from netCDF file for a gridpoint.
 
         Parameters
         ----------
-        gp : int
-            Grid point index.
+        location : int or tuple of floats
+            Either Grid point index as integer value or Longitude/Latitude
+            given as tuple.
         region : str, optional
             Region of interest, set to first defined region if not set.
         variable : str, optional
@@ -574,6 +576,16 @@ class BasicSource(object):
 
         if region is None:
             region = self.dest_regions[0]
+
+        if type(location) is int:
+            gp = location
+        elif type(location) is tuple:
+            if region == 'global':
+                grid = RegularGrid(self.dest_sp_res)
+            else:
+                grid = ShapeGrid(region, self.dest_sp_res)
+
+            gp, _ = grid.find_nearest_gpi(location[0], location[1])
 
         if variable is None:
             if self.variables is None:
