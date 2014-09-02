@@ -43,6 +43,7 @@ from datetime import datetime
 from netCDF4 import Dataset
 from poets.io.source_base import BasicSource
 from poets.grid.grids import ShapeGrid
+import poets.web.app as web
 
 valid_temp_res = ['dekad', 'month']
 
@@ -306,6 +307,10 @@ class Poet(object):
         ts = self.sources[source].read_ts(location, region, variable)
 
         return ts
+
+    def webstart(self):
+
+        web.start(self)
 
 if __name__ == "__main__":
     pass
