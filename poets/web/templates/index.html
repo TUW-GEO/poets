@@ -2,13 +2,43 @@
 
 {% block body %}
 
+<!-- 
 <div class="row">
 	<div id='graph1' class="col-md-12" style="height:250px;">
 	</div>
 </div>
-
+ -->
+ 
 <p>
-    {{ sources }}
+
+<form class="form-inline" role="form">
+    <div class="form-group">
+        <label class="sr-only" for="region">Regions</label>
+        <select class="form-control" id="region">
+	        <option>REGION</option>
+		        {% for region in regions %}
+		          <option>{{ region }}</option>
+		        {% endfor %}
+		</select>
+	</div>
+	<div class="form-group">
+	    <label class="sr-only" for="source">Sources</label>
+	    <select class="form-control" id="source">
+	        <option>SOURCE</option>
+		    {% for source in sources %}
+			  <option>{{ source }}</option>
+			{% endfor %}
+	    </select>
+	</div>
+	<div class="form-group">
+		<label class="sr-only" for="dataset">Datasets</label>
+		<select class="form-control" id="dataset">
+		    <option>DATASETS</option>
+		    {% for var in variables %}
+		      <option>{{ var }}</option>
+		    {% endfor %}
+		</select>
+	</div>
 </p>
 
 

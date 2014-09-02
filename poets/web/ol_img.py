@@ -21,7 +21,7 @@ def curpath():
 # POETS SETTINGS
 spatial_resolution = 0.25
 temporal_resolution = 'dekad'
-rootpath = '/media/sf_D/TEST/poets'
+rootpath = '/home/thomas/Downloads/TEST'
 nan_value = -99
 start_date = datetime.datetime(2000, 1, 1)
 regions = ['MO']

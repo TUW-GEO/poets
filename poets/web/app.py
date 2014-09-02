@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 from flask import Flask, render_template, jsonify, request, views
 import datetime
 from poets.web.overlays import bounds
-from poets.poet import Poet
 from poets.timedate.dekad import dekad_index
 
 
@@ -31,17 +30,40 @@ def curpath():
     return pth
 
 
-def start(p):
+def start(regions, sources, variables):
 
     app = Flask(__name__, static_folder='static', static_url_path='/static',
                 template_folder="templates")
 
-    region = 'MO'
-    source = 'TAMSAT'
-    variable = 'TAMSAT_rfe'
+#==============================================================================
+#     @app.route('/<region>/<variable>')
+#     def index(**kwargs):
+#
+#         if 'region' in kwargs:
+#             region = kwargs['region']
+#         else:
+#             region = None
+#
+#         if 'variable' in kwargs:
+#             variable = None
+#
+#         # source_names = sources.keys()
+#         # return render_template('index.html', regions=regions, sources=source_names, variables=variables)
+#
+#         return region, variable
+#==============================================================================
+
+    # region = 'MO'
+    # source = 'TAMSAT'
+    # variable = 'TAMSAT_rfe'
     dest = os.path.join(curpath(), 'static')
 
-    ndate = p.sources[source]._check_current_date()
+    region = regions[0]
+    print region
+    source = sources['TAMSAT']
+    variable = 'TAMSAT_rfe'
+
+    ndate = source._check_current_date()
     begindate = ndate[region][variable][0]
     enddate = ndate[region][variable][1]
 
@@ -53,11 +75,10 @@ def start(p):
     vmax = 20
     cmap = 'jet_r'
 
-
     class ol_osm(views.MethodView):
         def get(self):
             lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
-            img, _, _ = p.read_image(source, enddate, region, variable)
+            img, _, _ = source.read_img(enddate, region, variable)
             filename = region + '_' + variable + '_' + str(idxdates) + '.png'
             filepath = os.path.join(dest, filename)
             plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
@@ -90,18 +111,19 @@ def start(p):
         filepath = os.path.join(dest, filename)
 
         if not os.path.isfile(os.path.join(filepath, filename)):
-            img, _, _ = p.read_image(source, pidx, region, variable)
+            img, _, _ = source.read_img(enddate, region, variable)
             plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
 
         path = '../static/' + filename
         return jsonify(rdat=path)
 
-    @app.route('/')
-    def index():
+    app.add_url_rule('/', view_func=ol_osm.as_view('main'),
+                     methods=['GET', 'POST'])
+    app.run(debug=True, use_debugger=True, use_reloader=True)
+    # app.run(debug=True)
 
-        return render_template('index.html', sources=sources)
-    app.run(debug=True)
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
+#==============================================================================
+# if __name__ == "__main__":
+#     app.run(debug=True)
+#==============================================================================

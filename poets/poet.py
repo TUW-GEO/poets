@@ -1,6 +1,7 @@
 # Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
+from poets.image.netcdf import get_properties
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -42,8 +43,9 @@ import pandas as pd
 from datetime import datetime
 from netCDF4 import Dataset
 from poets.io.source_base import BasicSource
+from poets.image.netcdf import get_properties
 from poets.grid.grids import ShapeGrid
-import poets.web.app as web
+import poets.web.app as app
 
 valid_temp_res = ['dekad', 'month']
 
@@ -308,9 +310,14 @@ class Poet(object):
 
         return ts
 
-    def webstart(self):
+    def app_start(self):
 
-        web.start(self)
+        src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
+                    '_' + str(self.temporal_resolution) + '.nc')
+
+        variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+
+        app.start(self.regions, self.sources, variables)
 
 if __name__ == "__main__":
     pass
