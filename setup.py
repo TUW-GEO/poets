@@ -61,8 +61,8 @@ else:
 
 setup(
     name='poets',
-    version='0.1.0',
-    url='http://rs.geo.tuwien.ac.at/tools/poets',
+    version='0.2.0',
+    url='http://rs.geo.tuwien.ac.at/poets',
     description='python Open Earth Observation Tools',
     long_description=open('README.rst').read(),
 
