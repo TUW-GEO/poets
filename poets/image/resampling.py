@@ -109,8 +109,9 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
         grid = gr.ShapeGrid(region, sp_res, shapefile)
 
     if fileExtension in ['.nc', '.nc3', '.nc4']:
-        data, src_lon, src_lat, timestamp, metadata = \
-            nc.clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max)
+        data_src, lon, lat, timestamp, metadata = nc.read_image(source_file)
+        data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
+                                               lat_min, lon_max, lat_max)
 
     elif fileExtension in imgfiletypes:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,

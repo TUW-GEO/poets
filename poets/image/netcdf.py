@@ -188,7 +188,7 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
                 var.setncatts(metadata[key])
 
 
-def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max):
+def read_image(source_file):
     """Clips bounding box out of netCDF file and returns data as numpy.ndarray
 
     Parameters
@@ -211,7 +211,7 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max):
     lon_new : numpy.array
         Longitudes of the clipped image.
     lat_new : numpy.array
-        Latgitudes of the clipped image.
+        Latitudes of the clipped image.
     timestamp : datetime.date
         Timestamp of image.
     metadata : dict of strings
@@ -239,28 +239,38 @@ def clip_bbox(source_file, lon_min, lat_min, lon_max, lat_max):
         if 'time' in variables:
             variables.remove('time')
 
-        lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
-        lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
-
-        lon_new = lon[lons.min():lons.max() + 1]
-        lat_new = lat[lats.min():lats.max() + 1]
-
         data = {}
         metadata = {}
 
         for var in variables:
             dat = nc.variables[var][:][0]
-            data[var] = dat[lats.min():lats.max() + 1,
-                            lons.min():lons.max() + 1]
+            data[var] = dat[:]
             metadata[var] = {}
             for attr in nc.variables[var].ncattrs():
                 if attr[0] != '_' and attr != 'scale_factor':
                     metadata[var][attr] = nc.variables[var].getncattr(attr)
 
-    return data, lon_new, lat_new, timestamp, metadata
+    return data, lon, lat, timestamp, metadata
 
 
-def read_image(source_file, variable, date, date_to=None):
+def clip_bbox(data, lon, lat, lon_min, lat_min, lon_max, lat_max):
+
+    lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
+    lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
+
+    lon_new = lon[lons.min():lons.max() + 1]
+    lat_new = lat[lats.min():lats.max() + 1]
+
+    data_new = {}
+
+    for var in data.keys():
+        data_new[var] = data[var][lats.min():lats.max() + 1,
+                        lons.min():lons.max() + 1]
+
+    return data_new, lon_new, lat_new
+
+
+def read_variable(source_file, variable, date, date_to=None):
     """Gets images from a netCDF file.
 
     Reads the image for a specific date. If date_to is given, it will return
