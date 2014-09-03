@@ -209,8 +209,9 @@ def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
     grid = ShapeGrid(region, sp_res, shapefile)
     gridpoints = grid.get_gridpoints()
 
-    data, lon, lat, _, _ = nc.clip_bbox(source_file, lon_min, lat_min, lon_max,
-                                        lat_max)
+    data, lon, lat, _, _ = nc.read_image(source_file)
+    data, lon, lat = nc.clip_bbox(data, lon, lat, lon_min, lat_min, lon_max,
+                                  lat_max)
 
     lon, lat = np.meshgrid(lon, lat)
 

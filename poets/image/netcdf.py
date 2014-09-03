@@ -189,29 +189,21 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
 
 
 def read_image(source_file):
-    """Clips bounding box out of netCDF file and returns data as numpy.ndarray
+    """Reads data out of netCDF file and returns it as numpy.ndarray
 
     Parameters
     ----------
     source_file : str
         Path to source file.
-    lon_min : float
-        Min longitude of bounding box.
-    lat_min : float
-        Min latitude of bounding box.
-    lon_max : float
-        Max longitude of bounding box.
-    lat_max : float
-        Max latitude of bounding box.
 
     Returns
     -------
     data : dict of numpy.arrays
-        Clipped image.
-    lon_new : numpy.array
-        Longitudes of the clipped image.
-    lat_new : numpy.array
-        Latitudes of the clipped image.
+        Source file.
+    lon : numpy.array
+        Longitudes of the source file.
+    lat : numpy.array
+        Latitudes of the source file.
     timestamp : datetime.date
         Timestamp of image.
     metadata : dict of strings
@@ -254,6 +246,34 @@ def read_image(source_file):
 
 
 def clip_bbox(data, lon, lat, lon_min, lat_min, lon_max, lat_max):
+    """Clips bounding box out of numpy.array and returns data as numpy.ndarray
+
+    Parameters
+    ----------
+    data : dict of numpy.arrays
+        Source file.
+    lon : numpy.array
+        Longitudes of source file
+    lat : numpy.array
+        Latitudes of source file
+    lon_min : float
+        Min longitude of bounding box.
+    lat_min : float
+        Min latitude of bounding box.
+    lon_max : float
+        Max longitude of bounding box.
+    lat_max : float
+        Max latitude of bounding box.
+
+    Returns
+    -------
+    data_new : dict of numpy.arrays
+        Clipped image.
+    lon_new : numpy.array
+        Longitudes of the clipped image.
+    lat_new : numpy.array
+        Latitudes of the clipped image.
+    """
 
     lons = np.where((lon >= lon_min) & (lon <= lon_max))[0]
     lats = np.where((lat >= lat_min) & (lat <= lat_max))[0]
