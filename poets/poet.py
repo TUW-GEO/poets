@@ -312,12 +312,16 @@ class Poet(object):
 
     def app_start(self):
 
-        src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
-                    '_' + str(self.temporal_resolution) + '.nc')
+#==============================================================================
+#         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
+#                     '_' + str(self.temporal_resolution) + '.nc')
+#
+#         variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+#
+#         app.start(self.regions, self.sources, variables)
+#==============================================================================
 
-        variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
-
-        app.start(self.regions, self.sources, variables)
+        app.start(self)
 
 if __name__ == "__main__":
     pass

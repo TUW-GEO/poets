@@ -22,7 +22,6 @@ $(function init() {
 	bounds.extend(new OpenLayers.LonLat{{ex1}}); 	// overlay image appears cutoff at the edges due to massive upscaling
 	bounds.extend(new OpenLayers.LonLat{{ex2}});	// referrencing image on it's center coord. possible
 	bounds.transform(proj4326, map.getProjectionObject());
-		
 	image = new OpenLayers.Layer.Image('IMAGE', "{{ovl}}", bounds, new OpenLayers.Size(3400, 1600), { 
 		'isBaseLayer': false,	// drawing overlay with the latest overlay image
 		'alwaysInRange': true,
@@ -44,7 +43,7 @@ $(function init() {
 					});
 		},
 		stop: function(event, ui) {	// on mouse up the tamsat layer gets redrawn with 'data.rdat'
-			$.getJSON('/_rdat', {
+			$.getJSON('/_rdat/{{region}}-{{source}}-{{variable}}', {
 			current: ui.value,
 			}, function (data) {
 			image.destroy();

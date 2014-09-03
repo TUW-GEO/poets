@@ -29,38 +29,29 @@ def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
     return pth
 
+dest = os.path.join(curpath(), 'static')
 
-def start(regions, sources, variables):
+app = Flask(__name__, static_folder='static', static_url_path='/static',
+            template_folder="templates")
 
-    app = Flask(__name__, static_folder='static', static_url_path='/static',
-                template_folder="templates")
 
-#==============================================================================
-#     @app.route('/<region>/<variable>')
-#     def index(**kwargs):
-#
-#         if 'region' in kwargs:
-#             region = kwargs['region']
-#         else:
-#             region = None
-#
-#         if 'variable' in kwargs:
-#             variable = None
-#
-#         # source_names = sources.keys()
-#         # return render_template('index.html', regions=regions, sources=source_names, variables=variables)
-#
-#         return region, variable
-#==============================================================================
+def start(poet):
 
-    # region = 'MO'
-    # source = 'TAMSAT'
-    # variable = 'TAMSAT_rfe'
-    dest = os.path.join(curpath(), 'static')
+    global regions
+    global sources
+    global region
+    global source
+    global variable
+    global enddate
+    global dates
+    global ndate
+    global idxdates
+    global vmin, vmax, cmap
 
-    region = regions[0]
-    print region
-    source = sources['TAMSAT']
+    regions = poet.regions
+    sources = poet.sources
+    region = poet.regions[0]
+    source = poet.sources['TAMSAT']
     variable = 'TAMSAT_rfe'
 
     ndate = source._check_current_date()
@@ -75,55 +66,70 @@ def start(regions, sources, variables):
     vmax = 20
     cmap = 'jet_r'
 
-    class ol_osm(views.MethodView):
-        def get(self):
-            lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
-            img, _, _ = source.read_img(enddate, region, variable)
-            filename = region + '_' + variable + '_' + str(idxdates) + '.png'
-            filepath = os.path.join(dest, filename)
-            plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
-
-            return render_template('images.html',
-                                   max=idxdates,
-                                   coord=[c_lon, c_lat],
-                                   zoom=zoom,  # depends on map div width,
-                                   ex1=(lon_max, lat_min),
-                                   ex2=(lon_min, lat_max),
-                                   ovl="../static/" + filename)
-
-
-    @app.route('/_pretty_date')
-    def pretty_date():
-        idx = request.args.get('current', 0, type=int)
-        min = request.args.get('min', 0, type=int)
-        max = request.args.get('max', idxdates, type=int)
-        pretty = (dates[idx].strftime('%Y-%m-%d'))
-        begin = (dates[min].strftime('%Y-%m-%d'))
-        end = (dates[max - 1].strftime('%Y-%m-%d'))
-        return jsonify(begin=begin, end=end, currentV=pretty)
-
-
-    @app.route('/_rdat')
-    def request_data():
-        idx = request.args.get('current', 0, type=int)
-        pidx = (dates[idx])
-        filename = region + '_' + variable + '_' + str(idx) + '.png'
-        filepath = os.path.join(dest, filename)
-
-        if not os.path.isfile(os.path.join(filepath, filename)):
-            img, _, _ = source.read_img(enddate, region, variable)
-            plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
-
-        path = '../static/' + filename
-        return jsonify(rdat=path)
-
-    app.add_url_rule('/', view_func=ol_osm.as_view('main'),
-                     methods=['GET', 'POST'])
     app.run(debug=True, use_debugger=True, use_reloader=True)
-    # app.run(debug=True)
 
 
-#==============================================================================
-# if __name__ == "__main__":
-#     app.run(debug=True)
-#==============================================================================
+@app.route('/<reg>-<src>-<var>', methods=['GET', 'POST'])
+def index(**kwargs):
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = sources[kwargs['src']]
+    if 'var' in kwargs:
+        variable = kwargs['var']
+
+    print region, source, variable
+
+    lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
+    img, _, _ = source.read_img(enddate, region, variable)
+    filename = region + '_' + variable + '_' + str(idxdates) + '.png'
+    filepath = os.path.join(dest, filename)
+    plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+
+    return render_template('images.html',
+                           max=idxdates,
+                           coord=[c_lon, c_lat],
+                           zoom=zoom,  # depends on map div width,
+                           ex1=(lon_max, lat_min),
+                           ex2=(lon_min, lat_max),
+                           ovl="../static/" + filename,
+                           region=region,
+                           source=source.name,
+                           variable=variable)
+
+
+@app.route('/_pretty_date')
+def pretty_date():
+    idx = request.args.get('current', 0, type=int)
+    min = request.args.get('min', 0, type=int)
+    max = request.args.get('max', idxdates, type=int)
+    pretty = (dates[idx].strftime('%Y-%m-%d'))
+    begin = (dates[min].strftime('%Y-%m-%d'))
+    end = (dates[max - 1].strftime('%Y-%m-%d'))
+    return jsonify(begin=begin, end=end, currentV=pretty)
+
+
+@app.route('/_rdat/<reg>-<src>-<var>')
+def request_data(**kwargs):
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = sources[kwargs['src']]
+    if 'var' in kwargs:
+        variable = kwargs['var']
+
+    print region, source, variable
+
+    idx = request.args.get('current', 0, type=int)
+    pidx = (dates[idx])
+    filename = region + '_' + variable + '_' + str(idx) + '.png'
+    filepath = os.path.join(dest, filename)
+
+    if not os.path.isfile(os.path.join(filepath, filename)):
+        img, _, _ = source.read_img(pidx, region, variable)
+        plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+
+    path = '../static/' + filename
+    return jsonify(rdat=path)
