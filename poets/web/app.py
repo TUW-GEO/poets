@@ -18,6 +18,7 @@
 # Creation date: 2014-05-26
 
 import os
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from flask import Flask, render_template, jsonify, request, views
 import datetime
@@ -79,13 +80,23 @@ def index(**kwargs):
     if 'var' in kwargs:
         variable = kwargs['var']
 
-    print region, source, variable
-
     lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
     img, _, _ = source.read_img(enddate, region, variable)
     filename = region + '_' + variable + '_' + str(idxdates) + '.png'
+    legendname = region + '_' + variable + '_legend.png'
     filepath = os.path.join(dest, filename)
-    plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+    legend = os.path.join(dest, legendname)
+    if source.valid_range is not None:
+        vmin = source.valid_range[0]
+        vmax = source.valid_range[1]
+        plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+        fig = plt.figure(figsize=(5, 0.5))
+        ax1 = fig.add_axes([0.05, 0.5, 0.9, 0.2])
+        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+        cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='horizontal')
+        plt.savefig(legend)
+    else:
+        plt.imsave(filepath, img, cmap=cmap)
 
     return render_template('images.html',
                            max=idxdates,
@@ -96,7 +107,8 @@ def index(**kwargs):
                            ovl="../static/" + filename,
                            region=region,
                            source=source.name,
-                           variable=variable)
+                           variable=variable,
+                           legend="../static/" + legendname)
 
 
 @app.route('/_pretty_date')
@@ -120,8 +132,6 @@ def request_data(**kwargs):
     if 'var' in kwargs:
         variable = kwargs['var']
 
-    print region, source, variable
-
     idx = request.args.get('current', 0, type=int)
     pidx = (dates[idx])
     filename = region + '_' + variable + '_' + str(idx) + '.png'
@@ -129,7 +139,12 @@ def request_data(**kwargs):
 
     if not os.path.isfile(os.path.join(filepath, filename)):
         img, _, _ = source.read_img(pidx, region, variable)
-        plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+        if source.valid_range is not None:
+            vmin = source.valid_range[0]
+            vmax = source.valid_range[1]
+            plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+        else:
+            plt.imsave(filepath, img, cmap=cmap)
 
     path = '../static/' + filename
     return jsonify(rdat=path)

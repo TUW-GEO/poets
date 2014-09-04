@@ -29,6 +29,8 @@ $(function init() {
 	});
 	map.addLayer(image);
 	
+	$("#legend").attr('src', '{{legend}}');
+	
 	var values = [0, {{max}}];
 	
 	$("#slider").slider({
@@ -62,11 +64,11 @@ $(function init() {
 
 
 </script>
-<h1>Image</h1>
 <div class="row">
 	<div id='map' class="col-md-12" style="height:640px;">
 	</div>
 </div>
+<div style="height:50px;"><img id='legend' src='' /></div>
 <br>
 <div class="row">
 	<div id="main" class="col-md-12"> <!--slider controls-->
