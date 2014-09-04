@@ -40,28 +40,12 @@ def start(poet):
 
     global regions
     global sources
-    global region
-    global source
-    global variable
-    global enddate
-    global dates
-    global ndate
-    global idxdates
+    global variables
     global vmin, vmax, cmap
 
     regions = poet.regions
     sources = poet.sources
-    region = poet.regions[0]
-    source = poet.sources['TAMSAT']
-    variable = 'TAMSAT_rfe'
-
-    ndate = source._check_current_date()
-    begindate = ndate[region][variable][0]
-    enddate = ndate[region][variable][1]
-
-    d = dekad_index(begindate, enddate)
-    dates = d.to_pydatetime()
-    idxdates = len(dates)
+    variables = poet.get_variables()
 
     vmin = 0
     vmax = 20
@@ -72,6 +56,11 @@ def start(poet):
 
 @app.route('/<reg>-<src>-<var>', methods=['GET', 'POST'])
 def index(**kwargs):
+    global enddate
+    global dates
+    global ndate
+    global idxdates
+    global dates
 
     if 'reg' in kwargs:
         region = kwargs['reg']
@@ -79,6 +68,16 @@ def index(**kwargs):
         source = sources[kwargs['src']]
     if 'var' in kwargs:
         variable = kwargs['var']
+
+    print variables
+
+    ndate = source._check_current_date()
+    begindate = ndate[region][variable][0]
+    enddate = ndate[region][variable][1]
+
+    d = dekad_index(begindate, enddate)
+    dates = d.to_pydatetime()
+    idxdates = len(dates)
 
     lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
     img, _, _ = source.read_img(enddate, region, variable)
@@ -90,10 +89,12 @@ def index(**kwargs):
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
         plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
-        fig = plt.figure(figsize=(5, 0.5))
-        ax1 = fig.add_axes([0.05, 0.5, 0.9, 0.2])
+
+        fig = plt.figure(figsize=(5, 0.8))
+        ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
         norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
         cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='horizontal')
+        # cb1.set_label('unit', fontsize=10)
         plt.savefig(legend)
     else:
         plt.imsave(filepath, img, cmap=cmap)
@@ -105,10 +106,12 @@ def index(**kwargs):
                            ex1=(lon_max, lat_min),
                            ex2=(lon_min, lat_max),
                            ovl="../static/" + filename,
+                           legend="../static/" + legendname,
                            region=region,
                            source=source.name,
                            variable=variable,
-                           legend="../static/" + legendname)
+                           regions=regions,
+                           variables=variables)
 
 
 @app.route('/_pretty_date')

@@ -140,7 +140,8 @@ class Poet(object):
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
-                   variables=None, nan_value=None, valid_range=None):
+                   variables=None, nan_value=None, valid_range=None,
+                   unit=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -311,6 +312,15 @@ class Poet(object):
         ts = self.sources[source].read_ts(location, region, variable)
 
         return ts
+
+    def get_variables(self):
+
+        src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
+                    '_' + str(self.temporal_resolution) + '.nc')
+
+        variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+
+        return variables
 
     def app_start(self):
 

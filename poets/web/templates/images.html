@@ -64,11 +64,47 @@ $(function init() {
 
 
 </script>
+<div class="jumbotron">
+	<form class="form-inline" role="form">
+	    <div class="form-group">
+	        <label class="sr-only" for="region">Regions</label>
+	        <select class="form-control" id="region">
+		        <option>REGION</option>
+			        {% for reg in regions %}
+			          <option>{{ reg }}</option>
+			        {% endfor %}
+			</select>
+		</div>
+		<div class="form-group">
+			<label class="sr-only" for="dataset">Datasets</label>
+			<select class="form-control" id="dataset">
+			    <option>DATASETS</option>
+			    {% for var in variables %}
+			      <option>{{ var }}</option>
+			    {% endfor %}
+			</select>
+		</div>
+		<a href='/' class='btn btn-primary'>GO</a>
+	</form>
+</div>
+
+<ul>
+{% for reg in regions %}
+  <li><a href='/{{ reg }}-{{ source }}-{{ variable }}'>{{ reg }}</a></li>
+{% endfor %}
+</ul>
+
+<ul>
+{% for var in variables %}
+  <li><a href='/{{ region }}-{{ source }}-{{ var }}'>{{ var }}</a></li>
+{% endfor %}
+</ul>
+
 <div class="row">
 	<div id='map' class="col-md-12" style="height:640px;">
 	</div>
 </div>
-<div style="height:50px;"><img id='legend' src='' /></div>
+<div><img id='legend' src='' /></div>
 <br>
 <div class="row">
 	<div id="main" class="col-md-12"> <!--slider controls-->
