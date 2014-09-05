@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>[poets] Web Interface {% block title %}{% endblock %}</title>
+    <title>Web Interface {% block title %}{% endblock %}</title>
 
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
@@ -36,7 +36,10 @@
 	          <span class="icon-bar"></span>
 	          <span class="icon-bar"></span>
 	        </button>
-	        <a class="navbar-brand" href="#">[poets] Data Viewer</a>
+	        <a class="navbar-brand" rel="home" href="#" title="poets°">
+                <img style="max-width:100px; margin-top: -7px;"
+                     src="{{ url_for('static', filename='poets_logo_white_32.png') }}">
+            </a>
 	      </div>
 	      <div class="collapse navbar-collapse">
 	        <ul class="nav navbar-nav">

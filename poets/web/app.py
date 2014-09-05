@@ -25,6 +25,7 @@ from flask import Flask, render_template, jsonify, request
 from poets.web.overlays import bounds
 from poets.timedate.dekad import dekad_index
 
+mpl.use('Agg')
 
 def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
