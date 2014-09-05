@@ -1,0 +1,200 @@
+{% extends "layout_ol.html" %}
+
+{% block body %}
+
+<script>
+$(function init() {
+	
+	var opacity = 0.75
+	
+	proj4326 = new OpenLayers.Projection("EPSG:4326");
+		
+	gphy = new OpenLayers.Layer.Google("Google Physical", {
+		type: google.maps.MapTypeId.TERRAIN
+	});
+	osm = new OpenLayers.Layer.OSM("openstreetmap");
+	map = new OpenLayers.Map("map");
+	map.addControl(new OpenLayers.Control.LayerSwitcher());
+	map.addLayers([osm, gphy]);
+	map.setCenter(new OpenLayers.LonLat({{coord}}).transform(proj4326, map.getProjectionObject()), {{zoom}});
+
+	bounds = new OpenLayers.Bounds(); 				// bounding box for the overlay:
+	bounds.extend(new OpenLayers.LonLat{{ex1}}); 	// overlay image appears cutoff at the edges due to massive upscaling
+	bounds.extend(new OpenLayers.LonLat{{ex2}});	// referrencing image on it's center coord. possible
+	bounds.transform(proj4326, map.getProjectionObject());
+	image = new OpenLayers.Layer.Image('IMAGE', "{{ovl}}", bounds, new OpenLayers.Size(3400, 1600), { 
+		'isBaseLayer': false,	// drawing overlay with the latest overlay image
+		'alwaysInRange': true,
+		'opacity' : opacity
+	});
+	map.addLayer(image);
+	
+	$("#legend").attr('src', '{{legend}}');
+	initLink();
+	enableGo();
+	
+	var values = [0, {{max}}];
+	
+	enableButtons({{max}});
+	
+	$("#slider").slider({
+		formater: function(value) {
+			$("#dateSelect").prop("selectedIndex", value);
+			return $("#dateSelect option[value='"+$("#dateSelect").val()+"']").text();
+		},
+		min: values[0],
+		max: values[1],
+		value: values[1]
+				
+	})
+	.on('slideStop', function(ev){
+		val = $('#slider').val()
+		loadImg(val);
+		enableButtons(val);
+    });
+	
+	$("#btn-prev").click(function(){
+		val = parseInt($('#dateSelect').val())-1;
+		$('#slider').val(val);
+		$('#slider').slider({value:val});
+		$("#dateSelect").prop("selectedIndex", val); 
+		loadImg($('#slider').val());
+		enableButtons(val);
+        sliderPos(val);
+	});
+	
+	$("#btn-next").click(function(){
+        val = parseInt($('#dateSelect').val())+1;
+        $('#slider').val(val);
+        $('#slider').slider({value:val});
+        $("#dateSelect").prop("selectedIndex", val);
+        loadImg($('#slider').val());
+        enableButtons(val);
+        sliderPos(val);
+    });
+	
+	$("#dateSelect").change(function() {
+		val = $("#dateSelect").val();
+		loadImg(val);
+		enableButtons(val);
+		sliderPos(val);
+	});
+	
+	function enableButtons(date) {
+		if (date == {{max}}) {
+            $("#btn-next").attr('disabled', 'disabled');
+        } else {
+            $("#btn-next").removeAttr('disabled');
+        }
+        if (date==0) {
+            $("#btn-prev").attr('disabled', 'disabled');
+        } else {
+            $("#btn-prev").removeAttr('disabled');
+        }
+	}
+	
+	function sliderPos(date) {
+		$("#slider").slider('setValue', date)
+	}
+	
+	function loadImg(date) {
+		$.getJSON('/_rdat/{{region}}-{{source}}-{{variable}}', {
+            current: date,
+            }, function (data) {
+            image.destroy();
+            image = new OpenLayers.Layer.Image('IMAGE', data.rdat, bounds, new OpenLayers.Size(3400, 1600), {
+                'isBaseLayer': false,
+                'alwaysInRange': true,
+                'opacity' : opacity
+                });
+            map.addLayer(image);
+            });
+	}
+	
+	function initLink() {
+		sel_reg = $("#region").val()
+		sel_var = $("#dataset").val()
+		link = "/"+sel_reg+"-"+sel_var
+		$("#go").attr('href', link);
+	}
+	   
+    $("#region").change(function() {
+        initLink();
+        enableGo();
+    });
+    $("#dataset").change(function() {
+        initLink();
+        enableGo();
+    });
+    
+    function enableGo() {
+        if ($("#region").val() == '') {
+            $("#go").attr('disabled', 'disabled');
+        }
+        else if ($("#dataset").val() == '') {
+            $("#go").attr('disabled', 'disabled');
+        } else {
+            $("#go").removeAttr('disabled');
+        }
+    }
+});
+
+
+</script>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <form class="form-inline" role="form">
+        <div class="form-group">
+            <label class="sr-only" for="region">Regions</label>
+            <select class="form-control" id="region">
+                <option value=''>REGION</option>
+                    {% for reg in regions %}
+                      {% set checked = '' %}
+                      {% if reg == region %}
+                        {% set checked = 'selected="selected"' %}
+                      {% endif %}
+                      <option value="{{ reg }}" {{ checked }}>{{ reg }}</option>
+                    {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="sr-only" for="dataset">Datasets</label>
+            <select class="form-control" id="dataset">
+                <option value=''>DATASET</option>
+                {% for var in variables %}
+                  {% set checked = '' %}
+                  {% if var == variable %}
+                    {% set checked = 'selected="selected"' %}
+                  {% endif %}
+                  <option value="{{ var }}" {{ checked }}>{{ var }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
+    </form>
+  </div>
+  
+  <div class="panel-body">
+    <div id='map' style="height:640px;" ></div>
+    <div style="position:relative;"><img id='legend' src='' /></div>
+  </div>
+  
+  <div class="panel-footer" align="center">
+    <input type="text" style="width:100%;" id="slider">
+    <form class="form-inline" role="form" style="margin-top:8px;">
+        <button type="button" class="btn btn-default" id="btn-prev">
+           <span class="glyphicon glyphicon-chevron-left"></span>
+         </button>
+         <select id="dateSelect" class="form-control">
+              {% for dat in dates %}
+                  <option value="{{ dat['id'] }}">{{ dat['date'] }}</option>
+              {% endfor %}
+         </select>
+         <button type="button" class="btn btn-default" id="btn-next">
+           <span class="glyphicon glyphicon-chevron-right"></span>
+         </button>
+      </form>
+  </div>
+
+{% endblock %}

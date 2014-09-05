@@ -8,39 +8,70 @@
 	</div>
 </div>
  -->
- 
-<p>
+<script>
+$(function init() {
+	
+	enableGo();
+	
+    function initLink() {
+        sel_reg = $("#region").val();
+        sel_var = $("#dataset").val();
+        link = "/"+sel_reg+"-"+sel_var
+        $("#go").attr('href', link);
+    }
+    
+    $("#region").change(function() {
+        initLink();
+        enableGo();
+    });
+    $("#dataset").change(function() {
+        initLink();
+        enableGo();
+    });
+    
+    function enableGo() {
+        if ($("#region").val() == '') {
+            $("#go").attr('disabled', 'disabled');
+        }
+        else if ($("#dataset").val() == '') {
+        	$("#go").attr('disabled', 'disabled');
+        } else {
+            $("#go").removeAttr('disabled');
+        }
+    }
+    
+});
+</script>
 
-<form class="form-inline" role="form">
-    <div class="form-group">
-        <label class="sr-only" for="region">Regions</label>
-        <select class="form-control" id="region">
-	        <option>REGION</option>
-		        {% for region in regions %}
-		          <option>{{ region }}</option>
-		        {% endfor %}
-		</select>
-	</div>
-	<div class="form-group">
-	    <label class="sr-only" for="source">Sources</label>
-	    <select class="form-control" id="source">
-	        <option>SOURCE</option>
-		    {% for source in sources %}
-			  <option>{{ source }}</option>
-			{% endfor %}
-	    </select>
-	</div>
-	<div class="form-group">
-		<label class="sr-only" for="dataset">Datasets</label>
-		<select class="form-control" id="dataset">
-		    <option>DATASETS</option>
-		    {% for var in variables %}
-		      <option>{{ var }}</option>
-		    {% endfor %}
-		</select>
-	</div>
-</form>
-</p>
+<style type="text/css">
+
+</style>
+
+<div class="jumbotron" align="center">
+    <h2>Welcome to the poets dataviewer!</h2>
+    <p>Select a Region and Datataset to start...</p>
+	<form class="form-inline" role="form">
+	    <div class="form-group">
+	        <label class="sr-only" for="region">Regions</label>
+	        <select class="form-control" id="region">
+		        <option value=''>REGION</option>
+			        {% for region in regions %}
+			          <option value="{{ region }}" >{{ region }}</option>
+			        {% endfor %}
+			</select>
+		</div>
+		<div class="form-group">
+			<label class="sr-only" for="dataset">Datasets</label>
+			<select class="form-control" id="dataset">
+			    <option value=''>DATASETS</option>
+			    {% for var in variables %}
+			      <option value="{{ var }}" >{{ var }}</option>
+			    {% endfor %}
+			</select>
+		</div>
+		<a href='' class='btn btn-primary btn-lg' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
+	</form>
+</div>
 
 
 
