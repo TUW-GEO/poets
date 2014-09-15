@@ -322,7 +322,7 @@ class Poet(object):
 
         return variables
 
-    def app_start(self):
+    def start_app(self):
 
 #==============================================================================
 #         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +

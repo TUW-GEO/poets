@@ -19,17 +19,33 @@
 
 import os
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from flask import Flask, render_template, jsonify, request
 from poets.web.overlays import bounds
 from poets.timedate.dekad import dekad_index
 
-mpl.use('Agg')
 
 def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
     return pth
+
+
+def to_dygraph_format(self):
+    labels = ['date']
+    labels.extend(self.columns.values.tolist())
+    data_values = np.hsplit(self.values, self.columns.values.size)
+    data_index = self.index.values.astype('M8[s]').tolist()
+    data_index = [x.strftime("%Y/%m/%d %H:%M:%S") for x in data_index]
+    data_index = np.reshape(data_index, (len(data_index), 1))
+    data_values.insert(0, data_index)
+    data_values = np.column_stack(data_values)
+
+    return labels, data_values.tolist()
+
+pd.DataFrame.to_dygraph_format = to_dygraph_format
 
 dest = os.path.join(curpath(), 'static', 'temp')
 
@@ -50,7 +66,7 @@ def start(poet):
 
     vmin = 0
     vmax = 20
-    cmap = 'jet_r'
+    cmap = 'jet'
 
     app.run(debug=True, use_debugger=True, use_reloader=True)
 
@@ -156,3 +172,26 @@ def request_data(**kwargs):
 
     path = '../static/temp/' + filename
     return jsonify(rdat=path)
+
+
+@app.route('/_ts/<reg>&<src>&<var>&<loc>')
+def get_ts(**kwargs):
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = sources[kwargs['src']]
+    if 'var' in kwargs:
+        variable = kwargs['var']
+    if 'loc' in kwargs:
+        loc = kwargs['loc']
+
+    loc = loc.split(',')
+    lonlat = (float(loc[0]), float(loc[1]))
+
+    ts = source.read_ts(lonlat, region, variable)
+
+    labels, values = ts.to_dygraph_format()
+    data = {'labels': labels, 'data': values}
+
+    return jsonify(data)

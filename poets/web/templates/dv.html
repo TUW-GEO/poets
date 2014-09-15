@@ -3,7 +3,9 @@
 {% block body %}
 
 <script>
-$(function init() {
+$(document).ready(function () {
+	
+	ts = new poetsViewer();
 	
 	var opacity = 0.75
 	
@@ -27,7 +29,23 @@ $(function init() {
 		'alwaysInRange': true,
 		'opacity' : opacity
 	});
+	
 	map.addLayer(image);
+	
+	var markers = new OpenLayers.Layer.Markers("Markers");
+	map.addLayer(markers);
+	
+	map.events.register("click", map, function(e) {
+		
+		var lonlat = map.getLonLatFromViewPortPx(e.xy);
+		var lonlat_o = map.getLonLatFromViewPortPx(e.xy);
+		lonlat = lonlat.transform(map.getProjectionObject(), proj4326);
+		
+		markers.clearMarkers()
+		var marker = new OpenLayers.Marker(lonlat_o);
+        markers.addMarker(marker);
+        ts.loadTS(lonlat.lon, lonlat.lat);
+	});
 	
 	$("#legend").attr('src', '{{legend}}');
 	initLink();
@@ -102,6 +120,7 @@ $(function init() {
             current: date,
             }, function (data) {
             image.destroy();
+            markers.destroy();
             image = new OpenLayers.Layer.Image('IMAGE', data.rdat, bounds, new OpenLayers.Size(3400, 1600), {
                 'isBaseLayer': false,
                 'alwaysInRange': true,
@@ -138,8 +157,6 @@ $(function init() {
         }
     }
 });
-
-
 </script>
 
 <div class="panel panel-default">
@@ -172,6 +189,7 @@ $(function init() {
             </select>
         </div>
         <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
+        <input id="source" type="hidden" value="{{ source }}" />
     </form>
   </div>
   
@@ -196,5 +214,13 @@ $(function init() {
          </button>
       </form>
   </div>
+</div>
+
+<div class="panel panel-default">
+	<div class="panel-body">
+		<div id="graph_body" style="height:250px;"></div>
+	</div>
+	<div id="graph_footer" class="panel-footer"></div>
+</div>
 
 {% endblock %}
