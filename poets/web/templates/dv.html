@@ -44,6 +44,7 @@ $(document).ready(function () {
 		markers.clearMarkers()
 		var marker = new OpenLayers.Marker(lonlat_o);
         markers.addMarker(marker);
+    	expandDiv("graphs");
         ts.loadTS(lonlat.lon, lonlat.lat);
 	});
 	
@@ -156,6 +157,20 @@ $(document).ready(function () {
             $("#go").removeAttr('disabled');
         }
     }
+    
+	function expandDiv(div) {
+		var div = document.getElementById(div);
+		div.style.visibility='visible';
+		div.style.overflow = "visible";
+		div.style.height = "auto";
+	}
+
+	function foldDiv(div) {
+		var div = document.getElementById(div);
+		div.style.visibility='hidden';
+		div.style.overflow = "hidden";
+		div.style.height = "0";
+	}
 });
 </script>
 
@@ -216,7 +231,7 @@ $(document).ready(function () {
   </div>
 </div>
 
-<div class="panel panel-default">
+<div class="panel panel-default" id="graphs" style="visibility:hidden">
 	<div class="panel-body">
 		<div id="graph_body" style="height:250px;"></div>
 	</div>
