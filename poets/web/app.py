@@ -23,9 +23,11 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, make_response
 from poets.web.overlays import bounds
 from poets.timedate.dekad import dekad_index
+import pytesmo.time_series as ts
+from cStringIO import StringIO
 
 
 def curpath():
@@ -113,12 +115,14 @@ def index(**kwargs):
         if source.valid_range is not None:
             vmin = source.valid_range[0]
             vmax = source.valid_range[1]
+
             plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
 
             fig = plt.figure(figsize=(5, 0.8))
             ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
             norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
-            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='horizontal')
+            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
+                                            orientation='horizontal')
             # cb1.set_label('unit', fontsize=10)
             plt.savefig(legend)
 
@@ -175,7 +179,10 @@ def request_data(**kwargs):
 
 
 @app.route('/_ts/<reg>&<src>&<var>&<loc>')
+@app.route('/_ts/<reg>&<src>&<var>&<loc>&<anom>')
 def get_ts(**kwargs):
+
+    anomaly = False
 
     if 'reg' in kwargs:
         region = kwargs['reg']
@@ -185,13 +192,66 @@ def get_ts(**kwargs):
         variable = kwargs['var']
     if 'loc' in kwargs:
         loc = kwargs['loc']
+    if 'anom' in kwargs:
+        anomaly = True
 
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    ts = source.read_ts(lonlat, region, variable)
+    df = source.read_ts(lonlat, region, variable)
 
-    labels, values = ts.to_dygraph_format()
+    if anomaly:
+        df = ts.anomaly.calc_anomaly(df)
+        columns = []
+        for cols in df.columns:
+            columns.append(cols + '_anomaly')
+        df.columns = columns
+
+    labels, values = df.to_dygraph_format()
     data = {'labels': labels, 'data': values}
 
     return jsonify(data)
+
+@app.route('/_tsdown/<reg>&<src>&<var>&<loc>')
+@app.route('/_tsdown/<reg>&<src>&<var>&<loc>&<anom>')
+def download_ts(**kwargs):
+
+    anomaly = False
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = sources[kwargs['src']]
+    if 'var' in kwargs:
+        variable = kwargs['var']
+    if 'loc' in kwargs:
+        loc = kwargs['loc']
+    if 'anom' in kwargs:
+        anomaly = True
+
+    loc = loc.split(',')
+    lonlat = (float(loc[0]), float(loc[1]))
+
+    filename = region + '_' + variable + '_' + loc[0][:6] + '_' + loc[1][:6]
+
+    df = source.read_ts(lonlat, region, variable)
+
+    if anomaly:
+        df = ts.anomaly.calc_anomaly(df)
+        columns = []
+        for cols in df.columns:
+            columns.append(cols + '_anomaly')
+        df.columns = columns
+
+        filename += '_anomaly'
+
+    output = StringIO()
+
+    df.to_csv(output)
+    csv = output.getvalue()
+
+    response = make_response(csv)
+    response.headers["Content-Disposition"] = ("attachment; filename=" +
+                                               filename + ".csv")
+
+    return response

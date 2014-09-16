@@ -24,12 +24,12 @@ $(document).ready(function () {
 	bounds.extend(new OpenLayers.LonLat{{ex1}}); 	// overlay image appears cutoff at the edges due to massive upscaling
 	bounds.extend(new OpenLayers.LonLat{{ex2}});	// referrencing image on it's center coord. possible
 	bounds.transform(proj4326, map.getProjectionObject());
+	
 	image = new OpenLayers.Layer.Image('IMAGE', "{{ovl}}", bounds, new OpenLayers.Size(3400, 1600), { 
 		'isBaseLayer': false,	// drawing overlay with the latest overlay image
 		'alwaysInRange': true,
 		'opacity' : opacity
 	});
-	
 	map.addLayer(image);
 	
 	var markers = new OpenLayers.Layer.Markers("Markers");
@@ -44,7 +44,14 @@ $(document).ready(function () {
 		markers.clearMarkers()
 		var marker = new OpenLayers.Marker(lonlat_o);
         markers.addMarker(marker);
-    	expandDiv("graphs");
+        
+        $("#lon").val(lonlat.lon)
+        $("#lat").val(lonlat.lat)
+        
+        initDownLink();
+        
+    	expandDiv("graph");
+    	foldDiv("graph_anom")
         ts.loadTS(lonlat.lon, lonlat.lat);
 	});
 	
@@ -121,7 +128,6 @@ $(document).ready(function () {
             current: date,
             }, function (data) {
             image.destroy();
-            markers.destroy();
             image = new OpenLayers.Layer.Image('IMAGE', data.rdat, bounds, new OpenLayers.Size(3400, 1600), {
                 'isBaseLayer': false,
                 'alwaysInRange': true,
@@ -137,6 +143,24 @@ $(document).ready(function () {
 		link = "/"+sel_reg+"-"+sel_var
 		$("#go").attr('href', link);
 	}
+	
+	function initDownLink(anom) {
+		sel_reg = $("#region").val()
+        sel_var = $("#dataset").val()
+        sel_src = $("#source").val()
+        sel_lon = $("#lon").val()
+        sel_lat = $("#lat").val()
+        
+        div = "#download"
+        link = "/_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+        
+        if(anom == true) {
+        	link += '&anom';
+        	div += "_anom"
+        }
+          
+        $(div).attr('href', link);
+	}
 	   
     $("#region").change(function() {
         initLink();
@@ -145,6 +169,14 @@ $(document).ready(function () {
     $("#dataset").change(function() {
         initLink();
         enableGo();
+    });
+    
+    $("#anom").click(function() {
+        expandDiv('graph_anom');
+        lon = $("#lon").val()
+        lat = $("#lat").val()
+        ts.loadTS(lon, lat, true);
+        initDownLink(true);
     });
     
     function enableGo() {
@@ -174,68 +206,100 @@ $(document).ready(function () {
 });
 </script>
 
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <form class="form-inline" role="form">
-        <div class="form-group">
-            <label class="sr-only" for="region">Regions</label>
-            <select class="form-control" id="region">
-                <option value=''>REGION</option>
-                    {% for reg in regions %}
-                      {% set checked = '' %}
-                      {% if reg == region %}
-                        {% set checked = 'selected="selected"' %}
-                      {% endif %}
-                      <option value="{{ reg }}" {{ checked }}>{{ reg }}</option>
-                    {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label class="sr-only" for="dataset">Datasets</label>
-            <select class="form-control" id="dataset">
-                <option value=''>DATASET</option>
-                {% for var in variables %}
-                  {% set checked = '' %}
-                  {% if var == variable %}
-                    {% set checked = 'selected="selected"' %}
-                  {% endif %}
-                  <option value="{{ var }}" {{ checked }}>{{ var }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
-        <input id="source" type="hidden" value="{{ source }}" />
-    </form>
-  </div>
-  
-  <div class="panel-body">
-    <div id='map' style="height:640px;" ></div>
-    <div style="position:relative;"><img id='legend' src='' /></div>
-  </div>
-  
-  <div class="panel-footer" align="center">
-    <input type="text" style="width:100%;" id="slider">
-    <form class="form-inline" role="form" style="margin-top:8px;">
-        <button type="button" class="btn btn-default" id="btn-prev">
-           <span class="glyphicon glyphicon-chevron-left"></span>
-         </button>
-         <select id="dateSelect" class="form-control">
-              {% for dat in dates %}
-                  <option value="{{ dat['id'] }}">{{ dat['date'] }}</option>
-              {% endfor %}
-         </select>
-         <button type="button" class="btn btn-default" id="btn-next">
-           <span class="glyphicon glyphicon-chevron-right"></span>
-         </button>
-      </form>
-  </div>
+<div class="row">
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <form class="form-inline" role="form">
+	        <div class="form-group">
+	            <label class="sr-only" for="region">Regions</label>
+	            <select class="form-control" id="region">
+	                <option value=''>REGION</option>
+	                    {% for reg in regions %}
+	                      {% set checked = '' %}
+	                      {% if reg == region %}
+	                        {% set checked = 'selected="selected"' %}
+	                      {% endif %}
+	                      <option value="{{ reg }}" {{ checked }}>{{ reg }}</option>
+	                    {% endfor %}
+	            </select>
+	        </div>
+	        <div class="form-group">
+	            <label class="sr-only" for="dataset">Datasets</label>
+	            <select class="form-control" id="dataset">
+	                <option value=''>DATASET</option>
+	                {% for var in variables %}
+	                  {% set checked = '' %}
+	                  {% if var == variable %}
+	                    {% set checked = 'selected="selected"' %}
+	                  {% endif %}
+	                  <option value="{{ var }}" {{ checked }}>{{ var }}</option>
+	                {% endfor %}
+	            </select>
+	        </div>
+	        <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
+	        <input id="source" type="hidden" value="{{ source }}" />
+	        <input id="lon" type="hidden" />
+	        <input id="lat" type="hidden" />
+	    </form>
+	  </div>
+	  
+	  <div class="panel-body" style="position:relative">
+	    <div id='map' style="height:640px; z-index:0"></div>
+	    <div style="position: absolute; bottom: 30px; left:30px; z-index:9999;"><img id='legend' src='' /></div>
+	  </div>
+	  
+	  <div class="panel-footer" align="center">
+	    <input type="text" style="width:100%;" id="slider">
+	    <form class="form-inline" role="form" style="margin-top:8px;">
+	        <button type="button" class="btn btn-default" id="btn-prev">
+	           <span class="glyphicon glyphicon-chevron-left"></span>
+	         </button>
+	         <select id="dateSelect" class="form-control">
+	              {% for dat in dates %}
+	                  <option value="{{ dat['id'] }}">{{ dat['date'] }}</option>
+	              {% endfor %}
+	         </select>
+	         <button type="button" class="btn btn-default" id="btn-next">
+	           <span class="glyphicon glyphicon-chevron-right"></span>
+	         </button>
+	      </form>
+	  </div>
+	</div>
 </div>
 
-<div class="panel panel-default" id="graphs" style="visibility:hidden">
-	<div class="panel-body">
-		<div id="graph_body" style="height:250px;"></div>
+<div class="row">
+	<div class="panel panel-default" id="graph" style="visibility:hidden; height:0px;">
+		<div class="panel-body">
+			<div id="graph_body" style="height:250px;"></div>
+		</div>
+		<div class="panel-footer">
+		   <div class="row">
+		       <div class="col-md-6" id="graph_footer"></div>
+		       <div class="col-md-6" align="right">
+		           <button class='btn btn-default' id="anom">calc anomalies</button>
+		           <a href='' class='btn btn-default' id="download">
+		               <span class="glyphicon glyphicon-download-alt"></span> download
+		           </a>
+		       </div>
+		   </div>
+		</div>
 	</div>
-	<div id="graph_footer" class="panel-footer"></div>
+	
+	<div class="panel panel-default" id="graph_anom" style="visibility:hidden; height:0px;">
+	    <div class="panel-body">
+	        <div id="graph_anom_body" style="height:250px;"></div>
+	    </div>
+	    <div class="panel-footer">
+	       <div class="row">
+	           <div class="col-md-6" id="graph_anom_footer"></div>
+	           <div class="col-md-6" align="right">
+	               <a href='' class='btn btn-default' id="download_anom">
+	                   <span class="glyphicon glyphicon-download-alt"></span> download
+	               </a>
+	           </div>
+	       </div>
+	    </div>
+	</div>
 </div>
 
 {% endblock %}
