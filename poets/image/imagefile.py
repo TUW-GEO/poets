@@ -1,7 +1,6 @@
 # Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
-
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -42,6 +41,7 @@ import numpy as np
 from PIL import Image
 from poets.shape.shapes import Shape
 import math
+from poets.image.geotiff import get_layer_extent, lonlat2px_gt, px2lonlat_gt
 
 
 def lonlat2px(img, lon, lat):
@@ -67,12 +67,13 @@ def lonlat2px(img, lon, lat):
     """
 
     w, h = img.size
+    
     mw = w / 360.0
     mh = h / 180.0
-
+    
     row = h / 2 - lat * mh
     col = w / 2 + lon * mw
-
+    
     return row, col
 
 
@@ -135,18 +136,19 @@ def px2lonlat(img, lon_px, lat_px):
     """
 
     w, h = img.size
+    
     mw = w / 360.0
     mh = h / 180.0
-
+    
     lon_new = np.zeros(len(lon_px))
     lat_new = np.zeros(len(lat_px))
-
+    
     for i in range(0, len(lon_px)):
         lon_new[i] = (lon_px[i] - w / 2) / mw
-
+    
     for i in range(0, len(lat_px)):
         lat_new[i] = -(lat_px[i] - h / 2) / mh
-
+    
     return lon_new, lat_new
 
 
@@ -250,7 +252,7 @@ def dateline_country(country):
     return lon_min, lon_max
 
 
-def bbox_img(source_file, region, shapefile=None):
+def bbox_img(source_file, region, fileExtension, shapefile=None):
     """
     Clips bounding box out of image file and returns data as numpy.ndarray
 
@@ -261,6 +263,8 @@ def bbox_img(source_file, region, shapefile=None):
     region : str
         Identifier of the region in the shapefile. If the default shapefile is
         used, this would be the FIPS country code.
+    fileExtension : str
+        filetype (e.g. png, tif)
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
         default.
@@ -280,6 +284,9 @@ def bbox_img(source_file, region, shapefile=None):
     """
 
     orig_img = Image.open(source_file)
+
+    lon_min_src, lat_min_src, lon_max_src, lat_max_src = \
+        get_layer_extent(source_file)
 
     if region == 'global':
         lon_min = -180
@@ -301,10 +308,37 @@ def bbox_img(source_file, region, shapefile=None):
 
     # get 2 pairs of points (upper left, lower right of bbox)
     if d > 350 and region not in ['AY', 'global']:
-        orig_img = rearrange_img(orig_img)
-        row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
-        row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
+        if fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
+            if (round(lon_max_src-lon_min_src) == 360.0 and
+                round(lat_max_src-lat_min_src) == 180.0):
+                orig_img = rearrange_img(orig_img)
+                row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
+                row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
+        
+                img = orig_img.crop((int(math.floor(col_min)),
+                                     int(math.floor(row_min)),
+                                     int(math.ceil(col_max)),
+                                     int(math.ceil(row_max))))
+            else:
+                print 'Rearranging is only possible for global imagefiles.'
+                return
+        else:
+            orig_img = rearrange_img(orig_img)
+            row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
+            row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
+    
+            img = orig_img.crop((int(math.floor(col_min)),
+                                 int(math.floor(row_min)),
+                                 int(math.ceil(col_max)),
+                                 int(math.ceil(row_max))))
+    
+    elif fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
+        row_min, col_min = lonlat2px_gt(orig_img, lon_min, lat_max, lon_min_src,
+                                        lat_min_src, lon_max_src, lat_max_src)
+        row_max, col_max = lonlat2px_gt(orig_img, lon_max, lat_min, lon_min_src,
+                                        lat_min_src, lon_max_src, lat_max_src)
 
+        # crop image
         img = orig_img.crop((int(math.floor(col_min)),
                              int(math.floor(row_min)),
                              int(math.ceil(col_max)),
@@ -328,6 +362,9 @@ def bbox_img(source_file, region, shapefile=None):
 
     if region in ['NZ', 'RS', 'US']:
         lon_new, lat_new = px2lonlat_rearr(orig_img, lon_px, lat_px)
+    elif fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
+        lon_new, lat_new = px2lonlat_gt(orig_img, lon_px, lat_px, lon_min_src,
+                                        lat_min_src, lon_max_src, lat_max_src)
     else:
         lon_new, lat_new = px2lonlat(orig_img, lon_px, lat_px)
 
