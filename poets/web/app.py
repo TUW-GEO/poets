@@ -307,6 +307,8 @@ def request_image(**kwargs):
         vmin = img.min()
         vmax = img.max()
 
+    print 'image  ', vmin, vmax
+
     buf = StringIO()
     plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)
 
@@ -332,6 +334,8 @@ def request_legend(**kwargs):
         vmax = float(kwargs['vmax'])
 
     cmap = 'jet'
+
+    print 'legend ', vmin, vmax
 
     fig = plt.figure(figsize=(5, 0.8))
     ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])

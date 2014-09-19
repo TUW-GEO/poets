@@ -32,6 +32,9 @@ $(document).ready(function () {
 	});
 	map.addLayer(image);
 	
+	// add legend
+	$('#legend').attr('src', '/_rlegend?' + Math.random());
+	
 	var markers = new OpenLayers.Layer.Markers("Markers");
 	map.addLayer(markers);
 	
@@ -54,9 +57,6 @@ $(document).ready(function () {
     	foldDiv("graph_anom")
         ts.loadTS(lonlat.lon, lonlat.lat);
 	});
-	
-	// add legend
-	$('#legend').attr('src', '/_rlegend?' + Math.random());
 	
 	initLink();
 	enableGo();
