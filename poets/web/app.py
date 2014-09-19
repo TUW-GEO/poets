@@ -161,22 +161,23 @@ def index(**kwargs):
         legendname = region + '_' + variable + '_legend.png'
         filepath = os.path.join(dest, filename)
         legend = os.path.join(dest, legendname)
+
         if source.valid_range is not None:
             vmin = source.valid_range[0]
             vmax = source.valid_range[1]
-
-            plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
-
-            fig = plt.figure(figsize=(5, 0.8))
-            ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
-            norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
-            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
-                                            orientation='horizontal')
-            # cb1.set_label('unit', fontsize=10)
-            plt.savefig(legend)
-
         else:
-            plt.imsave(filepath, img, cmap=cmap)
+            vmin = img.min()
+            vmax = img.max()
+
+        plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
+
+        fig = plt.figure(figsize=(5, 0.8))
+        ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
+        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+        cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
+                                        orientation='horizontal')
+        # cb1.set_label('unit', fontsize=10)
+        plt.savefig(legend)
 
         return render_template('app.html',
                                max=idxdates,
