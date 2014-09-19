@@ -25,7 +25,7 @@ $(document).ready(function () {
 	bounds.extend(new OpenLayers.LonLat{{ex2}});	// referrencing image on it's center coord. possible
 	bounds.transform(proj4326, map.getProjectionObject());
 	
-	image = new OpenLayers.Layer.Image('IMAGE', "{{ovl}}", bounds, new OpenLayers.Size(3400, 1600), { 
+	image = new OpenLayers.Layer.Image('IMAGE', "/_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
 		'isBaseLayer': false,	// drawing overlay with the latest overlay image
 		'alwaysInRange': true,
 		'opacity' : opacity
@@ -55,7 +55,9 @@ $(document).ready(function () {
         ts.loadTS(lonlat.lon, lonlat.lat);
 	});
 	
-	$("#legend").attr('src', '{{legend}}');
+	// add legend
+	$('#legend').attr('src', '/_rlegend?' + Math.random());
+	
 	initLink();
 	enableGo();
 	
@@ -124,17 +126,16 @@ $(document).ready(function () {
 	}
 	
 	function loadImg(date) {
-		$.getJSON('/_rdat/{{region}}&{{source}}&{{variable}}', {
-            current: date,
-            }, function (data) {
-            image.destroy();
-            image = new OpenLayers.Layer.Image('IMAGE', data.rdat, bounds, new OpenLayers.Size(3400, 1600), {
-                'isBaseLayer': false,
-                'alwaysInRange': true,
-                'opacity' : opacity
-                });
-            map.addLayer(image);
+		image.destroy();
+        image = new OpenLayers.Layer.Image('IMAGE', '/_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
+            'isBaseLayer': false,
+            'alwaysInRange': true,
+            'opacity' : opacity
             });
+        map.addLayer(image);
+        
+        // add legend
+        $('#legend').attr('src', '/_rlegend?' + Math.random());
 	}
 	
 	function initLink() {
@@ -203,6 +204,7 @@ $(document).ready(function () {
 		div.style.overflow = "hidden";
 		div.style.height = "0";
 	}
+	
 });
 </script>
 
@@ -267,6 +269,7 @@ $(document).ready(function () {
 	</div>
 </div>
 
+<div id='test'></div>
 <div class="row">
 	<div class="panel panel-default" id="graph" style="visibility:hidden; height:0px;">
 		<div class="panel-body">

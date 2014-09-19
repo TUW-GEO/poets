@@ -103,6 +103,7 @@ def start(poet):
     global regions
     global sources
     global variables
+    global dates
     global vmin, vmax, cmap
 
     regions = poet.regions
@@ -156,28 +157,6 @@ def index(**kwargs):
             fdates.append(dat)
 
         lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
-        img, _, _ = source.read_img(enddate, region, variable)
-        filename = region + '_' + variable + '_' + str(idxdates) + '.png'
-        legendname = region + '_' + variable + '_legend.png'
-        filepath = os.path.join(dest, filename)
-        legend = os.path.join(dest, legendname)
-
-        if source.valid_range is not None:
-            vmin = source.valid_range[0]
-            vmax = source.valid_range[1]
-        else:
-            vmin = img.min()
-            vmax = img.max()
-
-        plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
-
-        fig = plt.figure(figsize=(5, 0.8))
-        ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
-        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
-        cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
-                                        orientation='horizontal')
-        # cb1.set_label('unit', fontsize=10)
-        plt.savefig(legend)
 
         return render_template('app.html',
                                max=idxdates,
@@ -185,8 +164,6 @@ def index(**kwargs):
                                zoom=zoom,  # depends on map div width,
                                ex1=(lon_max, lat_min),
                                ex2=(lon_min, lat_max),
-                               ovl="../static/temp/" + filename,
-                               legend="../static/temp/" + legendname,
                                region=region,
                                source=source.name,
                                variable=variable,
@@ -198,42 +175,6 @@ def index(**kwargs):
                                regions=regions,
                                sources=sources.keys(),
                                variables=variables)
-
-
-@app.route('/_rdat/<reg>&<src>&<var>')
-def request_data(**kwargs):
-    """
-    Creates image for OpenLayers overlay.
-
-    Returns
-    -------
-    jsonified str
-        Path to image as jsonified sring.
-    """
-
-    if 'reg' in kwargs:
-        region = kwargs['reg']
-    if 'src' in kwargs:
-        source = sources[kwargs['src']]
-    if 'var' in kwargs:
-        variable = kwargs['var']
-
-    idx = request.args.get('current', 0, type=int)
-    pidx = (dates[idx])
-    filename = region + '_' + variable + '_' + str(idx) + '.png'
-    filepath = os.path.join(dest, filename)
-
-    if not os.path.isfile(os.path.join(filepath, filename)):
-        img, _, _ = source.read_img(pidx, region, variable)
-        if source.valid_range is not None:
-            vmin = source.valid_range[0]
-            vmax = source.valid_range[1]
-            plt.imsave(filepath, img, vmin=vmin, vmax=vmax, cmap=cmap)
-        else:
-            plt.imsave(filepath, img, cmap=cmap)
-
-    path = '../static/temp/' + filename
-    return jsonify(rdat=path)
 
 
 @app.route('/_ts/<reg>&<src>&<var>&<loc>')
@@ -329,5 +270,88 @@ def download_ts(**kwargs):
     response = make_response(csv)
     response.headers["Content-Disposition"] = ("attachment; filename=" +
                                                filename + ".csv")
+
+    return response
+
+
+@app.route('/_rimg/<reg>&<src>&<var>&<idx>', methods=['GET', 'POST'])
+def request_image(**kwargs):
+    """
+    Creates image for OpenLayers overlay.
+
+    Returns
+    -------
+    StringIO
+        Image in StringIO.
+    """
+
+    global vmin
+    global vmax
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = sources[kwargs['src']]
+    if 'var' in kwargs:
+        variable = kwargs['var']
+    if 'idx' in kwargs:
+        idx = kwargs['idx']
+
+    pidx = (dates[int(idx)])
+
+    img, _, _ = source.read_img(pidx, region, variable)
+    if source.valid_range is not None:
+        vmin = source.valid_range[0]
+        vmax = source.valid_range[1]
+    else:
+        vmin = img.min()
+        vmax = img.max()
+
+    buf = StringIO()
+    plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)
+
+    image = buf.getvalue()
+
+    response = make_response(image)
+    response.headers["Content-Type"] = ("image/png; filename=data.png")
+
+    return response
+
+
+@app.route('/_rlegend/')
+@app.route('/_rlegend/<vmin>&<vmax>')
+@app.route('/_rlegend/<vmin>&<vmax>&<unit>')
+def request_legend(**kwargs):
+
+    global vmin
+    global vmax
+
+    if 'vmin' in kwargs:
+        vmin = float(kwargs['vmin'])
+    if 'vmax' in kwargs:
+        vmax = float(kwargs['vmax'])
+
+    cmap = 'jet'
+
+    fig = plt.figure(figsize=(5, 0.8))
+    ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
+    norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+    cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
+                                    orientation='horizontal')
+
+    if 'unit' in kwargs:
+        cb1.set_label('unit', fontsize=10)
+
+    buf = StringIO()
+
+    plt.savefig(buf)
+    plt.close()
+
+    image = buf.getvalue()
+
+    filename = str(np.random.randint(9, size=10))
+
+    response = make_response(image)
+    response.headers["Content-Type"] = ("image/png; filename=" + filename + ".png")
 
     return response
