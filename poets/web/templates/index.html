@@ -16,7 +16,7 @@ $(function init() {
     function initLink() {
         sel_reg = $("#region").val();
         sel_var = $("#dataset").val();
-        link = "/"+sel_reg+"-"+sel_var
+        link = "/"+sel_reg+"&"+sel_var
         $("#go").attr('href', link);
     }
     

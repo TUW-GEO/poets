@@ -74,7 +74,7 @@ def start(poet):
 
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/<reg>-<var>', methods=['GET', 'POST'])
+@app.route('/<reg>&<var>', methods=['GET', 'POST'])
 def index(**kwargs):
     global enddate
     global dates
@@ -129,7 +129,7 @@ def index(**kwargs):
         else:
             plt.imsave(filepath, img, cmap=cmap)
 
-        return render_template('dv.html',
+        return render_template('app.html',
                                max=idxdates,
                                coord=[c_lon, c_lat],
                                zoom=zoom,  # depends on map div width,
@@ -150,7 +150,7 @@ def index(**kwargs):
                                variables=variables)
 
 
-@app.route('/_rdat/<reg>-<src>-<var>')
+@app.route('/_rdat/<reg>&<src>&<var>')
 def request_data(**kwargs):
 
     if 'reg' in kwargs:
@@ -211,6 +211,7 @@ def get_ts(**kwargs):
     data = {'labels': labels, 'data': values}
 
     return jsonify(data)
+
 
 @app.route('/_tsdown/<reg>&<src>&<var>&<loc>')
 @app.route('/_tsdown/<reg>&<src>&<var>&<loc>&<anom>')

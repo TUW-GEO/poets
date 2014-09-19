@@ -124,7 +124,7 @@ $(document).ready(function () {
 	}
 	
 	function loadImg(date) {
-		$.getJSON('/_rdat/{{region}}-{{source}}-{{variable}}', {
+		$.getJSON('/_rdat/{{region}}&{{source}}&{{variable}}', {
             current: date,
             }, function (data) {
             image.destroy();
@@ -140,7 +140,7 @@ $(document).ready(function () {
 	function initLink() {
 		sel_reg = $("#region").val()
 		sel_var = $("#dataset").val()
-		link = "/"+sel_reg+"-"+sel_var
+		link = "/"+sel_reg+"&"+sel_var
 		$("#go").attr('href', link);
 	}
 	
