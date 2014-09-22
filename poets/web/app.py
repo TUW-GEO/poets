@@ -38,7 +38,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, jsonify, request, make_response
+from flask import Flask, render_template, jsonify, make_response
 from poets.web.overlays import bounds
 from poets.timedate.dekad import dekad_index
 import pytesmo.time_series as ts
@@ -287,6 +287,7 @@ def request_image(**kwargs):
 
     global vmin
     global vmax
+    global metadata
 
     if 'reg' in kwargs:
         region = kwargs['reg']
@@ -299,15 +300,13 @@ def request_image(**kwargs):
 
     pidx = (dates[int(idx)])
 
-    img, _, _ = source.read_img(pidx, region, variable)
+    img, _, _, metadata = source.read_img(pidx, region, variable)
     if source.valid_range is not None:
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
     else:
         vmin = img.min()
         vmax = img.max()
-
-    print 'image  ', vmin, vmax
 
     buf = StringIO()
     plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)
@@ -321,30 +320,30 @@ def request_image(**kwargs):
 
 
 @app.route('/_rlegend/')
-@app.route('/_rlegend/<vmin>&<vmax>')
-@app.route('/_rlegend/<vmin>&<vmax>&<unit>')
 def request_legend(**kwargs):
+    """
+    Creates Legend for OpenLayers overlay.
 
+    Returns
+    -------
+    StringIO
+        Legend in StringIO.
+    """
     global vmin
     global vmax
-
-    if 'vmin' in kwargs:
-        vmin = float(kwargs['vmin'])
-    if 'vmax' in kwargs:
-        vmax = float(kwargs['vmax'])
+    global metadata
 
     cmap = 'jet'
 
-    print 'legend ', vmin, vmax
-
-    fig = plt.figure(figsize=(5, 0.8))
+    fig = plt.figure(figsize=(4, 0.7))
     ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
     cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
                                     orientation='horizontal')
+    plt.xticks(fontsize=9)
 
-    if 'unit' in kwargs:
-        cb1.set_label('unit', fontsize=10)
+    if metadata and 'units' in metadata:
+        cb1.set_label(metadata['units'], fontsize=10)
 
     buf = StringIO()
 
@@ -353,9 +352,12 @@ def request_legend(**kwargs):
 
     image = buf.getvalue()
 
-    filename = str(np.random.randint(9, size=10))
-
     response = make_response(image)
-    response.headers["Content-Type"] = ("image/png; filename=" + filename + ".png")
+    response.headers["Content-Type"] = ("image/png; filename=legend.png")
 
     return response
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')

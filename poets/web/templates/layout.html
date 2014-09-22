@@ -12,6 +12,21 @@
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <!-- Bootstrap Theme -->
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+    <!-- Documentation extras -->
+    <link href="http://getbootstrap.com/assets/css/docs.min.css" rel="stylesheet">
+    
+    <!-- Font Bree Serif -->
+    <link href='http://fonts.googleapis.com/css?family=Bree+Serif' rel='stylesheet' type='text/css'>
+    
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Tangerine">
+    <style>
+      h1, h2, h3, h4, h5, .hi {
+        font-family: 'Bree Serif', serif;
+      }
+      .hi {
+        font-size: 1.1em;
+      }
+    </style>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -26,46 +41,6 @@
   </head> 
   
   <body role="document" onload='init()'>
-  
-	<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-	    <div class="container">
-	      <div class="navbar-header">
-	        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-	          <span class="sr-only">Toggle navigation</span>
-	          <span class="icon-bar"></span>
-	          <span class="icon-bar"></span>
-	          <span class="icon-bar"></span>
-	        </button>
-	        <a class="navbar-brand" rel="home" href="#" title="poets°">
-                <img style="max-width:100px; margin-top: -7px;"
-                     src="{{ url_for('static', filename='poets_logo_white_32.png') }}">
-            </a>
-	      </div>
-	      <div class="collapse navbar-collapse">
-	        <ul class="nav navbar-nav">
-	          <li class="active"><a href="#">Home</a></li>
-	          <li><a href="#about">About</a></li>
-	          <li><a href="#contact">Contact</a></li>
-	        </ul>
-	      </div><!--/.nav-collapse -->
-	  </div>
-	</div>
-	
-    <div class="container theme-showcase" role="main">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-	        {% if messages %}
-	            <dl class=flashes>
-	                {% for category, message in messages %}
-	                    {% if category == 'message' %}
-	                       {% set category = 'warning' %}
-	                    {% endif %}
-	                    <li class="label label-{{ category }}">{{ message }}</li>
-	                {% endfor %}
-	            </dl>
-	        {% endif %}
-	    {% endwith %}
-
-		<div class="row"><br><br><br></div>
         {% block body %}{% endblock %}
     </div>
 	

@@ -32,8 +32,7 @@ $(document).ready(function () {
 	});
 	map.addLayer(image);
 	
-	// add legend
-	$('#legend').attr('src', '/_rlegend?' + Math.random());
+	initLegend();
 	
 	var markers = new OpenLayers.Layer.Markers("Markers");
 	map.addLayer(markers);
@@ -53,6 +52,7 @@ $(document).ready(function () {
         
         initDownLink();
         
+        expandDiv("ts");
     	expandDiv("graph");
     	foldDiv("graph_anom")
         ts.loadTS(lonlat.lon, lonlat.lat);
@@ -60,11 +60,28 @@ $(document).ready(function () {
 	
 	initLink();
 	enableGo();
-	
-	var values = [0, {{max}}];
-	
 	enableButtons({{max}});
 	
+	// LOAD IMAGE =============================================================
+	function loadImg(date) {
+		image.destroy();
+        image = new OpenLayers.Layer.Image('IMAGE', '/_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
+            'isBaseLayer': false,
+            'alwaysInRange': true,
+            'opacity' : opacity
+            });
+        map.addLayer(image);
+        initLegend();
+	}
+	
+	// LEGEND =================================================================
+	function initLegend() {
+		var lcode = $("#region").val()+$("#dataset").val()+$('#slider').val(); 
+		$('#legend').attr('src', '/_rlegend?' +lcode);
+	}
+	
+	// SLIDER =================================================================
+	var values = [0, {{max}}];
 	$("#slider").slider({
 		formater: function(value) {
 			$("#dateSelect").prop("selectedIndex", value);
@@ -73,14 +90,15 @@ $(document).ready(function () {
 		min: values[0],
 		max: values[1],
 		value: values[1]
-				
-	})
-	.on('slideStop', function(ev){
-		val = $('#slider').val()
-		loadImg(val);
-		enableButtons(val);
-    });
+	}).on('slideStop',
+		  function(ev){
+		      val = $('#slider').val();
+		      loadImg(val);
+		      enableButtons(val);
+		  }
+	);
 	
+	// CONTROLLERS ============================================================
 	$("#btn-prev").click(function(){
 		val = parseInt($('#dateSelect').val())-1;
 		$('#slider').val(val);
@@ -103,7 +121,9 @@ $(document).ready(function () {
 	
 	$("#dateSelect").change(function() {
 		val = $("#dateSelect").val();
-		loadImg(val);
+		$('#slider').val(val);
+        $('#slider').slider({value:val});
+        loadImg($('#slider').val());
 		enableButtons(val);
 		sliderPos(val);
 	});
@@ -123,19 +143,6 @@ $(document).ready(function () {
 	
 	function sliderPos(date) {
 		$("#slider").slider('setValue', date)
-	}
-	
-	function loadImg(date) {
-		image.destroy();
-        image = new OpenLayers.Layer.Image('IMAGE', '/_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
-            'isBaseLayer': false,
-            'alwaysInRange': true,
-            'opacity' : opacity
-            });
-        map.addLayer(image);
-        
-        // add legend
-        $('#legend').attr('src', '/_rlegend?' + Math.random());
 	}
 	
 	function initLink() {
@@ -247,7 +254,9 @@ $(document).ready(function () {
 	  
 	  <div class="panel-body" style="position:relative">
 	    <div id='map' style="height:640px; z-index:0"></div>
-	    <div style="position: absolute; bottom: 30px; left:30px; z-index:9999;"><img id='legend' src='' /></div>
+	    <div style="position: absolute; bottom: 30px; left:30px; z-index:9999;">
+            <img id='legend' src='' style="width: auto; height: auto;"/>
+        </div>
 	  </div>
 	  
 	  <div class="panel-footer" align="center">
@@ -269,8 +278,7 @@ $(document).ready(function () {
 	</div>
 </div>
 
-<div id='test'></div>
-<div class="row">
+<div class="row" id="ts" style="visibility:hidden; height:0px; overflow: hidden;">
 	<div class="panel panel-default" id="graph" style="visibility:hidden; height:0px;">
 		<div class="panel-body">
 			<div id="graph_body" style="height:250px;"></div>

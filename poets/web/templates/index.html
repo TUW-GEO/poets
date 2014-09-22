@@ -2,12 +2,6 @@
 
 {% block body %}
 
-<!-- 
-<div class="row">
-	<div id='graph1' class="col-md-12" style="height:250px;">
-	</div>
-</div>
- -->
 <script>
 $(function init() {
 	
@@ -43,9 +37,28 @@ $(function init() {
 });
 </script>
 
-<style type="text/css">
-
-</style>
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" rel="home" href="#" title="poets°">
+                <img style="max-width:100px; margin-top: -7px;"
+                     src="{{ url_for('static', filename='poets_logo_white_32.png') }}">
+            </a>
+          </div>
+          <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+              <li class="active"><a href="/">Home</a></li>
+              <li><a href="{{ url_for('about') }}">About</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+      </div>
+    </div>
 
 <div class="jumbotron" align="center">
     <h2>Welcome to the poets data viewer!</h2>
