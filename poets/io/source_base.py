@@ -646,6 +646,8 @@ class BasicSource(object):
             Array with longitudes.
         lat : numpy.array
             Array with latitudes.
+        metadata : dict
+            Dictionary containing metadata of the variable.
         """
 
         if region is None:
@@ -675,11 +677,21 @@ class BasicSource(object):
 
             position = np.where(time[:] == datenum)[0][0]
 
-            img = nc.variables[variable][position]
+            var = nc.variables[variable]
+            img = var[position]
             lon = nc.variables['lon'][:]
             lat = nc.variables['lat'][:]
 
-        return img, lon, lat
+            metadata = {}
+
+            for attr in var.ncattrs():
+                if attr[0] != '_' and attr != 'scale_factor':
+                    metadata[attr] = var.getncattr(attr)
+
+            if not metadata:
+                metadata = None
+
+        return img, lon, lat, metadata
 
     def get_variables(self):
         """

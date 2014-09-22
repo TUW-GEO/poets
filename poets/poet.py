@@ -281,11 +281,14 @@ class Poet(object):
             Array with longitudes.
         lat : numpy.array
             Array with latitudes.
+        metadata : dict
+            Dictionary containing metadata of the variable.
         """
 
-        img, lon, lat = self.sources[source].read_img(date, region, variable)
+        img, lon, lat, metadata = self.sources[source].read_img(date, region,
+                                                                variable)
 
-        return img, lon, lat
+        return img, lon, lat, metadata
 
     def read_timeseries(self, source, location, region=None, variable=None):
         """
