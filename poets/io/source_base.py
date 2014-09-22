@@ -83,6 +83,8 @@ class BasicSource(object):
         Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
         Nan value of the original data as given by the data provider.
+    valid_range : tuple of int of float, optional
+        Valid range of data, given as (minimum, maximum).
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     dest_regions : list of str, optional
@@ -126,7 +128,9 @@ class BasicSource(object):
     variables : list of strings
         Variables used from data source.
     nan_value : int, float
-        N a number value of the original data as given by the data provider.
+        Not a number value of the original data as given by the data provider.
+    valid_range : tuple of int of float
+        Valid range of data, given as (minimum, maximum).
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     tmp_path : str
@@ -147,10 +151,9 @@ class BasicSource(object):
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
                  begin_date=datetime(2000, 1, 1),
-                 variables=None,
-                 nan_value=None, dest_nan_value=-99, dest_regions=None,
-                 dest_sp_res=0.25, dest_temp_res='dekad',
-                 dest_start_date=datetime(2000, 1, 1)):
+                 variables=None, nan_value=None, valid_range=None,
+                 dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
+                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1)):
 
         self.name = name
         self.filename = filename
@@ -169,6 +172,7 @@ class BasicSource(object):
         else:
             self.variables = variables
         self.nan_value = nan_value
+        self.valid_range = valid_range
         self.dest_nan_value = dest_nan_value
         self.dest_regions = dest_regions
         self.dest_sp_res = dest_sp_res
@@ -314,7 +318,6 @@ class BasicSource(object):
 
         raw_files = []
 
-        # filename if tmp file is used
         dest_file = self._get_tmp_filepath('spatial', region)
 
         dirList = os.listdir(self.rawdata_path)
@@ -643,6 +646,8 @@ class BasicSource(object):
             Array with longitudes.
         lat : numpy.array
             Array with latitudes.
+        metadata : dict
+            Dictionary containing metadata of the variable.
         """
 
         if region is None:
@@ -672,11 +677,21 @@ class BasicSource(object):
 
             position = np.where(time[:] == datenum)[0][0]
 
-            img = nc.variables[variable][position]
+            var = nc.variables[variable]
+            img = var[position]
             lon = nc.variables['lon'][:]
             lat = nc.variables['lat'][:]
 
-        return img, lon, lat
+            metadata = {}
+
+            for attr in var.ncattrs():
+                if attr[0] != '_' and attr != 'scale_factor':
+                    metadata[attr] = var.getncattr(attr)
+
+            if not metadata:
+                metadata = None
+
+        return img, lon, lat, metadata
 
     def get_variables(self):
         """
@@ -701,6 +716,7 @@ class BasicSource(object):
                 variables.append(var)
 
         return variables
+
 
 if __name__ == "__main__":
     pass

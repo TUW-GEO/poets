@@ -1,0 +1,316 @@
+{% extends "layout_ol.html" %}
+
+{% block body %}
+
+<script>
+$(document).ready(function () {
+	
+	ts = new poetsViewer();
+	
+	var opacity = 0.75
+	
+	proj4326 = new OpenLayers.Projection("EPSG:4326");
+		
+	gphy = new OpenLayers.Layer.Google("Google Physical", {
+		type: google.maps.MapTypeId.TERRAIN
+	});
+	osm = new OpenLayers.Layer.OSM("openstreetmap");
+	map = new OpenLayers.Map("map");
+	map.addControl(new OpenLayers.Control.LayerSwitcher());
+	map.addLayers([osm, gphy]);
+	map.setCenter(new OpenLayers.LonLat({{coord}}).transform(proj4326, map.getProjectionObject()), {{zoom}});
+
+	bounds = new OpenLayers.Bounds(); 				// bounding box for the overlay:
+	bounds.extend(new OpenLayers.LonLat{{ex1}}); 	// overlay image appears cutoff at the edges due to massive upscaling
+	bounds.extend(new OpenLayers.LonLat{{ex2}});	// referrencing image on it's center coord. possible
+	bounds.transform(proj4326, map.getProjectionObject());
+	
+	image = new OpenLayers.Layer.Image('IMAGE', "/_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
+		'isBaseLayer': false,	// drawing overlay with the latest overlay image
+		'alwaysInRange': true,
+		'opacity' : opacity
+	});
+	map.addLayer(image);
+	
+	initLegend();
+	
+	var markers = new OpenLayers.Layer.Markers("Markers");
+	map.addLayer(markers);
+	
+	map.events.register("click", map, function(e) {
+		
+		var lonlat = map.getLonLatFromViewPortPx(e.xy);
+		var lonlat_o = map.getLonLatFromViewPortPx(e.xy);
+		lonlat = lonlat.transform(map.getProjectionObject(), proj4326);
+		
+		markers.clearMarkers()
+		var marker = new OpenLayers.Marker(lonlat_o);
+        markers.addMarker(marker);
+        
+        $("#lon").val(lonlat.lon)
+        $("#lat").val(lonlat.lat)
+        
+        initDownLink();
+        
+        expandDiv("ts");
+    	expandDiv("graph");
+    	foldDiv("graph_anom")
+        ts.loadTS(lonlat.lon, lonlat.lat);
+	});
+	
+	initLink();
+	enableGo();
+	enableButtons({{max}});
+	
+	// LOAD IMAGE =============================================================
+	function loadImg(date) {
+		image.destroy();
+        image = new OpenLayers.Layer.Image('IMAGE', '/_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
+            'isBaseLayer': false,
+            'alwaysInRange': true,
+            'opacity' : opacity
+            });
+        map.addLayer(image);
+        initLegend();
+	}
+	
+	// LEGEND =================================================================
+	function initLegend() {
+		var lcode = $("#region").val()+$("#dataset").val()+$('#slider').val(); 
+		$('#legend').attr('src', '/_rlegend?' +lcode);
+	}
+	
+	// SLIDER =================================================================
+	var values = [0, {{max}}];
+	$("#slider").slider({
+		formater: function(value) {
+			$("#dateSelect").prop("selectedIndex", value);
+			return $("#dateSelect option[value='"+$("#dateSelect").val()+"']").text();
+		},
+		min: values[0],
+		max: values[1],
+		value: values[1]
+	}).on('slideStop',
+		  function(ev){
+		      val = $('#slider').val();
+		      loadImg(val);
+		      enableButtons(val);
+		  }
+	);
+	
+	// CONTROLLERS ============================================================
+	$("#btn-prev").click(function(){
+		val = parseInt($('#dateSelect').val())-1;
+		$('#slider').val(val);
+		$('#slider').slider({value:val});
+		$("#dateSelect").prop("selectedIndex", val); 
+		loadImg($('#slider').val());
+		enableButtons(val);
+        sliderPos(val);
+	});
+	
+	$("#btn-next").click(function(){
+        val = parseInt($('#dateSelect').val())+1;
+        $('#slider').val(val);
+        $('#slider').slider({value:val});
+        $("#dateSelect").prop("selectedIndex", val);
+        loadImg($('#slider').val());
+        enableButtons(val);
+        sliderPos(val);
+    });
+	
+	$("#dateSelect").change(function() {
+		val = $("#dateSelect").val();
+		$('#slider').val(val);
+        $('#slider').slider({value:val});
+        loadImg($('#slider').val());
+		enableButtons(val);
+		sliderPos(val);
+	});
+	
+	function enableButtons(date) {
+		if (date == {{max}}) {
+            $("#btn-next").attr('disabled', 'disabled');
+        } else {
+            $("#btn-next").removeAttr('disabled');
+        }
+        if (date==0) {
+            $("#btn-prev").attr('disabled', 'disabled');
+        } else {
+            $("#btn-prev").removeAttr('disabled');
+        }
+	}
+	
+	function sliderPos(date) {
+		$("#slider").slider('setValue', date)
+	}
+	
+	function initLink() {
+		sel_reg = $("#region").val()
+		sel_var = $("#dataset").val()
+		link = "/"+sel_reg+"&"+sel_var
+		$("#go").attr('href', link);
+	}
+	
+	function initDownLink(anom) {
+		sel_reg = $("#region").val()
+        sel_var = $("#dataset").val()
+        sel_src = $("#source").val()
+        sel_lon = $("#lon").val()
+        sel_lat = $("#lat").val()
+        
+        div = "#download"
+        link = "/_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+        
+        if(anom == true) {
+        	link += '&anom';
+        	div += "_anom"
+        }
+          
+        $(div).attr('href', link);
+	}
+	   
+    $("#region").change(function() {
+        initLink();
+        enableGo();
+    });
+    $("#dataset").change(function() {
+        initLink();
+        enableGo();
+    });
+    
+    $("#anom").click(function() {
+        expandDiv('graph_anom');
+        lon = $("#lon").val()
+        lat = $("#lat").val()
+        ts.loadTS(lon, lat, true);
+        initDownLink(true);
+    });
+    
+    function enableGo() {
+        if ($("#region").val() == '') {
+            $("#go").attr('disabled', 'disabled');
+        }
+        else if ($("#dataset").val() == '') {
+            $("#go").attr('disabled', 'disabled');
+        } else {
+            $("#go").removeAttr('disabled');
+        }
+    }
+    
+	function expandDiv(div) {
+		var div = document.getElementById(div);
+		div.style.visibility='visible';
+		div.style.overflow = "visible";
+		div.style.height = "auto";
+	}
+
+	function foldDiv(div) {
+		var div = document.getElementById(div);
+		div.style.visibility='hidden';
+		div.style.overflow = "hidden";
+		div.style.height = "0";
+	}
+	
+});
+</script>
+
+<div class="row">
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+	    <form class="form-inline" role="form">
+	        <div class="form-group">
+	            <label class="sr-only" for="region">Regions</label>
+	            <select class="form-control" id="region">
+	                <option value=''>REGION</option>
+	                    {% for reg in regions %}
+	                      {% set checked = '' %}
+	                      {% if reg == region %}
+	                        {% set checked = 'selected="selected"' %}
+	                      {% endif %}
+	                      <option value="{{ reg }}" {{ checked }}>{{ reg }}</option>
+	                    {% endfor %}
+	            </select>
+	        </div>
+	        <div class="form-group">
+	            <label class="sr-only" for="dataset">Datasets</label>
+	            <select class="form-control" id="dataset">
+	                <option value=''>DATASET</option>
+	                {% for var in variables %}
+	                  {% set checked = '' %}
+	                  {% if var == variable %}
+	                    {% set checked = 'selected="selected"' %}
+	                  {% endif %}
+	                  <option value="{{ var }}" {{ checked }}>{{ var }}</option>
+	                {% endfor %}
+	            </select>
+	        </div>
+	        <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
+	        <input id="source" type="hidden" value="{{ source }}" />
+	        <input id="lon" type="hidden" />
+	        <input id="lat" type="hidden" />
+	    </form>
+	  </div>
+	  
+	  <div class="panel-body" style="position:relative">
+	    <div id='map' style="height:640px; z-index:0"></div>
+	    <div style="position: absolute; bottom: 30px; left:30px; z-index:9999;">
+            <img id='legend' src='' style="width: auto; height: auto;"/>
+        </div>
+	  </div>
+	  
+	  <div class="panel-footer" align="center">
+	    <input type="text" style="width:100%;" id="slider">
+	    <form class="form-inline" role="form" style="margin-top:8px;">
+	        <button type="button" class="btn btn-default" id="btn-prev">
+	           <span class="glyphicon glyphicon-chevron-left"></span>
+	         </button>
+	         <select id="dateSelect" class="form-control">
+	              {% for dat in dates %}
+	                  <option value="{{ dat['id'] }}">{{ dat['date'] }}</option>
+	              {% endfor %}
+	         </select>
+	         <button type="button" class="btn btn-default" id="btn-next">
+	           <span class="glyphicon glyphicon-chevron-right"></span>
+	         </button>
+	      </form>
+	  </div>
+	</div>
+</div>
+
+<div class="row" id="ts" style="visibility:hidden; height:0px; overflow: hidden;">
+	<div class="panel panel-default" id="graph" style="visibility:hidden; height:0px;">
+		<div class="panel-body">
+			<div id="graph_body" style="height:250px;"></div>
+		</div>
+		<div class="panel-footer">
+		   <div class="row">
+		       <div class="col-md-6" id="graph_footer"></div>
+		       <div class="col-md-6" align="right">
+		           <button class='btn btn-default' id="anom">calc anomalies</button>
+		           <a href='' class='btn btn-default' id="download">
+		               <span class="glyphicon glyphicon-download-alt"></span> download
+		           </a>
+		       </div>
+		   </div>
+		</div>
+	</div>
+	
+	<div class="panel panel-default" id="graph_anom" style="visibility:hidden; height:0px;">
+	    <div class="panel-body">
+	        <div id="graph_anom_body" style="height:250px;"></div>
+	    </div>
+	    <div class="panel-footer">
+	       <div class="row">
+	           <div class="col-md-6" id="graph_anom_footer"></div>
+	           <div class="col-md-6" align="right">
+	               <a href='' class='btn btn-default' id="download_anom">
+	                   <span class="glyphicon glyphicon-download-alt"></span> download
+	               </a>
+	           </div>
+	       </div>
+	    </div>
+	</div>
+</div>
+
+{% endblock %}

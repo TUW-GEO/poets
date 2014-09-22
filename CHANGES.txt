@@ -7,3 +7,6 @@ v0.2.0, 2014-08-29
 longitude/latitude
 * Added time_series package with features such as deseasonalizing
 * Fixed bugs that occured on resampling
+
+v0.3.0, 2014-09-22
+* Implemented web interface for displaying images and time series in a browser
