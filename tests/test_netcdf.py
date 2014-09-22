@@ -38,7 +38,7 @@ import numpy as np
 import numpy.testing as nptest
 from datetime import datetime
 from poets.image.netcdf import save_image, write_tmp_file, clip_bbox, \
-    read_image, get_properties
+    read_image, get_properties, read_variable
 from netCDF4 import Dataset
 
 
@@ -113,7 +113,19 @@ class Test(unittest.TestCase):
             assert data.getncattr('Attribute1') == \
                 self.metadata[self.variable]['Attribute1']
 
+    def test_read_image(self):
+        write_tmp_file(self.image, self.timestamp, self.region, self.metadata,
+                       self.testfilename, self.start_date, self.sp_res)
+
+        _, _, _, timestamp, metadata = read_image(self.testfilename)
+
+        timediff = self.timestamp - timestamp
+
+        assert timediff.days == 0
+        assert metadata == self.metadata
+
     def test_clip_bbox(self):
+
         lon_min = -180
         lon_max = 0
         lat_min = 0
@@ -122,24 +134,21 @@ class Test(unittest.TestCase):
         write_tmp_file(self.image, self.timestamp, self.region, self.metadata,
                        self.testfilename, self.start_date, self.sp_res)
 
-        data, lon_new, lat_new, timestamp, metadata = clip_bbox(
-            self.testfilename, lon_min, lat_min, lon_max, lat_max)
-
-        timediff = self.timestamp - timestamp
+        data_src, lon, lat, _, _ = read_image(self.testfilename)
+        data, lon_new, lat_new = clip_bbox(
+            data_src, lon, lat, lon_min, lat_min, lon_max, lat_max)
 
         nptest.assert_array_equal(self.bbox, data[self.variable])
         nptest.assert_array_equal(self.lon_new, lon_new)
         nptest.assert_array_equal(self.lat_new, lat_new)
-        assert timediff.days == 0
-        assert metadata == self.metadata
 
-    def test_read_image(self):
+    def test_read_variable(self):
 
         save_image(self.image, self.timestamp, self.region, self.metadata,
                    self.testfilename, self.start_date, self.sp_res,
                    temp_res=self.temp_res)
 
-        image, lon, lat, metadata = read_image(self.testfilename,
+        image, lon, lat, metadata = read_variable(self.testfilename,
                                                self.variable,
                                                self.timestamp)
 
