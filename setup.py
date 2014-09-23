@@ -55,7 +55,8 @@ else:
                                               "pyshp >=1.2.1",
                                               "paramiko >= 1.14.0",
                                               "requests >= 1.14.0",
-                                              "pillow >= 2.5.1"
+                                              "pillow >= 2.5.1",
+                                              "flask >= 0.10.1"
                                               ],
                          'test_suite': 'tests/'}
 
@@ -72,7 +73,7 @@ setup(
     license='LICENSE.txt',
 
     packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
-              'poets.timedate'],
+              'poets.timedate', 'poets.web'],
     package_data={'poets': [os.path.join('shape', 'ancillary', '*.dbf'),
                             os.path.join('shape', 'ancillary', '*.README'),
                             os.path.join('shape', 'ancillary', '*.shp'),

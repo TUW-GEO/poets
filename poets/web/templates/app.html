@@ -34,7 +34,8 @@ $(document).ready(function () {
 	
 	initLegend();
 	
-	var markers = new OpenLayers.Layer.Markers("Markers");
+	var mlayer = new OpenLayers.Layer()
+	markers = new OpenLayers.Layer.Markers("Markers");
 	map.addLayer(markers);
 	
 	map.events.register("click", map, function(e) {
@@ -71,6 +72,8 @@ $(document).ready(function () {
             'opacity' : opacity
             });
         map.addLayer(image);
+        markers.setZIndex(1001);
+        image.setZIndex(1000);
         initLegend();
 	}
 	

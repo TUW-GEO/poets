@@ -13,6 +13,7 @@ Features
 * spatial resampling to a regular grid globally or to a specific country
 * temporal resampling to monthly or dekadal intervals (more options will be available in future versions)
 * saves resampled images as NetCDF4 file
+* web interface for displaying images and time series in a browser
 
 
 Supported Data
@@ -37,14 +38,14 @@ Supported File Types
 poets supports following file types:
 
 * NetCDF version >= 4.0
-* png, jpg, tif and gif image files
+* GeoTiff
+* png, jpg, and gif image files
 
 The latter image files must have global coverage with longitudes from -180 to 
 180 and latitudes from -90 to 90, with the left upper pixel at -180, 90 and the
 right lower pixel at 180,-90.
 
-Input files MUST NOT be compressed, support of compressed files will be enabled in future versions.
-
+Input files MUST NOT be compressed, support of compressed files will be enabled in future versions
 
 Installation
 ============
@@ -61,10 +62,11 @@ In order to use all poets features python version 2.7.5 with the following packa
 * statsmodels >= 0.4.3 http://statsmodels.sourceforge.net/
 * netCDF4 >= 1.0.1 https://pypi.python.org/pypi/netCDF4
 * Shapely >= 1.3.2 http://toblerity.org/shapely/
-* pyshp >=1.2.1 https://code.google.com/p/pyshp/
+* pyshp >= 1.2.1 https://code.google.com/p/pyshp/
 * paramiko >= 1.14.0 http://paramiko-www.readthedocs.org/
 * requests >= 1.14.0 http://docs.python-requests.org/
 * pillow >= 2.5.1 http://pillow.readthedocs.org/
+* flask >= 0.10.1 http://flask.pocoo.org/
 
 How to install python packages
 ------------------------------

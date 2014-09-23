@@ -44,7 +44,6 @@ The latter image files must have global coverage with longitudes from -180 to
 180 and latitudes from -90 to 90, with the left upper pixel at -180, 90 and the
 right lower pixel at 180,-90.
 
-
 Ancillary data
 ==============
 

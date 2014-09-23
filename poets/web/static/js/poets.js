@@ -14,10 +14,16 @@ poetsViewer.prototype.loadTS = function(lon, lat, anom) {
 	
 	color = '#DF7401';
 	
+	tlon = parseInt(lon).toFixed(2);
+	tlat = parseInt(lat).toFixed(2);
+	
+	title = " ("+tlon+"/"+tlat+")"
+	
 	if(anom == true) {
 		link += '&anom';
 		div += 'anom_';
-		color = '#006699'
+		color = '#006699';
+		title += ' moving average (window size 100 days)'
 	}
 	
 	$.getJSON(this.host+link, function(data){
@@ -33,7 +39,7 @@ poetsViewer.prototype.loadTS = function(lon, lat, anom) {
 		    drawPoints: true,
 		    labelsSeparateLines: false,
 		    connectSeparatedPoints:true,
-		    title: data.labels[1]+' ('+lon+'/'+lat+')',
+		    title: data.labels[1] + title,
 		    legend: 'always',
 		    colors: [color],
 		    fillGraph: true

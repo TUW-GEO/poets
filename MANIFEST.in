@@ -1,4 +1,4 @@
 include *.txt
 recursive-include docs *.txt *.html *.css *.png *.gif *.js
-recursive-include poets *.dbf *.README *.shp *.shx
+recursive-include poets *.dbf *.README *.shp *.shx *.png *.ico *.html *.js *.md *.css *.gif
 recursive-include tests *.py *.png *.csv *.tiff

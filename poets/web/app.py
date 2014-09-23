@@ -161,7 +161,7 @@ def index(**kwargs):
         return render_template('app.html',
                                max=idxdates,
                                coord=[c_lon, c_lat],
-                               zoom=zoom,  # depends on map div width,
+                               zoom=zoom,
                                ex1=(lon_max, lat_min),
                                ex2=(lon_min, lat_max),
                                region=region,
@@ -209,7 +209,7 @@ def get_ts(**kwargs):
     df = source.read_ts(lonlat, region, variable)
 
     if anomaly:
-        df = ts.anomaly.calc_anomaly(df)
+        df = ts.anomaly.calc_anomaly(df, window_size=100)
         columns = []
         for cols in df.columns:
             columns.append(cols + '_anomaly')
@@ -359,5 +359,5 @@ def request_legend(**kwargs):
 
 
 @app.route('/about')
-def about():
+def _about():
     return render_template('about.html')

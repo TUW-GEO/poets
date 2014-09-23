@@ -10,3 +10,4 @@ longitude/latitude
 
 v0.3.0, 2014-09-22
 * Implemented web interface for displaying images and time series in a browser
+* Now support GeoTiff metadata
