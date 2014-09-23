@@ -56,7 +56,7 @@ else:
                                               "paramiko >= 1.14.0",
                                               "requests >= 1.14.0",
                                               "pillow >= 2.5.1",
-                                              "flask >= 0.10.1"
+                                              "Flask >= 0.10.1"
                                               ],
                          'test_suite': 'tests/'}
 
@@ -77,7 +77,20 @@ setup(
     package_data={'poets': [os.path.join('shape', 'ancillary', '*.dbf'),
                             os.path.join('shape', 'ancillary', '*.README'),
                             os.path.join('shape', 'ancillary', '*.shp'),
-                            os.path.join('shape', 'ancillary', '*.shx')]
+                            os.path.join('shape', 'ancillary', '*.shx'),
+                            os.path.join('web', 'static', 'js', '*.js*'),
+                            os.path.join('web', 'static', 'ol2.13.1', '*.js*'),
+                            os.path.join('web', 'static', 'ol2.13.1', 'theme', 'default', '*.css*'),
+                            os.path.join('web', 'static', 'ol2.13.1', 'theme', 'default', 'img', '*.*'),
+                            os.path.join('web', 'static', 'ol2.13.1', 'img', '*.*'),
+                            os.path.join('web', 'static', 'ol2.13.1', '*.*'),
+                            os.path.join('web', 'static', 'slider', 'js', '*.js*'),
+                            os.path.join('web', 'static', 'slider', 'css', '*.css*'),
+                            os.path.join('web', 'static', 'slider', 'less', '*.less*'),
+                            os.path.join('web', 'templates', '*.html*'),
+                            os.path.join('web', 'static', '*.ico'),
+                            os.path.join('web', 'static', '*.png')
+                            ]
                   },
     **setuptools_kwargs)
 
