@@ -115,7 +115,8 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
 
     elif fileExtension in imgfiletypes:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
-                                                               region)
+                                                               region,
+                                                               fileExtension)
 
     if nan_value is not None:
         for key in data.keys():

@@ -18,8 +18,8 @@ Features
 Supported Datasets
 ==================
 
-Sources Data Sources
---------------------
+Supported Data Sources
+----------------------
 
 In order to work properly, all datasets must be provided via one of the 
 following protocols:

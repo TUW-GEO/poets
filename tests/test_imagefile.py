@@ -49,6 +49,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.testfilename = os.path.join(curpath(), 'data', 'test.png')
         self.region = 'NZ'
+        self.fileExtension = '.png'
 
         self.lon = np.array([165., 166., 167., 168., 169., 170., 171., 172.,
                              173., 174., 175., 176., 177., 178., 179., -180.,
@@ -67,7 +68,8 @@ class Test(unittest.TestCase):
         datamin = 112
         datamax = 255
 
-        data, lon_new, lat_new, _, _ = bbox_img(self.testfilename, self.region)
+        data, lon_new, lat_new, _, _ = bbox_img(self.testfilename, self.region,
+                                                self.fileExtension)
 
         nptest.assert_array_equal(lon_new, self.lon)
         nptest.assert_array_equal(lat_new, self.lat)
