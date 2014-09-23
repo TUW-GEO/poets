@@ -12,6 +12,7 @@ Features
   Sources`
 * spatial and temporal resampling of datasets
 * saves resampled images as NetCDF4 file
+* web interface for displaying images and time series in a browser
 
 
 Supported Datasets
@@ -36,12 +37,12 @@ Supported File Types
 poets supports following file types:
 
 * NetCDF version >= 4.0
-* png, jpg, tif and gif image files
+* GeoTiff
+* png, jpg, and gif image files
 
 The latter image files must have global coverage with longitudes from -180 to 
 180 and latitudes from -90 to 90, with the left upper pixel at -180, 90 and the
 right lower pixel at 180,-90.
-
 
 Ancillary data
 ==============

@@ -27,4 +27,7 @@ But now let's start...
    
 .. include::
    ex_read_ts.rst
+   
+.. include::
+   ex_start_app.rst
 

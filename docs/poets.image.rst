@@ -4,6 +4,14 @@ poets.image package
 Submodules
 ----------
 
+poets.image.geotiff module
+--------------------------
+
+.. automodule:: poets.image.geotiff
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 poets.image.imagefile module
 ----------------------------
 

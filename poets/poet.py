@@ -1,6 +1,7 @@
 # Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
+from poets.image.netcdf import get_properties
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -42,7 +43,9 @@ import pandas as pd
 from datetime import datetime
 from netCDF4 import Dataset
 from poets.io.source_base import BasicSource
+from poets.image.netcdf import get_properties
 from poets.grid.grids import ShapeGrid
+import poets.web.app as app
 
 valid_temp_res = ['dekad', 'month']
 
@@ -137,7 +140,8 @@ class Poet(object):
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
-                   variables=None, nan_value=None):
+                   variables=None, nan_value=None, valid_range=None,
+                   unit=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -171,14 +175,16 @@ class Poet(object):
             Variables used from data source.
         nan_value : int, float, optional
             Nan value of the original data as given by the data provider.
+        valid_range : tuple of int of float, optional
+            Valid range of data, given as (minimum, maximum).
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
                              host, protocol, username, password, port,
                              directory, dirstruct, begin_date, variables,
-                             nan_value, self.nan_value, self.regions,
-                             self.spatial_resolution, self.temporal_resolution,
-                             self.start_date)
+                             nan_value, valid_range, self.nan_value,
+                             self.regions, self.spatial_resolution,
+                             self.temporal_resolution, self.start_date)
 
         self.sources[name] = source
 
@@ -275,11 +281,14 @@ class Poet(object):
             Array with longitudes.
         lat : numpy.array
             Array with latitudes.
+        metadata : dict
+            Dictionary containing metadata of the variable.
         """
 
-        img, lon, lat = self.sources[source].read_img(date, region, variable)
+        img, lon, lat, metadata = self.sources[source].read_img(date, region,
+                                                                variable)
 
-        return img, lon, lat
+        return img, lon, lat, metadata
 
     def read_timeseries(self, source, location, region=None, variable=None):
         """
@@ -306,6 +315,28 @@ class Poet(object):
         ts = self.sources[source].read_ts(location, region, variable)
 
         return ts
+
+    def get_variables(self):
+
+        src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
+                    '_' + str(self.temporal_resolution) + '.nc')
+
+        variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+
+        return variables
+
+    def start_app(self):
+
+#==============================================================================
+#         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
+#                     '_' + str(self.temporal_resolution) + '.nc')
+#
+#         variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+#
+#         app.start(self.regions, self.sources, variables)
+#==============================================================================
+
+        app.start(self)
 
 if __name__ == "__main__":
     pass

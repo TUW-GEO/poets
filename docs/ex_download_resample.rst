@@ -1,7 +1,7 @@
 Download and resample data
 ==========================
 
-After `Setting up a Poet base class`_ and adding some sources, we can now start downloading and resampling the data by calling the :class:`poets.poet.Poet.fetch_data` method.
+After setting up a Poet base class and adding some sources, we can now start downloading and resampling the data by calling the :class:`poets.poet.Poet.fetch_data` method.
 
 In[3]::
    

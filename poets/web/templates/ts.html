@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="row">
+	<div id='graph1' class="col-md-12" style="height:250px;">
+	</div>
+</div>
+
+<script type="text/javascript">
+ts = new poetsViewer();
+ts.loadTS();
+
+</script>
+
+{% endblock %}
