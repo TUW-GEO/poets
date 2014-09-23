@@ -12,14 +12,6 @@ poets.web.app module
     :undoc-members:
     :show-inheritance:
 
-poets.web.ol_img module
------------------------
-
-.. automodule:: poets.web.ol_img
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 poets.web.overlays module
 -------------------------
 

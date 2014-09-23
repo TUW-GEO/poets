@@ -359,5 +359,8 @@ def request_legend(**kwargs):
 
 
 @app.route('/about')
-def _about():
+def about():
+    """
+    Creates the `about` page.
+    """
     return render_template('about.html')
