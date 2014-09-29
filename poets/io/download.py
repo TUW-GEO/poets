@@ -48,9 +48,9 @@ from poets.timedate.dekad import dekad2day
 import shutil
 
 
-def download_ftp(download_path, host, directory, port, username, password,
-                 filedate, dirstruct=None, ffilter=None, begin=None,
-                 end=None):
+def download_ftp(download_path, host, directory, filedate, port=None,
+                 username=None, password=None, dirstruct=None, ffilter=None,
+                 begin=None, end=None):
     """Download data via SFTP
 
     Parameters
@@ -86,6 +86,24 @@ def download_ftp(download_path, host, directory, port, username, password,
         true if data is available, false if not
     """
 
+    if port == None:
+        port = 21
+
+    if username == None:
+        username = ''
+
+    if password == None:
+        password = ''
+
+    if ffilter == None:
+        ffilter = ''
+
+    if begin is None:
+        begin = datetime.datetime(1900, 1, 1)
+
+    if end is None:
+        end = datetime.datetime.now()
+
     if host[-1] == '/':
         host = host[:-1]
 
@@ -96,15 +114,6 @@ def download_ftp(download_path, host, directory, port, username, password,
     subdirs = []
 
     ftp.retrlines("NLST", subdirs.append)  # NLIST retrieves filename only
-
-    if ffilter == None:
-        ffilter = ''
-
-    if begin is None:
-        begin = datetime.datetime(1900, 1, 1)
-
-    if end is None:
-        end = datetime.datetime.now()
 
     if not os.path.exists(download_path):
         os.makedirs(download_path)
@@ -144,10 +153,10 @@ def download_ftp(download_path, host, directory, port, username, password,
     if len(files) > 0:
         for fname in files:
             # datum wird weiter oben schon ueberprueft!
-            #===================================================================
+            #==================================================================
             # date = get_file_date(fname, filedate)
             # if date >= begin and date <= end:
-            #===================================================================
+            #==================================================================
             fname2 = fname.split('/')[-1]
             if not os.path.exists(os.path.join(download_path, fname2)):
                 if ffilter in fname2:
@@ -167,7 +176,8 @@ def download_ftp(download_path, host, directory, port, username, password,
 
 
 def download_sftp(download_path, host, directory, port, username, password,
-                  filedate, dirstruct=None, ffilter=None, begin=None, end=None):
+                  filedate, dirstruct=None, ffilter=None, begin=None,
+                  end=None):
     """Download data via SFTP
 
     Parameters
@@ -183,7 +193,7 @@ def download_sftp(download_path, host, directory, port, username, password,
     username : str
         Username for source.
     password : str
-        Passwor for source.
+        Password for source.
     filedate : dict
         Dict which points to the date fields in the filename.
     dirstruct : list of str, optional
@@ -298,7 +308,7 @@ def download_sftp(download_path, host, directory, port, username, password,
 
 
 def download_http(download_path, host, directory, filename, filedate,
-                  dirstruct=None, begin=None, end=None):
+                  dirstruct, ffilter=None, begin=None, end=None):
     """Download data via HTTP
 
     Parameters
@@ -453,18 +463,19 @@ def download_http(download_path, host, directory, filename, filedate,
             r = requests.get(fp)
             if r.status_code == 200:
                 # check if year folder is existing
-                if not os.path.exists(download_path):
-                    print('[INFO] output path does not exist...'
-                          'creating path')
-                    os.makedirs(download_path)
+                if ffilter in os.path.split(fp)[-1]:
+                    if not os.path.exists(download_path):
+                        print('[INFO] output path does not exist...'
+                              'creating path')
+                        os.makedirs(download_path)
 
-                # download file
-                newfile = os.path.join(download_path,
-                                       fp.split('/')[-1])
-                r = requests.get(fp, stream=True)
-                with open(newfile, 'wb') as f:
-                    f.write(r.content)
-                    print '.',
+                    # download file
+                    newfile = os.path.join(download_path,
+                                           fp.split('/')[-1])
+                    r = requests.get(fp, stream=True)
+                    with open(newfile, 'wb') as f:
+                        f.write(r.content)
+                        print '.',
 
     print ''
     return True
