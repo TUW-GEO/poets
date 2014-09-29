@@ -271,7 +271,7 @@ class ShapeGrid(grids.BasicGrid):
 
         lats = np.arange(latmin, latmax + sp_res, sp_res)
 
-        lon_new, lat_new = _remove_blank_frame(region, lons, lats)
+        lon_new, lat_new = _remove_blank_frame(region, lons, lats, shapefile)
 
         lon, lat = np.meshgrid(lon_new, lat_new)
 
@@ -311,7 +311,7 @@ class ShapeGrid(grids.BasicGrid):
         return points
 
 
-def _remove_blank_frame(region, lons, lats):
+def _remove_blank_frame(region, lons, lats, shapefile=None):
     """Removes longitudes and latitudes without points in region shape.
 
     Parameters
@@ -331,7 +331,7 @@ def _remove_blank_frame(region, lons, lats):
         Updated list of latitudes.
     """
 
-    shp = Shape(region)
+    shp = Shape(region, shapefile)
 
     poly = shp.polygon
 

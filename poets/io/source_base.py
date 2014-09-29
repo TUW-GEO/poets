@@ -74,7 +74,7 @@ class BasicSource(object):
         Port to data host, defaults to 22.
     directory : str, optional
         Path to data on host.
-    dirstruct : list of strings
+    dirstruct : list of strings, optional
         Structure of source directory, each list item represents a
         subdirectory.
     begin_date : datetime, optional
@@ -444,17 +444,18 @@ class BasicSource(object):
         if self.protocol in ['HTTP', 'http']:
             check = download_http(self.rawdata_path, self.host,
                                   self.directory, self.filename, self.filedate,
-                                  self.dirstruct, begin, end=end)
+                                  self.dirstruct, begin=begin, end=end)
         elif self.protocol in ['FTP', 'ftp']:
             check = download_ftp(self.rawdata_path, self.host, self.directory,
-                                 self.port, self.username, self.password,
-                                 self.filedate, self.dirstruct, begin, end=end)
+                                 self.filedate, self.port, self.username,
+                                 self.password, self.dirstruct, begin=begin,
+                                 end=end)
 
         elif self.protocol in ['SFTP', 'sftp']:
             check = download_sftp(self.rawdata_path, self.host,
                                   self.directory, self.port, self.username,
                                   self.password, self.filedate, self.dirstruct,
-                                  begin, end=end)
+                                  begin=begin, end=end)
 
         return check
 

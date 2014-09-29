@@ -67,13 +67,13 @@ def lonlat2px(img, lon, lat):
     """
 
     w, h = img.size
-    
+
     mw = w / 360.0
     mh = h / 180.0
-    
+
     row = h / 2 - lat * mh
     col = w / 2 + lon * mw
-    
+
     return row, col
 
 
@@ -136,19 +136,19 @@ def px2lonlat(img, lon_px, lat_px):
     """
 
     w, h = img.size
-    
+
     mw = w / 360.0
     mh = h / 180.0
-    
+
     lon_new = np.zeros(len(lon_px))
     lat_new = np.zeros(len(lat_px))
-    
+
     for i in range(0, len(lon_px)):
         lon_new[i] = (lon_px[i] - w / 2) / mw
-    
+
     for i in range(0, len(lat_px)):
         lat_new[i] = -(lat_px[i] - h / 2) / mh
-    
+
     return lon_new, lat_new
 
 
@@ -309,12 +309,12 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
     # get 2 pairs of points (upper left, lower right of bbox)
     if d > 350 and region not in ['AY', 'global']:
         if fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            if (round(lon_max_src-lon_min_src) == 360.0 and
-                round(lat_max_src-lat_min_src) == 180.0):
+            if (round(lon_max_src - lon_min_src) == 360.0 and
+                round(lat_max_src - lat_min_src) == 180.0):
                 orig_img = rearrange_img(orig_img)
                 row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
                 row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
-        
+
                 img = orig_img.crop((int(math.floor(col_min)),
                                      int(math.floor(row_min)),
                                      int(math.ceil(col_max)),
@@ -326,12 +326,12 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
             orig_img = rearrange_img(orig_img)
             row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
             row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
-    
+
             img = orig_img.crop((int(math.floor(col_min)),
                                  int(math.floor(row_min)),
                                  int(math.ceil(col_max)),
                                  int(math.ceil(row_max))))
-    
+
     elif fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
         row_min, col_min = lonlat2px_gt(orig_img, lon_min, lat_max, lon_min_src,
                                         lat_min_src, lon_max_src, lat_max_src)

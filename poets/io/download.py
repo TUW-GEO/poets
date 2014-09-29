@@ -47,7 +47,6 @@ import pandas as pd
 from poets.timedate.dekad import dekad2day
 import shutil
 
-
 def download_ftp(download_path, host, directory, filedate, port=None,
                  username=None, password=None, dirstruct=None, ffilter=None,
                  begin=None, end=None):
@@ -159,7 +158,7 @@ def download_ftp(download_path, host, directory, filedate, port=None,
             #==================================================================
             fname2 = fname.split('/')[-1]
             if not os.path.exists(os.path.join(download_path, fname2)):
-                if ffilter in fname2:
+                if ffilter is None or ffilter in fname2:
                     ftp.retrbinary("RETR " + fname2, open(fname2, "wb").write)
                     print '.',
             else:
@@ -463,7 +462,7 @@ def download_http(download_path, host, directory, filename, filedate,
             r = requests.get(fp)
             if r.status_code == 200:
                 # check if year folder is existing
-                if ffilter in os.path.split(fp)[-1]:
+                if ffilter is None or ffilter in os.path.split(fp)[-1]:
                     if not os.path.exists(download_path):
                         print('[INFO] output path does not exist...'
                               'creating path')
@@ -555,7 +554,7 @@ def download_local(download_path, directory, filedate, dirstruct=None,
     if dirstruct is None:
         for path, _, files in os.walk(directory):
             for fname in files:
-                if ffilter in fname:
+                if ffilter is None or ffilter in fname:
                     date = get_file_date(fname, filedate)
                     if (date >= begin and date <= end and not
                         os.path.exists(os.path.join(download_path,

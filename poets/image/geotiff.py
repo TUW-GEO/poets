@@ -50,7 +50,7 @@ def get_layer_extent(filepath):
     -----------
     filepath : str
         path to geotiff
-        
+
     Returns:
     --------
     lon_min, lat_min : float
@@ -72,7 +72,7 @@ def get_layer_extent(filepath):
 
 def region_in_geotiff(lon_min, lat_min, lon_max, lat_max, region):
     """ Checks if geotiff covers country.
-    
+
     Parameters:
     -----------
     lon_min, lat_min : float
@@ -81,12 +81,12 @@ def region_in_geotiff(lon_min, lat_min, lon_max, lat_max, region):
         upper right coordinate of geotiff
     region : str
         country FIPS code
-    
+
     Returns:
     --------
     True, if region in geotiff
     """
-    
+
     shp = Shape(region)
     region_ext = shp.bbox
     if (region_ext[0] >= lon_min and region_ext[1] >= lat_min and
@@ -121,15 +121,15 @@ def lonlat2px_gt(img, lon, lat, lon_min, lat_min, lon_max, lat_max):
     """
 
     w, h = img.size
-    
-    londiff = lon_max-lon_min
-    latdiff = lat_max-lat_min
-    
+
+    londiff = lon_max - lon_min
+    latdiff = lat_max - lat_min
+
     mw = w / londiff
     mh = h / latdiff
-    
-    row = (-lat+lat_max) * mh
-    col = (lon-lon_min) * mw
+
+    row = (-lat + lat_max) * mh
+    col = (lon - lon_min) * mw
 
     return row, col
 
@@ -159,12 +159,12 @@ def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
     lon_max, lat_max : float
         upper right coordinate of geotiff
     """
-    
+
     w, h = img.size
-    
-    londiff = lon_max-lon_min
-    latdiff = lat_max-lat_min
-    
+
+    londiff = lon_max - lon_min
+    latdiff = lat_max - lat_min
+
     mw = w / londiff
     mh = h / latdiff
 
