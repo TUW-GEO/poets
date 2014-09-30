@@ -559,7 +559,7 @@ class BasicSource(object):
             else:
                 print '[WARNING] no data available for this date'
 
-    def read_ts(self, location, region=None, variable=None):
+    def read_ts(self, location, region=None, variable=None, shapefile=None):
         """Gets timeseries from netCDF file for a gridpoint.
 
         Parameters
@@ -571,6 +571,8 @@ class BasicSource(object):
             Region of interest, set to first defined region if not set.
         variable : str, optional
             Variable to display, selects all available variables if None.
+        shapefile : str, optional
+            Path to custom shapefile.
 
         Returns
         -------
@@ -587,7 +589,7 @@ class BasicSource(object):
             if region == 'global':
                 grid = RegularGrid(self.dest_sp_res)
             else:
-                grid = ShapeGrid(region, self.dest_sp_res)
+                grid = ShapeGrid(region, self.dest_sp_res, shapefile)
 
             gp, _ = grid.find_nearest_gpi(location[0], location[1])
 

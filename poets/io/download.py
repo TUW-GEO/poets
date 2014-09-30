@@ -39,13 +39,12 @@ import calendar
 import datetime
 from ftplib import FTP
 import os
-
 import paramiko
 import requests
-
 import pandas as pd
 from poets.timedate.dekad import dekad2day
 import shutil
+
 
 def download_ftp(download_path, host, directory, filedate, port=None,
                  username=None, password=None, dirstruct=None, ffilter=None,
@@ -459,7 +458,10 @@ def download_http(download_path, host, directory, filename, filedate,
                 print '[INFO] File already exists, nothing to download',
                 continue
 
-            r = requests.get(fp)
+            proxies = {'http': 'http://proxy.ipf.tuwien.ac.at:3128',
+                       'https': 'http://proxy.ipf.tuwien.ac.at:3128'}
+
+            r = requests.get(fp, proxies=proxies)
             if r.status_code == 200:
                 # check if year folder is existing
                 if ffilter is None or ffilter in os.path.split(fp)[-1]:

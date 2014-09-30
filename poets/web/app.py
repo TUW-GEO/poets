@@ -105,10 +105,12 @@ def start(poet):
     global variables
     global dates
     global vmin, vmax, cmap
+    global shapefile
 
     regions = poet.regions
     sources = poet.sources
     variables = poet.get_variables()
+    shapefile = poet.shapefile
 
     vmin = 0
     vmax = 20
@@ -156,7 +158,8 @@ def index(**kwargs):
             dat = {'id': i, 'date': d.strftime('%Y-%m-%d')}
             fdates.append(dat)
 
-        lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
+        lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = \
+            bounds(region, shapefile)
 
         return render_template('app.html',
                                max=idxdates,
@@ -206,7 +209,7 @@ def get_ts(**kwargs):
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    df = source.read_ts(lonlat, region, variable)
+    df = source.read_ts(lonlat, region, variable, shapefile)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df, window_size=100)

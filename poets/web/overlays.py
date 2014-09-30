@@ -39,7 +39,7 @@ This modules provides functions used while creating image overlays.
 from poets.shape.shapes import Shape
 
 
-def bounds(country):
+def bounds(country, shapefile=None):
     """
     Returns the bounding box, center coordinates and zoom level
     for web overlay purposes.
@@ -53,7 +53,7 @@ def bounds(country):
     --------
     Selfspeaking Coordinates as Integer
     """
-    shp = Shape(country)
+    shp = Shape(country, shapefile)
 
     lon_min = shp.bbox[0]
     lon_max = shp.bbox[2]

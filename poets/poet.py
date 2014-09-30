@@ -1,7 +1,6 @@
 # Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
-from poets.image.netcdf import get_properties
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -326,15 +325,6 @@ class Poet(object):
         return variables
 
     def start_app(self):
-
-#==============================================================================
-#         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
-#                     '_' + str(self.temporal_resolution) + '.nc')
-#
-#         variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
-#
-#         app.start(self.regions, self.sources, variables)
-#==============================================================================
 
         app.start(self)
 
