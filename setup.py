@@ -56,7 +56,9 @@ else:
                                               "paramiko >= 1.14.0",
                                               "requests >= 1.14.0",
                                               "pillow >= 2.5.1",
-                                              "Flask >= 0.10.1"
+                                              "Flask >= 0.10.1",
+                                              "patool >= 1.7",
+                                              "pyunpack >= 0.0.3"
                                               ],
                          'test_suite': 'tests/'}
 
