@@ -33,16 +33,20 @@
 # Creation date: 2014-06-13
 
 import os
-import numpy as np
-import pandas as pd
-import pyresample as pr
-import poets.grid.grids as gr
-import poets.image.netcdf as nc
-from poets.shape.shapes import Shape
-from poets.grid.grids import ShapeGrid, RegularGrid
+
 from pytesmo.grid import resample
 from shapely.geometry import Point
+
+import numpy as np
+import pandas as pd
+from poets.grid.grids import ShapeGrid, RegularGrid
+import poets.grid.grids as gr
+import poets.image.hdf5 as h5
 from poets.image.imagefile import bbox_img
+import poets.image.netcdf as nc
+from poets.shape.shapes import Shape
+import pyresample as pr
+
 
 imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
                 '.JPG', '.jpeg', '.JPEG', '.gif', '.GIF']
@@ -92,7 +96,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
     if prefix is not None:
         prefix += '_'
 
-    _, fileExtension = os.path.splitext(source_file)
+    fileExtension = os.path.splitext(source_file)[1].lower()
 
     if region == 'global':
         lon_min = -180
@@ -112,7 +116,10 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
         data_src, lon, lat, timestamp, metadata = nc.read_image(source_file)
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
-
+    elif fileExtension in ['.h5']:
+        data_src, lon, lat, timestamp, metadata = h5.read_image(source_file)
+        data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
+                                              lat_min, lon_max, lat_max)
     elif fileExtension in imgfiletypes:
         data, src_lon, src_lat, timestamp, metadata = bbox_img(source_file,
                                                                region,

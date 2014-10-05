@@ -117,8 +117,6 @@ def unpack(filepath, outpath=None):
         If input file does not exist.
     """
 
-    print 'unpacking ' + filepath
-
     if os.path.isfile(filepath):
 
         if outpath is None:
@@ -143,5 +141,5 @@ def unpack(filepath, outpath=None):
         raise IOError('%s file does not exist' % filepath)
 
 if __name__ == '__main__':
-    unpack('/home/thomas/Downloads/decomp/test3.rar')
+    # unpack('/home/thomas/Downloads/decomp/test3.rar')
     pass

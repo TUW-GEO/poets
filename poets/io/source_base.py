@@ -32,19 +32,23 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-06-30
 
-import os
-from netCDF4 import Dataset, num2date, date2num
 from datetime import datetime, timedelta
+import os
+import shutil
+
+from netCDF4 import Dataset, num2date, date2num
+
 import numpy as np
 import pandas as pd
-import poets.image.netcdf as nt
-import poets.timedate.dateindex as dt
+from poets.grid.grids import ShapeGrid, RegularGrid
+import poets.image.netcdf as nc
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
-    get_file_date
+    get_file_date, download_local
+from poets.io.fileformats import select_file
+from poets.io.unpack import unpack, check_compressed
+import poets.timedate.dateindex as dt
 from poets.timedate.dekad import check_dekad
-from poets.image.netcdf import get_properties
-from poets.grid.grids import ShapeGrid, RegularGrid
 
 
 class BasicSource(object):
@@ -85,6 +89,9 @@ class BasicSource(object):
         Nan value of the original data as given by the data provider.
     valid_range : tuple of int of float, optional
         Valid range of data, given as (minimum, maximum).
+    ffilter : str, optional
+        Pattern that apperas in filename. Can be used to select out not
+        needed files if multiple files per date are provided.
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     dest_regions : list of str, optional
@@ -125,6 +132,8 @@ class BasicSource(object):
         subdirectory.
     begin_date : datetime
         Date from which on data is available.
+    ffilter : str
+        Pattern that apperas in filename.
     variables : list of strings
         Variables used from data source.
     nan_value : int, float
@@ -150,7 +159,7 @@ class BasicSource(object):
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime(2000, 1, 1),
+                 begin_date=datetime(2000, 1, 1), ffilter=None,
                  variables=None, nan_value=None, valid_range=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
                  dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1)):
@@ -171,6 +180,7 @@ class BasicSource(object):
             self.variables = [variables]
         else:
             self.variables = variables
+        self.ffilter = ffilter
         self.nan_value = nan_value
         self.valid_range = valid_range
         self.dest_nan_value = dest_nan_value
@@ -316,8 +326,6 @@ class BasicSource(object):
             resampling
         """
 
-        raw_files = []
-
         dest_file = self._get_tmp_filepath('spatial', region)
 
         dirList = os.listdir(self.rawdata_path)
@@ -326,15 +334,27 @@ class BasicSource(object):
         for item in dirList:
 
             src_file = os.path.join(self.rawdata_path, item)
-            raw_files.append(src_file)
+
+            if check_compressed(src_file):
+                dirname = os.path.splitext(item)[0]
+                dirpath = os.path.join(self.rawdata_path, dirname)
+                unpack(src_file)
+                src_file = select_file(os.listdir(dirpath))
+                src_file = os.path.join(dirpath, src_file)
 
             fdate = get_file_date(item, self.filedate)
 
             if begin is not None:
                 if fdate < begin:
+                    if check_compressed(item):
+                        shutil.rmtree(os.path.join(self.rawdata_path,
+                                                   os.path.splitext(item)[0]))
                     continue
             if end is not None:
                 if fdate > end:
+                    if check_compressed(item):
+                        shutil.rmtree(os.path.join(self.rawdata_path,
+                                                   os.path.splitext(item)[0]))
                     continue
 
             print '.',
@@ -352,15 +372,20 @@ class BasicSource(object):
                 filename = (region + '_' + str(self.dest_sp_res) + '_'
                             + str(self.dest_temp_res) + '.nc')
                 dfile = os.path.join(self.data_path, filename)
-                nt.save_image(image, timestamp, region, metadata, dfile,
+                nc.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
                               self.dest_nan_value, shapefile,
                               self.dest_temp_res)
             else:
-                nt.write_tmp_file(image, timestamp, region, metadata,
+                nc.write_tmp_file(image, timestamp, region, metadata,
                                   dest_file, self.dest_start_date,
                                   self.dest_sp_res, self.dest_nan_value,
                                   shapefile)
+
+            # deletes unpacked files if existing
+            if check_compressed(item):
+                shutil.rmtree(os.path.join(self.rawdata_path,
+                                           os.path.splitext(item)[0]))
 
         print ''
 
@@ -384,7 +409,7 @@ class BasicSource(object):
             return False
 
         data = {}
-        variables, _, period = nt.get_properties(src_file)
+        variables, _, period = nc.get_properties(src_file)
 
         dtindex = dt.get_dtindex(self.dest_temp_res, period[0], period[1])
 
@@ -407,7 +432,7 @@ class BasicSource(object):
 
             for var in variables:
                 img, _, _, meta = \
-                    nt.read_variable(src_file, var, begin, end)
+                    nc.read_variable(src_file, var, begin, end)
 
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)
@@ -416,7 +441,7 @@ class BasicSource(object):
                         + str(self.dest_temp_res) + '.nc')
             dest_file = os.path.join(self.data_path, filename)
 
-            nt.save_image(data, date, region, metadata, dest_file,
+            nc.save_image(data, date, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
                           self.dest_nan_value, shapefile, self.dest_temp_res)
 
@@ -444,18 +469,23 @@ class BasicSource(object):
         if self.protocol in ['HTTP', 'http']:
             check = download_http(self.rawdata_path, self.host,
                                   self.directory, self.filename, self.filedate,
-                                  self.dirstruct, begin=begin, end=end)
+                                  self.dirstruct, begin=begin, end=end,
+                                  ffilter=self.ffilter)
         elif self.protocol in ['FTP', 'ftp']:
             check = download_ftp(self.rawdata_path, self.host, self.directory,
                                  self.filedate, self.port, self.username,
                                  self.password, self.dirstruct, begin=begin,
-                                 end=end)
-
+                                 end=end, ffilter=self.ffilter)
         elif self.protocol in ['SFTP', 'sftp']:
             check = download_sftp(self.rawdata_path, self.host,
                                   self.directory, self.port, self.username,
                                   self.password, self.filedate, self.dirstruct,
-                                  begin=begin, end=end)
+                                  begin=begin, end=end, ffilter=self.ffilter)
+        elif self.protocol in ['local', 'LOCAL']:
+            check = download_local(self.rawdata_path, directory=self.host,
+                                   filedate=self.filedate,
+                                   dirstruct=self.dirstruct, begin=begin,
+                                   end=end, ffilter=self.ffilter)
 
         return check
 
@@ -710,7 +740,7 @@ class BasicSource(object):
                                + str(self.dest_sp_res) + '_'
                                + str(self.dest_temp_res) + '.nc')
 
-        nc_vars, _, _ = get_properties(nc_name)
+        nc_vars, _, _ = nc.get_properties(nc_name)
 
         variables = []
 

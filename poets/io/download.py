@@ -39,11 +39,13 @@ import calendar
 import datetime
 from ftplib import FTP
 import os
+import shutil
+
 import paramiko
 import requests
+
 import pandas as pd
 from poets.timedate.dekad import dekad2day
-import shutil
 
 
 def download_ftp(download_path, host, directory, filedate, port=None,
@@ -458,10 +460,12 @@ def download_http(download_path, host, directory, filename, filedate,
                 print '[INFO] File already exists, nothing to download',
                 continue
 
-            proxies = {'http': 'http://proxy.ipf.tuwien.ac.at:3128',
-                       'https': 'http://proxy.ipf.tuwien.ac.at:3128'}
+            #==================================================================
+            # proxies = {'http': 'http://proxy.ipf.tuwien.ac.at:3128',
+            #            'https': 'http://proxy.ipf.tuwien.ac.at:3128'}
+            #==================================================================
 
-            r = requests.get(fp, proxies=proxies)
+            r = requests.get(fp)  # , proxies=proxies)
             if r.status_code == 200:
                 # check if year folder is existing
                 if ffilter is None or ffilter in os.path.split(fp)[-1]:
@@ -498,7 +502,7 @@ def download_local(download_path, directory, filedate, dirstruct=None,
         Folder structure in directory, each list element represents
         a subdirectory.
     ffilter : str, optional
-        Filter for data download
+        Filter for data download.
     begin : datetime.datetime, optional
         Set either to first date of remote repository or date of last file in
         local repository.
@@ -522,6 +526,8 @@ def download_local(download_path, directory, filedate, dirstruct=None,
 
     if not os.path.exists(download_path):
         os.makedirs(download_path)
+
+    print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end),
 
     # directory/folder (len(dirstruct) == 1)
     if dirstruct is not None and len(dirstruct) == 1:
@@ -558,11 +564,15 @@ def download_local(download_path, directory, filedate, dirstruct=None,
             for fname in files:
                 if ffilter is None or ffilter in fname:
                     date = get_file_date(fname, filedate)
-                    if (date >= begin and date <= end and not
-                        os.path.exists(os.path.join(download_path,
-                                                    fname))):
-                        shutil.copy(os.path.join(path, fname),
-                                    os.path.join(download_path, fname))
+                    if date >= begin and date <= end: 
+                        if not os.path.exists(os.path.join(download_path, 
+                                                           fname)):
+                            shutil.copy(os.path.join(path, fname),
+                                        os.path.join(download_path, fname))
+                        else:
+                            print ''
+                            print ('[INFO] File already exists, nothing to' 
+                                   ' download'),
 
     return True
 

@@ -36,15 +36,18 @@
 This module includes the poets base class `Poet`.
 """
 
+from datetime import datetime
 import os
+
+from netCDF4 import Dataset
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from netCDF4 import Dataset
-from poets.io.source_base import BasicSource
-from poets.image.netcdf import get_properties
 from poets.grid.grids import ShapeGrid
+from poets.image.netcdf import get_properties
+from poets.io.source_base import BasicSource
 import poets.web.app as app
+
 
 valid_temp_res = ['dekad', 'month']
 
@@ -140,7 +143,7 @@ class Poet(object):
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
                    variables=None, nan_value=None, valid_range=None,
-                   unit=None):
+                   unit=None, ffilter=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -176,14 +179,22 @@ class Poet(object):
             Nan value of the original data as given by the data provider.
         valid_range : tuple of int of float, optional
             Valid range of data, given as (minimum, maximum).
+        ffilter : str, optional
+            Pattern that apperas in filename. Can be used to select out not
+            needed files if multiple files per date are provided.
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
-                             host, protocol, username, password, port,
-                             directory, dirstruct, begin_date, variables,
-                             nan_value, valid_range, self.nan_value,
-                             self.regions, self.spatial_resolution,
-                             self.temporal_resolution, self.start_date)
+                             host, protocol, username=username,
+                             password=password, port=port, ffilter=ffilter,
+                             directory=directory, dirstruct=dirstruct,
+                             begin_date=begin_date, variables=variables,
+                             nan_value=nan_value, valid_range=valid_range,
+                             dest_nan_value=self.nan_value,
+                             dest_regions=self.regions,
+                             dest_sp_res=self.spatial_resolution,
+                             dest_temp_res=self.temporal_resolution,
+                             dest_start_date=self.start_date)
 
         self.sources[name] = source
 

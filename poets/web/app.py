@@ -32,17 +32,19 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-05-26
 
+from cStringIO import StringIO
 import os
+from flask import Flask, render_template, jsonify, make_response
 import matplotlib as mpl
-mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, jsonify, make_response
-from poets.web.overlays import bounds
 from poets.timedate.dekad import dekad_index
+from poets.web.overlays import bounds
 import pytesmo.time_series as ts
-from cStringIO import StringIO
+
+
+mpl.use('Agg')
 
 
 def curpath():
@@ -345,7 +347,7 @@ def request_legend(**kwargs):
                                     orientation='horizontal')
     plt.xticks(fontsize=9)
 
-    if metadata and 'units' in metadata:
+    if metadata and ('units' in metadata or 'unit' in metadata):
         cb1.set_label(metadata['units'], fontsize=10)
 
     buf = StringIO()
