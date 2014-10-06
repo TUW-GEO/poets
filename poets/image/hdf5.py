@@ -86,11 +86,11 @@ def read_image(source_file):
                 for attr in meta_global:
                     metadata[var][attr] = meta_global[attr]
                 for attr in h5[grp][var].attrs:
+                    metadata[var][str(attr).lower()] = \
+                        h5[grp][var].attrs[attr][0]
                     if str(attr).lower() == 'scaling_factor':
-                        attribute = 'scale_factor'
-                    else:
-                        attribute = str(attr).lower()
-                    metadata[var][attribute] = h5[grp][var].attrs[attr][0]
+                        metadata[var]['scale_factor'] = \
+                            h5[grp][var].attrs[attr][0]
 
         sp_res = 180. / data[data.keys()[0]].shape[0]
 
@@ -99,5 +99,7 @@ def read_image(source_file):
 
         lon = np.arange(lonmin, 180, sp_res)
         lat = np.arange(latmin, 90, sp_res)
+
+        lat = lat[::-1]
 
     return data, lon, lat, timestamp, metadata

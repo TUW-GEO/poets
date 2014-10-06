@@ -39,7 +39,6 @@ Module for unpacking compressed archives. Based on pyunpack and patool.
 import os
 import shutil
 from pyunpack import Archive
-import bz2
 
 
 def check_compressed(filepath):
@@ -58,8 +57,8 @@ def check_compressed(filepath):
     """
 
     comp_ext = ['.zip', '.bz2', '.tar', '.7z', '.ace', '.rar', '.adf', '.alz',
-                '.cab', '.Z', '.cpio', '.deb', '.dms', '.gz', '.iso', '.lrz', 
-                '.lha', '.lzh', '.lz', '.lzma', '.lzo', '.rpm','.rz', '.shn', 
+                '.cab', '.Z', '.cpio', '.deb', '.dms', '.gz', '.iso', '.lrz',
+                '.lha', '.lzh', '.lz', '.lzma', '.lzo', '.rpm', '.rz', '.shn',
                 '.xz', '.zoo']
 
     if os.path.splitext(filepath)[1].lower() in comp_ext:
@@ -141,5 +140,4 @@ def unpack(filepath, outpath=None):
         raise IOError('%s file does not exist' % filepath)
 
 if __name__ == '__main__':
-    # unpack('/home/thomas/Downloads/decomp/test3.rar')
     pass

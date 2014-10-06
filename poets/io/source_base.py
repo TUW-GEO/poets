@@ -657,6 +657,15 @@ class BasicSource(object):
                 for i in range(begin, end + 1):
                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
 
+                if 'scaling_factor' in nc.variables[ncvar].ncattrs():
+                    vvar = nc.variables[ncvar]
+                    if vvar.getncattr('scaling_factor') < 0:
+                        df[ncvar] = (df[ncvar] *
+                                     float(vvar.getncattr('scaling_factor')))
+                    else:
+                        df[ncvar] = (df[ncvar] /
+                                     float(vvar.getncattr('scaling_factor')))
+
         return df
 
     def read_img(self, date, region=None, variable=None):
@@ -723,6 +732,12 @@ class BasicSource(object):
 
             if not metadata:
                 metadata = None
+
+            if 'scaling_factor' in var.ncattrs():
+                if metadata['scaling_factor'] < 0:
+                    img = img * float(metadata['scaling_factor'])
+                else:
+                    img = img / float(metadata['scaling_factor'])
 
         return img, lon, lat, metadata
 

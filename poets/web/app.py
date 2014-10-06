@@ -42,6 +42,7 @@ import pandas as pd
 from poets.timedate.dekad import dekad_index
 from poets.web.overlays import bounds
 import pytesmo.time_series as ts
+from PIL import Image
 
 
 mpl.use('Agg')
@@ -316,9 +317,18 @@ def request_image(**kwargs):
     buf = StringIO()
     plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)
 
-    image = buf.getvalue()
+    img = Image.open(buf.getvalue())
+    rsize = img.resize((img.size[0] * 10, img.size[1] * 10))
+    rsizeArr = np.asarray(rsize)
+    imgplot.set_interpolation('nearest')
+    buf1 = StringIO()
+    imgplot = plt.imsave(buf1, rsizeArr)
 
-    response = make_response(image)
+
+    # image = buf.getvalue()
+
+    # response = make_response(image)
+    response = make_response(imgplot)
     response.headers["Content-Type"] = ("image/png; filename=data.png")
 
     return response
