@@ -343,9 +343,16 @@ class Poet(object):
 
         return variables
 
-    def start_app(self):
+    def start_app(self, debug=False):
+        """Starts web interface.
 
-        app.start(self)
+        Parameters
+        ----------
+        debug : bool, optional
+            Starts app in debug mode if set True, defaults to False.
+        """
+
+        app.start(self, debug)
 
 if __name__ == "__main__":
     pass

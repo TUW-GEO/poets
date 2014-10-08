@@ -93,7 +93,7 @@ app = Flask(__name__, static_folder='static', static_url_path='/static',
             template_folder="templates")
 
 
-def start(poet):
+def start(poet, debug=False):
     """
     Starts application and sets global variables.
 
@@ -101,6 +101,8 @@ def start(poet):
     ----------
     poet : Poet()
         Instance of Poet class.
+    debug : bool, optional
+        Starts app in debug mode if set True, defaults to False.
     """
 
     global regions
@@ -117,7 +119,10 @@ def start(poet):
     shapefile = poet.shapefile
     nan_value = poet.nan_value
 
-    app.run(debug=True, use_debugger=True, use_reloader=True)
+    if debug:
+        app.run(debug=True, use_debugger=True, use_reloader=True)
+    else:
+        app.run()
 
 
 @app.route('/', methods=['GET', 'POST'])
