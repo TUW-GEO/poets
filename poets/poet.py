@@ -143,7 +143,7 @@ class Poet(object):
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=datetime(2000, 1, 1),
                    variables=None, nan_value=None, valid_range=None,
-                   unit=None, ffilter=None):
+                   unit=None, ffilter=None, data_range=None, colorbar=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -179,9 +179,16 @@ class Poet(object):
             Nan value of the original data as given by the data provider.
         valid_range : tuple of int of float, optional
             Valid range of data, given as (minimum, maximum).
+        data_range : tuple of int of float, optional
+            Range of the values as data given in rawdata (minimum, maximum).
+            Will be scaled to valid_range.
         ffilter : str, optional
             Pattern that apperas in filename. Can be used to select out not
             needed files if multiple files per date are provided.
+        colorbar : str, optional
+            Colorbar to use, use one from
+            http://matplotlib.org/examples/color/colormaps_reference.html;
+            defaults to jet.
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
@@ -190,6 +197,7 @@ class Poet(object):
                              directory=directory, dirstruct=dirstruct,
                              begin_date=begin_date, variables=variables,
                              nan_value=nan_value, valid_range=valid_range,
+                             data_range=data_range, colorbar=colorbar,
                              dest_nan_value=self.nan_value,
                              dest_regions=self.regions,
                              dest_sp_res=self.spatial_resolution,

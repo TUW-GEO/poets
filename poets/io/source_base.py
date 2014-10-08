@@ -32,14 +32,12 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-06-30
 
-from datetime import datetime, timedelta
 import os
 import shutil
-
-from netCDF4 import Dataset, num2date, date2num
-
-import numpy as np
 import pandas as pd
+import numpy as np
+from netCDF4 import Dataset, num2date, date2num
+from datetime import datetime, timedelta
 from poets.grid.grids import ShapeGrid, RegularGrid
 import poets.image.netcdf as nc
 from poets.image.resampling import resample_to_shape, average_layers
@@ -89,9 +87,16 @@ class BasicSource(object):
         Nan value of the original data as given by the data provider.
     valid_range : tuple of int of float, optional
         Valid range of data, given as (minimum, maximum).
+    data_range : tuple of int of float, optional
+        Range of the values as data given in rawdata (minimum, maximum).
+        Will be scaled to valid_range.
     ffilter : str, optional
         Pattern that apperas in filename. Can be used to select out not
         needed files if multiple files per date are provided.
+    colorbar : str, optional
+        Colorbar to use, use one from
+        http://matplotlib.org/examples/color/colormaps_reference.html,
+        defaults to jet.
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     dest_regions : list of str, optional
@@ -134,12 +139,16 @@ class BasicSource(object):
         Date from which on data is available.
     ffilter : str
         Pattern that apperas in filename.
+    colorbar : str, optional
+        Colorbar to used.
     variables : list of strings
         Variables used from data source.
     nan_value : int, float
         Not a number value of the original data as given by the data provider.
     valid_range : tuple of int of float
         Valid range of data, given as (minimum, maximum).
+    data_range : tuple of int of float
+        Range of the values as data given in rawdata (minimum, maximum).
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     tmp_path : str
@@ -159,10 +168,11 @@ class BasicSource(object):
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime(2000, 1, 1), ffilter=None,
+                 begin_date=datetime(2000, 1, 1), ffilter=None, colorbar='jet',
                  variables=None, nan_value=None, valid_range=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
-                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1)):
+                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
+                 data_range=None):
 
         self.name = name
         self.filename = filename
@@ -183,6 +193,8 @@ class BasicSource(object):
         self.ffilter = ffilter
         self.nan_value = nan_value
         self.valid_range = valid_range
+        self.data_range = data_range
+        self.colorbar = colorbar
         self.dest_nan_value = dest_nan_value
         self.dest_regions = dest_regions
         self.dest_sp_res = dest_sp_res
@@ -449,6 +461,17 @@ class BasicSource(object):
         print ''
         os.unlink(src_file)
 
+    def _scale_values(self, data):
+
+        if self.valid_range is not None:
+            if self.data_range is not None:
+                data = ((data - self.data_range[0]) /
+                        (self.data_range[1] - self.data_range[0]) *
+                        (self.valid_range[1] - self.valid_range[0]) +
+                        self.valid_range[0])
+
+        return data
+
     def download(self, download_path=None, begin=None, end=None):
         """"Download data
 
@@ -589,7 +612,8 @@ class BasicSource(object):
             else:
                 print '[WARNING] no data available for this date'
 
-    def read_ts(self, location, region=None, variable=None, shapefile=None):
+    def read_ts(self, location, region=None, variable=None, shapefile=None,
+                scaled=True):
         """Gets timeseries from netCDF file for a gridpoint.
 
         Parameters
@@ -603,6 +627,9 @@ class BasicSource(object):
             Variable to display, selects all available variables if None.
         shapefile : str, optional
             Path to custom shapefile.
+        scaled : bool, optional
+            If true, data will be scaled to a predefined range; if false, data
+            will be shown as given in rawdata file; defaults to True
 
         Returns
         -------
@@ -665,10 +692,14 @@ class BasicSource(object):
                     else:
                         df[ncvar] = (df[ncvar] /
                                      float(vvar.getncattr('scaling_factor')))
+                if scaled:
+                    if self.valid_range is not None:
+                        if self.data_range is not None:
+                            df[ncvar] = self._scale_values(df[ncvar])
 
         return df
 
-    def read_img(self, date, region=None, variable=None):
+    def read_img(self, date, region=None, variable=None, scaled=True):
         """Gets images from netCDF file for certain date
 
         Parameters
@@ -679,6 +710,9 @@ class BasicSource(object):
             Region of interest, set to first defined region if not set.
         variable : str, optional
             Variable to display, selects first available variables if None.
+        scaled : bool, optional
+            If true, data will be scaled to a predefined range; if false, data
+            will be shown as given in rawdata file; defaults to True.
 
         Returns
         -------
@@ -738,6 +772,11 @@ class BasicSource(object):
                     img = img * float(metadata['scaling_factor'])
                 else:
                     img = img / float(metadata['scaling_factor'])
+
+        if scaled:
+            if self.valid_range is not None:
+                if self.data_range is not None:
+                    img = self._scale_values(img)
 
         return img, lon, lat, metadata
 

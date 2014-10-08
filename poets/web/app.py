@@ -109,15 +109,13 @@ def start(poet):
     global dates
     global vmin, vmax, cmap
     global shapefile
+    global nan_value
 
     regions = poet.regions
     sources = poet.sources
     variables = poet.get_variables()
     shapefile = poet.shapefile
-
-    vmin = 0
-    vmax = 20
-    cmap = 'jet'
+    nan_value = poet.nan_value
 
     app.run(debug=True, use_debugger=True, use_reloader=True)
 
@@ -294,6 +292,7 @@ def request_image(**kwargs):
     global vmin
     global vmax
     global metadata
+    global cmap
 
     if 'reg' in kwargs:
         region = kwargs['reg']
@@ -307,6 +306,7 @@ def request_image(**kwargs):
     pidx = (dates[int(idx)])
 
     img, _, _, metadata = source.read_img(pidx, region, variable)
+
     if source.valid_range is not None:
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
@@ -314,21 +314,18 @@ def request_image(**kwargs):
         vmin = img.min()
         vmax = img.max()
 
+    cmap = source.colorbar
+
+    n = 10
+    img = np.kron(img, np.ones((n, n)))
+    img[img == nan_value] = np.NAN
+
     buf = StringIO()
     plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)
 
-    img = Image.open(buf.getvalue())
-    rsize = img.resize((img.size[0] * 10, img.size[1] * 10))
-    rsizeArr = np.asarray(rsize)
-    imgplot.set_interpolation('nearest')
-    buf1 = StringIO()
-    imgplot = plt.imsave(buf1, rsizeArr)
+    image = buf.getvalue()
 
-
-    # image = buf.getvalue()
-
-    # response = make_response(image)
-    response = make_response(imgplot)
+    response = make_response(image)
     response.headers["Content-Type"] = ("image/png; filename=data.png")
 
     return response
@@ -347,8 +344,7 @@ def request_legend(**kwargs):
     global vmin
     global vmax
     global metadata
-
-    cmap = 'jet'
+    global cmap
 
     fig = plt.figure(figsize=(4, 0.7))
     ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
