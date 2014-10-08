@@ -347,14 +347,22 @@ class BasicSource(object):
 
             src_file = os.path.join(self.rawdata_path, item)
 
+            fdate = get_file_date(item, self.filedate)
+
+            if begin is not None:
+                if fdate < begin:
+                    continue
+
+            if end is not None:
+                if fdate > end:
+                    continue
+
             if check_compressed(src_file):
                 dirname = os.path.splitext(item)[0]
                 dirpath = os.path.join(self.rawdata_path, dirname)
                 unpack(src_file)
                 src_file = select_file(os.listdir(dirpath))
                 src_file = os.path.join(dirpath, src_file)
-
-            fdate = get_file_date(item, self.filedate)
 
             if begin is not None:
                 if fdate < begin:

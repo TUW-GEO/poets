@@ -482,8 +482,12 @@ def download_http(download_path, host, directory, filename, filedate,
                         f.write(r.content)
                         print '.',
 
-    print ''
-    return True
+    if len(files) > 0:
+        print ''
+        return True
+    else:
+        print ''
+        return False
 
 
 def download_local(download_path, directory, filedate, dirstruct=None,
@@ -527,6 +531,8 @@ def download_local(download_path, directory, filedate, dirstruct=None,
     if not os.path.exists(download_path):
         os.makedirs(download_path)
 
+    files = []
+
     print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end),
 
     # directory/folder (len(dirstruct) == 1)
@@ -536,11 +542,16 @@ def download_local(download_path, directory, filedate, dirstruct=None,
             filelist = os.listdir(os.path.join(directory, folder))
             for fname in sorted(filelist):
                 date = get_file_date(fname, filedate)
-                if (date >= begin and date <= end and not
-                    os.path.exists(os.path.join(download_path,
-                                                fname))):
-                    shutil.copy(os.path.join(directory, folder, fname),
-                                os.path.join(download_path, fname))
+                if date >= begin and date <= end:
+                    files.append(fname)
+                    if not os.path.exists(os.path.join(download_path,
+                                                       fname)):
+                        shutil.copy(os.path.join(directory, folder, fname),
+                                    os.path.join(download_path, fname))
+                    else:
+                        print ''
+                        print ('[INFO] File already exists, nothing to'
+                               ' download'),
 
     # directory/folder/subfolder (len(dirstruct) == 2)
     elif dirstruct is not None and len(dirstruct) == 2:
@@ -551,30 +562,41 @@ def download_local(download_path, directory, filedate, dirstruct=None,
                 filelist = os.listdir(os.path.join(directory, folder,
                                                    subfolder))
                 for fname in sorted(filelist):
-                    if (date >= begin and date <= end and not
-                        os.path.exists(os.path.join(download_path,
-                                                    fname))):
-                        shutil.copy(os.path.join(directory, folder, subfolder,
-                                                 fname),
-                                    os.path.join(download_path, fname))
+                    if date >= begin and date <= end:
+                        files.append(fname)
+                        if not os.path.exists(os.path.join(download_path,
+                                                           fname)):
+                            shutil.copy(os.path.join(directory, folder,
+                                                     subfolder, fname),
+                                        os.path.join(download_path, fname))
+                        else:
+                            print ''
+                            print ('[INFO] File already exists, nothing to'
+                                   ' download'),
 
     # general case: unknown folder structure
     if dirstruct is None:
-        for path, _, files in os.walk(directory):
-            for fname in files:
+        for path, _, filelist in os.walk(directory):
+            for fname in filelist:
                 if ffilter is None or ffilter in fname:
                     date = get_file_date(fname, filedate)
-                    if date >= begin and date <= end: 
-                        if not os.path.exists(os.path.join(download_path, 
+                    if date >= begin and date <= end:
+                        files.append(fname)
+                        if not os.path.exists(os.path.join(download_path,
                                                            fname)):
                             shutil.copy(os.path.join(path, fname),
                                         os.path.join(download_path, fname))
                         else:
                             print ''
-                            print ('[INFO] File already exists, nothing to' 
+                            print ('[INFO] File already exists, nothing to'
                                    ' download'),
 
-    return True
+    if len(files) > 0:
+        print ''
+        return True
+    else:
+        print ''
+        return False
 
 
 def get_file_date(fname, fdate):
