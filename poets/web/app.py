@@ -42,8 +42,6 @@ import pandas as pd
 from poets.timedate.dekad import dekad_index
 from poets.web.overlays import bounds
 import pytesmo.time_series as ts
-from PIL import Image
-
 
 mpl.use('Agg')
 
@@ -93,7 +91,7 @@ app = Flask(__name__, static_folder='static', static_url_path='/static',
             template_folder="templates")
 
 
-def start(poet, debug=False):
+def start(poet, host='127.0.0.1', port=5000, debug=False):
     """
     Starts application and sets global variables.
 
@@ -101,6 +99,10 @@ def start(poet, debug=False):
     ----------
     poet : Poet()
         Instance of Poet class.
+    host : str, optional
+        Host that is used by the app, defaults to 127.0.0.1.
+    port : int, optional
+        Port where app runs on, defaults to 50000.
     debug : bool, optional
         Starts app in debug mode if set True, defaults to False.
     """
@@ -120,9 +122,10 @@ def start(poet, debug=False):
     nan_value = poet.nan_value
 
     if debug:
-        app.run(debug=True, use_debugger=True, use_reloader=True)
+        app.run(debug=True, use_debugger=True, use_reloader=True, host=host,
+                port=port)
     else:
-        app.run()
+        app.run(host=host, port=port)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -186,8 +189,8 @@ def index(**kwargs):
                                variables=variables)
 
 
-@app.route('/_ts/<reg>&<src>&<var>&<loc>')
-@app.route('/_ts/<reg>&<src>&<var>&<loc>&<anom>')
+@app.route('/_ts/<reg>&<src>&<var>&<loc>', methods=['GET', 'OPTIONS'])
+@app.route('/_ts/<reg>&<src>&<var>&<loc>&<anom>', methods=['GET', 'OPTIONS'])
 def get_ts(**kwargs):
     """
     Gets time series for selected location, gets anomaly of time series if
