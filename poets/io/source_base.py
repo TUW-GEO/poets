@@ -521,7 +521,7 @@ class BasicSource(object):
         return check
 
     def resample(self, begin=None, end=None, delete_rawdata=False,
-                 shapefile=None):
+                 shapefile=None, stepwise=True):
         """Resamples source data to given spatial and temporal resolution.
 
         Writes resampled images into a netCDF data file. Deletes original
@@ -540,19 +540,72 @@ class BasicSource(object):
             by default.
         """
 
-        for region in self.dest_regions:
-
-            print '[INFO] resampling to region ' + region
-            print '[INFO] performing spatial resampling ',
-
-            self._resample_spatial(region, begin, end, delete_rawdata,
-                                   shapefile)
-
-            if self.temp_res == self.dest_temp_res:
-                print '[INFO] skipping temporal resampling'
+        if begin is None:
+            if self.dest_start_date < self.begin_date:
+                begin = self.begin_date
             else:
-                print '[INFO] performing temporal resampling ',
-                self._resample_temporal(region, shapefile)
+                begin = self.dest_start_date
+
+            if begin < self._get_download_date():
+                begin = self._get_download_date()
+
+        if end is None:
+            end = datetime.now()
+
+        if begin > end:
+            print '[INFO] everything up to date'
+            return '[INFO] everything up to date'
+
+        if stepwise:
+
+            drange = dt.get_dtindex(self.dest_temp_res, begin, end)
+
+            for i, date in enumerate(drange):
+                if date > end:
+                    continue
+                if i == 0:
+                    start = begin
+                else:
+                    if self.dest_temp_res == 'dekad':
+                        start = drange[i - 1] + timedelta(days=1)
+                    else:
+                        start = date
+
+                stop = date
+
+                print '[INFO] ' + str(start) + '-' + str(stop)
+
+                for region in self.dest_regions:
+
+                    print '[INFO] resampling to region ' + region
+                    print '[INFO] performing spatial resampling ',
+
+                    self._resample_spatial(region, start, stop, delete_rawdata,
+                                           shapefile)
+
+                    if self.temp_res == self.dest_temp_res:
+                        print '[INFO] skipping temporal resampling'
+                    else:
+                        print '[INFO] performing temporal resampling ',
+                        self._resample_temporal(region, shapefile)
+
+        else:
+
+            print '[INFO] ' + str(begin) + '-' + str(end)
+
+            for region in self.dest_regions:
+
+                print '[INFO] resampling to region ' + region
+                print '[INFO] performing spatial resampling ',
+
+                self._resample_spatial(region, begin, end, delete_rawdata,
+                                       shapefile)
+
+                if self.temp_res == self.dest_temp_res:
+                    print '[INFO] skipping temporal resampling'
+                else:
+                    print '[INFO] performing temporal resampling ',
+                    self._resample_temporal(region, shapefile)
 
         if delete_rawdata:
             print '[INFO] Cleaning up rawdata'
@@ -616,7 +669,7 @@ class BasicSource(object):
 
             filecheck = self.download(download_path, start, stop)
             if filecheck is True:
-                self.resample(start, stop, delete_rawdata, shapefile)
+                self.resample(start, stop, delete_rawdata, shapefile, False)
             else:
                 print '[WARNING] no data available for this date'
 
