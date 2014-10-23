@@ -36,13 +36,8 @@
 This module provides functions for loading from HDF5 files.
 """
 
-import os.path
 import h5py
-from netCDF4 import Dataset, date2num, num2date
-from pytesmo.grid.netcdf import save_grid
 import numpy as np
-from poets.grid import grids
-from poets.timedate.dateindex import get_dtindex
 
 
 def read_image(source_file):
@@ -77,7 +72,12 @@ def read_image(source_file):
         meta_global = {}
 
         for attr in h5.attrs:
-            meta_global[str(attr).lower()] = h5.attrs[attr][0]
+            if (isinstance(h5.attrs[attr], list) or
+                isinstance(h5.attrs[attr], dict) or
+                isinstance(h5.attrs[attr], tuple)):
+                meta_global[str(attr).lower()] = h5.attrs[attr][0]
+            else:
+                meta_global[str(attr).lower()] = h5.attrs[attr]
 
         for grp in h5:
             for var in h5[grp].keys():
@@ -86,11 +86,16 @@ def read_image(source_file):
                 for attr in meta_global:
                     metadata[var][attr] = meta_global[attr]
                 for attr in h5[grp][var].attrs:
-                    metadata[var][str(attr).lower()] = \
-                        h5[grp][var].attrs[attr][0]
+                    if (isinstance(h5[grp][var].attrs[attr], list) or
+                        isinstance(h5[grp][var].attrs[attr], dict) or
+                        isinstance(h5[grp][var].attrs[attr], tuple)):
+                        attr_value = h5[grp][var].attrs[attr][0]
+                    else:
+                        attr_value = h5[grp][var].attrs[attr]
+                    metadata[var][str(attr).lower()] = attr_value
                     if str(attr).lower() == 'scaling_factor':
                         metadata[var]['scale_factor'] = \
-                            h5[grp][var].attrs[attr][0]
+                            attr_value
 
         sp_res = 180. / data[data.keys()[0]].shape[0]
 
