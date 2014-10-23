@@ -79,7 +79,7 @@ class Poet(object):
         default.
     delete_rawdata : bool, optional
         Original files will be deleted from rawdata_path if set True. Defaults
-        to False
+        to False.
 
     Attributes
     ----------
@@ -234,6 +234,48 @@ class Poet(object):
 
         print '[SUCCESS] Download and resampling complete!'
 
+    def download(self, begin=None, end=None):
+        """Starts download of input data for sources as added
+        to `Poets.sources`.
+
+        Parameters
+        ----------
+        begin : datetime, optional
+            Start date of data to download, defaults to start date as defined
+            in poets class.
+        end : datetime, optional
+            End date of data to download, defaults to current datetime.
+        """
+
+        for source in self.sources.keys():
+            src = self.sources[source]
+            print '[INFO] Download data for source ' + source
+            src.download(begin=begin, end=end)
+
+        print '[SUCCESS] Download complete!'
+
+    def resample(self, begin=None, end=None, delete_rawdata=None):
+        """Starts download of input data for sources as added
+        to `Poets.sources`.
+
+        Parameters
+        ----------
+        begin : datetime, optional
+            Start date of data to download, defaults to start date as defined
+            in poets class.
+        end : datetime, optional
+            End date of data to download, defaults to current datetime.
+        """
+
+        for source in self.sources.keys():
+            src = self.sources[source]
+            print '[INFO] Resampling data for source ' + source
+            src.resample(begin=begin, end=end,
+                         shapefile=self.shapefile,
+                         delete_rawdata=delete_rawdata)
+
+        print '[SUCCESS] Resampling complete!'
+
     def get_gridpoints(self):
         """Returns gridpoints from NetCDF file.
 
@@ -339,20 +381,25 @@ class Poet(object):
         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
                     '_' + str(self.temporal_resolution) + '.nc')
 
-        variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+        variables, _, _ = get_properties(os.path.join(self.data_path,
+                                                      src_file))
 
         return variables
 
-    def start_app(self, debug=False):
+    def start_app(self, host='127.0.0.1', port=5000, debug=False):
         """Starts web interface.
 
         Parameters
         ----------
+        host : str, optional
+            Host that is used by the app, defaults to 127.0.0.1.
+        port : int, optional
+            Port where app runs on, defaults to 50000.
         debug : bool, optional
             Starts app in debug mode if set True, defaults to False.
         """
 
-        app.start(self, debug)
+        app.start(self, host, port, debug)
 
 if __name__ == "__main__":
     pass
