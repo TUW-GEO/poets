@@ -114,12 +114,16 @@ def start(poet, host='127.0.0.1', port=5000, debug=False):
     global vmin, vmax, cmap
     global shapefile
     global nan_value
+    global host_gl
+    global port_gl
 
     regions = poet.regions
     sources = poet.sources
     variables = poet.get_variables()
     shapefile = poet.shapefile
     nan_value = poet.nan_value
+    host_gl = host
+    port_gl = port
 
     if debug:
         app.run(debug=True, use_debugger=True, use_reloader=True, host=host,
@@ -181,7 +185,9 @@ def index(**kwargs):
                                variable=variable,
                                regions=regions,
                                variables=variables,
-                               dates=fdates)
+                               dates=fdates,
+                               host=host_gl,
+                               port=port_gl)
     else:
         return render_template('index.html',
                                regions=regions,
@@ -324,6 +330,7 @@ def request_image(**kwargs):
 
     cmap = source.colorbar
 
+    # Resale the image
     n = 10
     img = np.kron(img, np.ones((n, n)))
     img[img == nan_value] = np.NAN
