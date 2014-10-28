@@ -99,7 +99,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
         else:
             data['modf'] = data[var]
 
-        data['modf_avg'] = data.groupby('period').modf.transform(lambda x: x.mean())
+        data['modf_avg'] = (data.groupby('period').modf
+                            .transform(lambda x: x.mean()))
 
         # Excess
         # Dekads below long term average. If the statement is true the program
@@ -109,7 +110,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
         # Run length
         # Maximum number of successive dekads below long term average
         # precipitation
-        rlen = lambda x: len(max((''.join(str(j) for j in map(int, x))).split('0')))
+        rlen = lambda x: len(max((''.join(str(j) for j in map(int, x)))
+                                 .split('0')))
 
         for ip in interest_period:
             data['rlen' + str(ip)] = pd.rolling_apply(data['exc'], ip, rlen,
@@ -120,7 +122,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
             data['rlen' + str(ip)] = (max_rlen + 1) - data['rlen' + str(ip)]
 
             # average run lenghts
-            rlen_avg = data.groupby('period').modf.transform(lambda x: x.mean())
+            rlen_avg = (data.groupby('period').modf
+                        .transform(lambda x: x.mean()))
             data['form' + str(ip)] = data['rlen' + str(ip)] / rlen_avg
 
             # sumip matrix
@@ -130,7 +133,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
                                                        ip)
 
             # average values for each interest period over all years
-            sumip_avg = data.groupby('period')['sumip' + str(ip)].transform(lambda x: x.mean())
+            sumip_avg = (data.groupby('period')['sumip' + str(ip)]
+                         .transform(lambda x: x.mean()))
             data['nrl' + str(ip)] = data['sumip' + str(ip)] / sumip_avg
 
             # calculating PDI/TDI
