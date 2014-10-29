@@ -114,7 +114,11 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
 
             var[np.where(times[:] == numdate)[0][0]] = image[key]
             if metadata is not None:
-                var.setncatts(metadata[key])
+                for item in metadata[key]:
+                    if item in var.ncattrs():
+                        continue
+                    else:
+                        var.setncattr(str(item), metadata[key][item])
 
 
 def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
