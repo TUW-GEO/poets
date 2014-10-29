@@ -113,6 +113,7 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
                 var = ncfile.variables[key]
 
             var[np.where(times[:] == numdate)[0][0]] = image[key]
+
             if metadata is not None:
                 for item in metadata[key]:
                     if item in var.ncattrs():
@@ -289,7 +290,7 @@ def clip_bbox(data, lon, lat, lon_min, lat_min, lon_max, lat_max):
 
     for var in data.keys():
         data_new[var] = data[var][lats.min():lats.max() + 1,
-                        lons.min():lons.max() + 1]
+                                  lons.min():lons.max() + 1]
 
     return data_new, lon_new, lat_new
 
