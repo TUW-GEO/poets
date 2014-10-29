@@ -90,7 +90,7 @@ def region_in_geotiff(lon_min, lat_min, lon_max, lat_max, region):
     shp = Shape(region)
     region_ext = shp.bbox
     if (region_ext[0] >= lon_min and region_ext[1] >= lat_min and
-        region_ext[2] <= lon_max and region_ext[3] <= lat_max):
+            region_ext[2] <= lon_max and region_ext[3] <= lat_max):
         return True
 
 
@@ -178,6 +178,7 @@ def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
         lat_new[i] = lat_max - lat_px[i] / mh
 
     return lon_new, lat_new
+
 
 if __name__ == "__main__":
     pass
