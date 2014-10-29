@@ -255,7 +255,8 @@ def average_layers(image, dest_nan_value):
         Averaged image.
     """
 
-    img = np.ma.masked_array(image.mean(0), fill_value=dest_nan_value)
+    img = np.ma.masked_array(np.nanmean(image, axis=0),
+                             fill_value=dest_nan_value)
     mask = img.mask
     data = np.copy(img.data)
     data[img.mask == True] = dest_nan_value
