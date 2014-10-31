@@ -34,10 +34,11 @@
 
 import pandas as pd
 import numpy as np
+import operator
 from poets.timedate.dekad import get_dekad_period
 
 
-def calc_CDI(data, weights=None):
+def calc_CDI(data, refparam=None, lags=[-10, 11]):
     """
     Calculates a weighted average over all columns of a pandas DataFrame.
 
@@ -45,25 +46,127 @@ def calc_CDI(data, weights=None):
     ----------
     data : pandas.DataFrame
         Pandas DataFrame containing data to be averaged.
-    weights : list of int, optional
-        A list of weights associated with the values in data. Values will be
-        weighted equally if not given.
+    refparam : str, optional
+        Reference parameter. If not set, parameters will be weighted equally.
+    lags : list of int, optional
+        Time periods to shift parameter against refparam,
+        defaults to [-10, 11].
 
     Returns
     -------
     df : pandas DataFrame
         Return the average of data
     """
+
     cols = data.keys()
     dat = np.array(data[cols])
     dat = np.ma.masked_invalid(dat)
-    if weights is None:
+
+    weights = calc_weights(data, refparam, lags)
+
+    if refparam is None:
         avg = np.ma.average(dat, axis=1)
     else:
         avg = np.ma.average(dat, axis=1, weights=weights)
     df = pd.DataFrame(avg, columns=['CDI'], index=data.index)
 
     return df
+
+
+def calc_weights(data, refparam, lags=[-10, 11]):
+    """
+    Calculates the weights of parameters for weighted averaging. Weights are
+    calculated using correlation and time shift of each parameter against the
+    reference parameter. Parameters must be direct proportional to reference
+    parameter!
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing data in columns.
+    refparam : str
+        Reference parameter.
+    lags : list of int, optional
+        Time periods to shift parameter against refparam,
+        defaults to [-10, 11].
+
+    Returns
+    -------
+    sorted_weights : list of int
+        Weights associated with the parameters in data.
+    """
+
+    params = data.keys()
+
+    maxlag = {}
+    maxcorr = {}
+    weights = {}
+    sorted_weights = []
+
+    correlations = calc_correlation(data, refparam, lags)
+
+    for param in params:
+        maxlag[param] = correlations[param]['lag']
+        maxcorr[param] = correlations[param]['corr']
+
+    sorted_lag = sorted(maxlag.iteritems(), key=operator.itemgetter(1))
+    sorted_corr = sorted(maxcorr.iteritems(), key=operator.itemgetter(1))
+
+    for item in sorted_lag:
+        weights[item[0]] = (float(maxlag[item[0]]) /
+                            sum(maxlag.values()) * 100)
+
+    for item in sorted_corr:
+        weights[item[0]] = ((weights[item[0]] +
+                             (maxcorr[item[0]] / sum(maxcorr.values())) *
+                             100) / 2)
+
+    for param in params:
+        sorted_weights.append(weights[param])
+
+    return sorted_weights
+
+
+def calc_correlation(data, refparam, lags=[-10, 11]):
+    """
+    Calculates the correlations between parameters and a reference parameter
+    given as columns in a DataFrame.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing data in columns.
+    refparam : str
+        Reference parameter.
+    lags : list of int, optional
+        Time periods to shift parameter against refparam,
+        defaults to [-10, 11].
+
+    Returns
+    -------
+    correlation : dict
+        Dictionary containing correlations and max time lags.
+    """
+
+    correlation = {}
+
+    for param in data.keys():
+        correlation[param] = {'corr': None, 'lag': None}
+        for i in range(lags[0], lags[1]):
+            corr = data[refparam].corr(data[param].shift(periods=i),
+                                    method='pearson')
+            if correlation[param]['corr'] is None:
+                correlation[param]['corr'] = corr
+                correlation[param]['lag'] = i
+            if abs(corr) > abs(correlation[param]['corr']):
+                correlation[param]['corr'] = corr
+                correlation[param]['lag'] = i
+            if abs(corr) == abs(correlation[param]['corr']):
+                if abs(i) < abs(correlation[param]['lag']):
+                    correlation[param]['corr'] = corr
+                    correlation[param]['lag'] = i
+
+    return correlation
 
 
 def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
@@ -80,8 +183,8 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
     interest_period : list of int, optional
         interest periods used to calculate drought index,
         defaults to [6, 12, 24]
-    scale_zero : boolean
-        Time series is shifted
+    scale_zero : boolean, optional
+        If True values will be shifted around zero, defaults to False.
     """
 
     ts_date = data.index
@@ -90,7 +193,7 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
 
     for var in variables:
 
-        if parameter == 'precipitation':
+        if parameter in ['precipitation', 'rainfall', 'rain']:
             data['modf'] = data[var] + 1
             del data[var]
         elif parameter == 'temperature':
@@ -161,4 +264,27 @@ def calc_DI(data, parameter, interest_period=[6, 12, 24], scale_zero=False):
     return data
 
 if __name__ == "__main__":
+    params = ['A', 'B', 'C']
+
+    data = pd.DataFrame(columns=params, index=range(0, 20))
+
+    a = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
+    b = [3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2]
+    c = [0, 3, 4, 5, 1, 2, 0, 4, 5, 1, 2, 3, 4, 4, 1, 2, 3, 2, 5, 1]
+
+    data['A'] = a
+    data['B'] = b
+    data['C'] = c
+
+    x = calc_CDI(data, 'A', [-5, 5])
+
+    a = calc_DI(data, 'vegetation')
+
+    data_di = pd.DataFrame(columns=params, index=range(0, 20))
+    data_di['A_DI'] = calc_DI(a, 'vegetation')
+    data_di['B_DI'] = calc_DI(b, 'soil moisture')
+    data_di['C_DI'] = calc_DI(c, 'precipitation')
+
+    y = calc_CDI(data_di, 'A', [-5, 5])
+
     pass

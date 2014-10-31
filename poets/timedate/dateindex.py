@@ -33,7 +33,8 @@
 # Creation date: 2014-05-27
 
 import pandas as pd
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from poets.timedate.dekad import dekad_index
 
 
@@ -71,3 +72,39 @@ def get_dtindex(interval, begin, end=None):
         dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
 
     return dtindex
+
+
+def get_periods(dates):
+    """Checks number of the period in the current year for dates given as list.
+    Dates must be distributed on a day-based interval.
+
+    Parameters
+    ----------
+    dates : list of datetime
+        Dates to check.
+
+    Returns
+    -------
+    period : list of int
+        List of period, numbers.
+    """
+
+    # check temporal resolution
+    stepsize = (dates[1] - dates[0]).days
+
+    periods = []
+
+    for dat in dates:
+        doy = dat.timetuple().tm_yday
+        periods.append(int(math.ceil(float(doy) / stepsize)))
+
+    return periods
+
+
+if __name__ == "__main__":
+
+    dates = [datetime(2014, 1, 1), datetime(2014, 1, 4), datetime(2014, 1, 8)]
+
+    x = get_periods(dates)
+
+    pass
