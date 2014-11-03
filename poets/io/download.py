@@ -157,9 +157,12 @@ def download_ftp(download_path, host, directory, filedate, port=None,
             # date = get_file_date(fname, filedate)
             # if date >= begin and date <= end:
             #==================================================================
+
             fname2 = fname.split('/')[-1]
             if not os.path.exists(os.path.join(download_path, fname2)):
                 if ffilter is None or ffilter in fname2:
+                    loc = '/'.join(fname.split('/')[:-1])
+                    ftp.cwd(loc)
                     ftp.retrbinary("RETR " + fname2, open(fname2, "wb").write)
                     print '.',
             else:
@@ -733,8 +736,7 @@ def filesInDir_ftp(path, ftp, filedate, begin, end, filelist):
                 filelist.append(path + fname)
         elif 'd' in lstatout:  # fname is dir
             filelist = filesInDir_ftp(path + fname + '/', ftp, filedate,
-                                        begin, end, filelist)
-            print fname, len(filelist)
+                                      begin, end, filelist)
 
     return filelist
 
