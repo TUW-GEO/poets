@@ -112,7 +112,13 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
             else:
                 var = ncfile.variables[key]
 
-            var[np.where(times[:] == numdate)[0][0]] = image[key]
+            if numdate in times[:]:
+                var_index = np.where(times[:] == numdate)[0][0]
+            else:
+                times[times[:].size] = numdate
+                var_index = times[:].size - 1
+
+            var[var_index] = image[key]
 
             if metadata is not None:
                 for item in metadata[key]:
