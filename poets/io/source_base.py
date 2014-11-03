@@ -46,7 +46,6 @@ from poets.io.download import download_http, download_ftp, download_sftp, \
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
 import poets.timedate.dateindex as dt
-from poets.timedate.dekad import check_dekad
 
 
 class BasicSource(object):
@@ -805,8 +804,7 @@ class BasicSource(object):
                                    + '_' + str(self.dest_temp_res) + '.nc')
 
         # get dekad of date:
-        if self.dest_temp_res in ['dekad', 'dekadal', 'decade', 'decadal']:
-            date = check_dekad(date)
+        date = dt.check_period(self.dest_temp_res, date)
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
             time = nc.variables['time']

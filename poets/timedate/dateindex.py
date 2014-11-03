@@ -34,8 +34,9 @@
 
 import pandas as pd
 import math
+import calendar
 from datetime import datetime, timedelta
-from poets.timedate.dekad import dekad_index
+from poets.timedate.dekad import dekad_index, check_dekad
 
 
 def get_dtindex(interval, begin, end=None):
@@ -102,10 +103,17 @@ def get_periods(dates):
     return periods
 
 
+def check_period(interval, date):
+
+    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
+        date = check_dekad(date)
+    elif interval in ['weekly', 'week', '7']:
+        date = date - timedelta(date.weekday()) + timedelta(6)
+    elif interval in ['monthly', 'month']:
+        lday = calendar.monthrange(date.year, date.month)[1]
+        date = datetime(date.year, date.month, lday)
+
+    return date
+
 if __name__ == "__main__":
-
-    dates = [datetime(2014, 1, 1), datetime(2014, 1, 4), datetime(2014, 1, 8)]
-
-    x = get_periods(dates)
-
     pass
