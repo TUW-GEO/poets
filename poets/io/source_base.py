@@ -171,7 +171,7 @@ class BasicSource(object):
                  begin_date=datetime(2000, 1, 1), ffilter=None, colorbar='jet',
                  variables=None, nan_value=None, valid_range=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
-                 dest_temp_res='monthly', dest_start_date=datetime(2000, 1, 1),
+                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
                  data_range=None):
 
         self.name = name
