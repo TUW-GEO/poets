@@ -39,7 +39,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from poets.timedate.dekad import dekad_index
+from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import bounds
 import pytesmo.time_series as ts
 
@@ -116,12 +116,14 @@ def start(poet, host='127.0.0.1', port=5000, debug=False):
     global nan_value
     global host_gl
     global port_gl
+    global tmp_res
 
     regions = poet.regions
     sources = poet.sources
     variables = poet.get_variables()
     shapefile = poet.shapefile
     nan_value = poet.nan_value
+    tmp_res = poet.temporal_resolution
     host_gl = host
     port_gl = port
 
@@ -161,7 +163,7 @@ def index(**kwargs):
         begindate = ndate[region][variable][0]
         enddate = ndate[region][variable][1]
 
-        d = dekad_index(begindate, enddate)
+        d = get_dtindex(tmp_res, begindate, enddate)
         dates = d.to_pydatetime()
         idxdates = len(dates) - 1
 
