@@ -48,8 +48,8 @@ from poets.image.netcdf import get_properties
 from poets.io.source_base import BasicSource
 import poets.web.app as app
 
-
-valid_temp_res = ['dekad', 'month']
+valid_temp_res = ['dekad', 'dekadal', 'month', 'monthly', 'week', 'weekly',
+                  'day', 'daily']
 
 
 class Poet(object):
@@ -118,7 +118,7 @@ class Poet(object):
         self.regions = regions
         self.spatial_resolution = spatial_resolution
 
-        if temporal_resolution not in ['dekad', 'month']:
+        if temporal_resolution not in valid_temp_res:
             raise ValueError("Temporal resulution must be one of " +
                              str(valid_temp_res))
 

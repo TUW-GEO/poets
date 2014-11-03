@@ -196,7 +196,11 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
 
             var[var_index] = image[key]
             if metadata is not None:
-                var.setncatts(metadata[key])
+                for item in metadata[key]:
+                    if item in var.ncattrs():
+                        continue
+                    else:
+                        var.setncattr(str(item), metadata[key][item])
 
 
 def read_image(source_file):

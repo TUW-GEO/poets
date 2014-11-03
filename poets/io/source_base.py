@@ -171,7 +171,7 @@ class BasicSource(object):
                  begin_date=datetime(2000, 1, 1), ffilter=None, colorbar='jet',
                  variables=None, nan_value=None, valid_range=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
-                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
+                 dest_temp_res='monthly', dest_start_date=datetime(2000, 1, 1),
                  data_range=None):
 
         self.name = name
@@ -566,7 +566,7 @@ class BasicSource(object):
                 if i == 0:
                     start = begin
                 else:
-                    if self.dest_temp_res == 'dekad':
+                    if self.dest_temp_res in ['dekadal', 'weekly']:
                         start = drange[i - 1] + timedelta(days=1)
                     else:
                         start = date
@@ -805,7 +805,8 @@ class BasicSource(object):
                                    + '_' + str(self.dest_temp_res) + '.nc')
 
         # get dekad of date:
-        date = check_dekad(date)
+        if self.dest_temp_res in ['dekad', 'dekadal', 'decade', 'decadal']:
+            date = check_dekad(date)
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
             time = nc.variables['time']
