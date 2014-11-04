@@ -41,7 +41,7 @@ import abc
 
 class AddonBase(object):
     """
-    Base class for poets add-ons that implements basic functions and also 
+    Base class for poets add-ons that implements basic functions and also
     abstract methods that have to be implemented by child classes.
 
     Parameters
@@ -65,9 +65,54 @@ class AddonBase(object):
         pass
 
     def read_image(self):
+        """Gets images from netCDF file for certain date
+
+        Parameters
+        ----------
+        date : datetime
+            Date of the image.
+        source : str
+            Data source from which image should be read.
+        region : str, optional
+            Region of interest, set to first defined region if None.
+        variable : str, optional
+            Variable to display, set to first variable of source if None.
+
+        Returns
+        -------
+        img : numpy.ndarray
+            Image of selected date.
+        lon : numpy.array
+            Array with longitudes.
+        lat : numpy.array
+            Array with latitudes.
+        metadata : dict
+            Dictionary containing metadata of the variable.
+        """
         return self._read_spec_img()
 
-    def read_timeseries(self):
+    def read_timeseries(self, source, location, region=None, variable=None):
+        """
+        Gets timeseries from netCDF file for a gridpoint.
+
+        Parameters
+        ----------
+        source : str
+            Data source from which time series should be read.
+        location : int or tuple of floats
+            Either Grid point index as integer value or Longitude/Latitude
+            given as tuple.
+        region : str, optional
+            Region of interest, set to first defined region if None.
+        variable : str, optional
+            Variable to display, set to first variable of source if None.
+
+        Returns
+        -------
+        ts : pd.DataFrame
+            Timeseries for the selected data.
+        """
+
         return self._read_spec_ts()
 
 if __name__ == "__main__":
