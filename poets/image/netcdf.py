@@ -45,7 +45,8 @@ from poets.timedate.dateindex import get_dtindex
 
 
 def save_image(image, timestamp, region, metadata, dest_file, start_date,
-               sp_res, nan_value=-99, shapefile=None, temp_res='dekad'):
+               sp_res, nan_value=-99, shapefile=None, temp_res='dekad',
+               compression=False):
     """Saves numpy.ndarray images as multidimensional netCDF4 file.
 
     Creates a datetimeindex over the whole period defined in the settings file
@@ -72,6 +73,8 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
         default.
     temp_res : string or int, optional
         Temporal resolution of the output NetCDF4 file, defaults to dekad.
+    compression : bool, optional
+        If True, ncfile compression is active. 
     """
 
     if region == 'global':
@@ -90,7 +93,14 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
 
         if 'time' not in ncfile.dimensions.keys():
             ncfile.createDimension("time", None)
-            times = ncfile.createVariable('time', 'uint16', ('time',))
+
+            if compression:
+                times = ncfile.createVariable('time', 'uint16', ('time',),
+                                              zlib=True, complevel=4)
+
+            else:
+                times = ncfile.createVariable('time', 'uint16', ('time',))
+
             times.units = 'days since ' + str(start_date)
             times.calendar = 'standard'
             times[:] = date2num(dt.tolist(), units=times.units,
@@ -107,8 +117,14 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
         for key in image.keys():
 
             if key not in ncfile.variables.keys():
-                var = ncfile.createVariable(key, image[key].dtype.char, dim,
-                                            fill_value=nan_value)
+
+                if compression:
+                    var = ncfile.createVariable(key, image[key].dtype.char,
+                                                dim, zlib=True, complevel=4,
+                                                fill_value=nan_value)
+                else:
+                    var = ncfile.createVariable(key, image[key].dtype.char,
+                                                dim, fill_value=nan_value)
             else:
                 var = ncfile.variables[key]
 
