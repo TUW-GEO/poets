@@ -40,12 +40,11 @@ import datetime
 from ftplib import FTP
 import os
 import shutil
-
 import paramiko
 import requests
-
 import pandas as pd
 from poets.timedate.dekad import dekad2day
+from requests.exceptions import ConnectionError, Timeout
 
 
 def download_ftp(download_path, host, directory, filedate, port=None,
@@ -464,11 +463,23 @@ def download_http(download_path, host, directory, filename, filedate,
                 continue
 
             #==================================================================
-            # proxies = {'http': 'http://proxy.ipf.tuwien.ac.at:3128',
-            #            'https': 'http://proxy.ipf.tuwien.ac.at:3128'}
+            # proxies = {
+            #            "http": "http://proxy.ipf.tuwien.ac.at:3128",
+            #            "https": "http://proxy.ipf.tuwien.ac.at:3128",
+            #            }
             #==================================================================
 
-            r = requests.get(fp)  # , proxies=proxies)
+            try:
+                r = requests.get(fp)  # , proxies=proxies, timeout=10.)
+            except ConnectionError as e:
+                print ''
+                print '[WARNING] File not available at resource, skipping...'
+                continue
+            except Timeout as t:
+                print ''
+                print '[WARNING] File not available at resource, skipping...'
+                continue
+
             if r.status_code == 200:
                 # check if year folder is existing
                 if ffilter is None or ffilter in os.path.split(fp)[-1]:
