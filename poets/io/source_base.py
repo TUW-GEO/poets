@@ -659,7 +659,8 @@ class BasicSource(object):
             if i == 0:
                 start = begin
             else:
-                if self.dest_temp_res == 'dekad':
+                if self.dest_temp_res in ['dekad', 'dekadal', 'week',
+                                          'weekly']:
                     start = drange[i - 1] + timedelta(days=1)
                 else:
                     start = date
