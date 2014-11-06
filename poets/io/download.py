@@ -43,7 +43,7 @@ import shutil
 import paramiko
 import requests
 import pandas as pd
-from poets.timedate.dekad import dekad2day
+from poets.timedate.dekad import dekad2day, runningdekad2date
 from requests.exceptions import ConnectionError, Timeout
 
 
@@ -470,7 +470,7 @@ def download_http(download_path, host, directory, filename, filedate,
             #==================================================================
 
             try:
-                r = requests.get(fp)  # , proxies=proxies, timeout=10.)
+                r = requests.get(fp, timeout=10.)  # , proxies=proxies, timeout=10.)
             except ConnectionError as e:
                 print ''
                 print '[WARNING] File not available at resource, skipping...'
@@ -647,6 +647,12 @@ def get_file_date(fname, fdate):
     if 'P' in fdate.keys():
         dekad = int(fname[fdate['P'][0]:fdate['P'][1]])
         day = dekad2day(year, month, dekad)
+
+    if 'RP' in fdate.keys():
+        dat = runningdekad2date(year,
+                                int(fname[fdate['RP'][0]:fdate['RP'][1]]))
+        month = dat.month
+        day = dat.day
 
     if 'hh' in fdate.keys():
         hour = int(fname[fdate['hh'][0]:fdate['hh'][1]])
