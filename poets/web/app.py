@@ -35,6 +35,7 @@
 from cStringIO import StringIO
 import os
 from flask import Flask, render_template, jsonify, make_response
+from flask.ext.cors import CORS
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -89,6 +90,8 @@ dest = os.path.join(curpath(), 'static', 'temp')
 
 app = Flask(__name__, static_folder='static', static_url_path='/static',
             template_folder="templates")
+app.config['CORS_HEADERS'] = 'Content-Type'
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 def start(poet, host='127.0.0.1', port=5000, debug=False):
