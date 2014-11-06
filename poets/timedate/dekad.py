@@ -38,6 +38,7 @@ This module provides functions for date manipulation on a dekadal basis.
 
 import calendar
 import pandas as pd
+import math
 from datetime import datetime
 
 
@@ -157,6 +158,29 @@ def dekad2day(year, month, dekad):
         day = calendar.monthrange(year, month)[1]
 
     return day
+
+
+def runningdekad2date(year, rdekad):
+    """Gets the date of the running dekad of a spacifc year.
+
+    Parameters
+    ----------
+    year : int
+        Year of the date.
+    rdekad : int
+        Running dekad of the date.
+
+    Returns
+    -------
+    datetime.datetime
+        Date value for the running dekad.
+    """
+
+    month = int(math.ceil(rdekad / 3.))
+    dekad = rdekad - month * 3 + 3
+    day = dekad2day(year, month, dekad)
+
+    return datetime(year, month, day)
 
 
 def day2dekad(day):
