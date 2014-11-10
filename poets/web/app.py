@@ -274,7 +274,7 @@ def download_ts(**kwargs):
 
     filename = region + '_' + variable + '_' + loc[0][:6] + '_' + loc[1][:6]
 
-    df = source.read_ts(lonlat, region, variable)
+    df = source.read_ts(lonlat, region, variable, shapefile)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df)
