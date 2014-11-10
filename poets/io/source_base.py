@@ -46,6 +46,7 @@ from poets.io.download import download_http, download_ftp, download_sftp, \
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
 import poets.timedate.dateindex as dt
+import poets.grid.grids as gr
 
 
 class BasicSource(object):
@@ -342,6 +343,11 @@ class BasicSource(object):
         dirList = os.listdir(self.rawdata_path)
         dirList.sort()
 
+        if region == 'global':
+            grid = gr.RegularGrid(sp_res=self.dest_sp_res)
+        else:
+            grid = gr.ShapeGrid(region, self.dest_sp_res, shapefile)
+
         for item in dirList:
 
             src_file = os.path.join(self.rawdata_path, item)
@@ -379,7 +385,7 @@ class BasicSource(object):
             print '.',
 
             image, _, _, _, timestamp, metadata = \
-                resample_to_shape(src_file, region, self.dest_sp_res,
+                resample_to_shape(src_file, region, self.dest_sp_res, grid,
                                   self.name, self.nan_value,
                                   self.dest_nan_value, self.variables,
                                   shapefile)

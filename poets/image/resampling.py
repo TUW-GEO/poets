@@ -39,8 +39,7 @@ from shapely.geometry import Point
 
 import numpy as np
 import pandas as pd
-from poets.grid.grids import ShapeGrid, RegularGrid
-import poets.grid.grids as gr
+from poets.grid.grids import ShapeGrid
 import poets.image.hdf5 as h5
 from poets.image.imagefile import bbox_img
 import poets.image.netcdf as nc
@@ -52,7 +51,7 @@ imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
                 '.JPG', '.jpeg', '.JPEG', '.gif', '.GIF']
 
 
-def resample_to_shape(source_file, region, sp_res, prefix=None,
+def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
                       nan_value=None, dest_nan_value=None, variables=None,
                       shapefile=None):
     """
@@ -103,14 +102,12 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
         lon_max = 180
         lat_min = -90
         lat_max = 90
-        grid = gr.RegularGrid(sp_res=sp_res)
     else:
         shp = Shape(region, shapefile)
         lon_min = shp.bbox[0]
         lon_max = shp.bbox[2]
         lat_min = shp.bbox[1]
         lat_max = shp.bbox[3]
-        grid = gr.ShapeGrid(region, sp_res, shapefile)
 
     if fileExtension in ['.nc', '.nc3', '.nc4']:
         data_src, lon, lat, timestamp, metadata = nc.read_image(source_file)
@@ -162,6 +159,7 @@ def resample_to_shape(source_file, region, sp_res, prefix=None,
                     p = Point(dest_lon[i][j], dest_lat[i][j])
                     if not p.within(poly):
                         mask[i][j] = True
+
                     if data[key].mask[i][j]:
                         mask[i][j] = True
 
