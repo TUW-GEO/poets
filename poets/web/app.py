@@ -330,8 +330,8 @@ def request_image(**kwargs):
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
     else:
-        vmin = img.min()
-        vmax = img.max()
+        vmin = np.nanmin(img)
+        vmax = np.nanmax(img)
 
     cmap = source.colorbar
 
