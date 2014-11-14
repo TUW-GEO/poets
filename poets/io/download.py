@@ -562,10 +562,6 @@ def download_local(download_path, directory, filedate, dirstruct=None,
                                                        fname)):
                         shutil.copy(os.path.join(directory, folder, fname),
                                     os.path.join(download_path, fname))
-                    else:
-                        print ''
-                        print ('[INFO] File already exists, nothing to'
-                               ' download'),
 
     # directory/folder/subfolder (len(dirstruct) == 2)
     elif dirstruct is not None and len(dirstruct) == 2:
@@ -583,10 +579,6 @@ def download_local(download_path, directory, filedate, dirstruct=None,
                             shutil.copy(os.path.join(directory, folder,
                                                      subfolder, fname),
                                         os.path.join(download_path, fname))
-                        else:
-                            print ''
-                            print ('[INFO] File already exists, nothing to'
-                                   ' download'),
 
     # general case: unknown folder structure
     if dirstruct is None:
@@ -600,10 +592,6 @@ def download_local(download_path, directory, filedate, dirstruct=None,
                                                            fname)):
                             shutil.copy(os.path.join(path, fname),
                                         os.path.join(download_path, fname))
-                        else:
-                            print ''
-                            print ('[INFO] File already exists, nothing to'
-                                   ' download'),
 
     if len(files) > 0:
         print ''
