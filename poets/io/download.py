@@ -164,8 +164,6 @@ def download_ftp(download_path, host, directory, filedate, port=None,
                     ftp.cwd(loc)
                     ftp.retrbinary("RETR " + fname2, open(fname2, "wb").write)
                     print '.',
-            else:
-                print ' file exists, skipping download'
         ftp.close()
         print ''
         return True
