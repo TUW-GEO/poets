@@ -50,6 +50,7 @@ else:
                                               "scipy >= 0.12",
                                               "statsmodels >= 0.4.3",
                                               "netcdf4 >= 1.1.0",
+                                              "GDAL >= 1.11.1",
                                               "pytesmo >= 0.2.0",
                                               "Shapely >= 1.3.2",
                                               "pyshp >=1.2.1",
