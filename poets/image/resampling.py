@@ -46,6 +46,8 @@ import poets.image.netcdf as nc
 from poets.shape.shapes import Shape
 import pyresample as pr
 
+from datetime import datetime
+
 
 imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
                 '.JPG', '.jpeg', '.JPEG', '.gif', '.GIF']
@@ -144,8 +146,8 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
 
     res_data = {}
 
+    count = 0
     for key in data.keys():
-
         if variables is not None:
             if key not in variables:
                 del metadata[key]
@@ -154,14 +156,26 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
         if region != 'global':
             poly = shp.polygon
 
-            for i in range(0, grid.shape[0]):
-                for j in range(0, grid.shape[1]):
+            if count > 0:
+                for idx in range(0, len(np.where(mask == False)[0])):
+                    i = np.where(mask == False)[0][idx]
+                    j = np.where(mask == False)[1][idx]
                     p = Point(dest_lon[i][j], dest_lat[i][j])
                     if not p.within(poly):
                         mask[i][j] = True
 
                     if data[key].mask[i][j]:
                         mask[i][j] = True
+
+            else:
+                for i in range(0, grid.shape[0]):
+                    for j in range(0, grid.shape[1]):
+                        p = Point(dest_lon[i][j], dest_lat[i][j])
+                        if not p.within(poly):
+                            mask[i][j] = True
+
+                        if data[key].mask[i][j]:
+                            mask[i][j] = True
 
         if prefix is None:
             var = key
@@ -183,6 +197,8 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
 
         res_data[var] = np.ma.masked_array(dat, mask=np.copy(mask),
                                            fill_value=dest_nan_value)
+
+        count += 1
 
     return res_data, dest_lon, dest_lat, gpis, timestamp, metadata
 

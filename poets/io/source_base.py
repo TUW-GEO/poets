@@ -545,6 +545,10 @@ class BasicSource(object):
             by default.
         """
 
+        if len(os.listdir(self.tmp_path)) != 0:
+            for file in os.listdir(self.tmp_path):
+                os.remove(os.path.join(self.tmp_path, file))
+
         if begin is None:
             if self.dest_start_date < self.begin_date:
                 begin = self.begin_date
