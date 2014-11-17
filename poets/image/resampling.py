@@ -35,7 +35,6 @@
 import os
 
 from pytesmo.grid import resample
-from shapely.geometry import Point
 
 import numpy as np
 import pandas as pd
@@ -46,7 +45,8 @@ import poets.image.netcdf as nc
 from poets.shape.shapes import Shape
 import pyresample as pr
 
-from datetime import datetime
+import ogr
+import matplotlib.path
 
 
 imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
@@ -142,11 +142,24 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
     data = resample.resample_to_grid(data, src_lon, src_lat, dest_lon,
                                      dest_lat, search_rad=search_rad)
 
-    mask = np.zeros(shape=grid.shape, dtype=np.bool)
-
     res_data = {}
 
-    count = 0
+    shapefile = os.path.join(os.path.abspath(os.path.join(os.path.dirname\
+                                                          (__file__), '..')),
+                             'shape', 'ancillary', 'world_country_admin_'
+                             'boundary_shapefile_with_fips_codes.shp')
+    shapef = ogr.Open(shapefile)
+    lyr = shapef.GetLayer()
+    poly = lyr.GetNextFeature()
+    poly_verts = poly.geometry().Boundary().GetPoints()
+    path = matplotlib.path.Path(poly_verts)
+
+    coords = [grid.arrlon, grid.arrlat[::-1]]
+    coords2 = np.zeros((len(coords[0]), 2))
+
+    for idx in range(0, len(coords[0])):
+        coords2[idx] = [coords[0][idx], coords[1][idx]]
+
     for key in data.keys():
         if variables is not None:
             if key not in variables:
@@ -154,28 +167,11 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
                 continue
 
         if region != 'global':
-            poly = shp.polygon
+            mask_rev = path.contains_points(coords2)
+            mask_rev = mask_rev.reshape(dest_lon.shape)
+            mask = np.invert(mask_rev)
 
-            if count > 0:
-                for idx in range(0, len(np.where(mask == False)[0])):
-                    i = np.where(mask == False)[0][idx]
-                    j = np.where(mask == False)[1][idx]
-                    p = Point(dest_lon[i][j], dest_lat[i][j])
-                    if not p.within(poly):
-                        mask[i][j] = True
-
-                    if data[key].mask[i][j]:
-                        mask[i][j] = True
-
-            else:
-                for i in range(0, grid.shape[0]):
-                    for j in range(0, grid.shape[1]):
-                        p = Point(dest_lon[i][j], dest_lat[i][j])
-                        if not p.within(poly):
-                            mask[i][j] = True
-
-                        if data[key].mask[i][j]:
-                            mask[i][j] = True
+            mask[data[key].mask == True] = True
 
         if prefix is None:
             var = key
@@ -197,8 +193,6 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
 
         res_data[var] = np.ma.masked_array(dat, mask=np.copy(mask),
                                            fill_value=dest_nan_value)
-
-        count += 1
 
     return res_data, dest_lon, dest_lat, gpis, timestamp, metadata
 
