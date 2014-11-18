@@ -34,7 +34,7 @@
 
 import unittest
 import os
-from poets.image.imagefile import bbox_img
+import poets.image.imagefile as imf
 import numpy as np
 import numpy.testing as nptest
 
@@ -62,14 +62,22 @@ class Test(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_get_layer_extent(self):
+            lon_min, lat_min, lon_max, lat_max = \
+                imf.get_layer_extent(self.testfile)
+
+            assert (lon_min, lon_max) == self.lon
+            assert (lat_min, lat_max) == self.lat
+
     def test_bbox_img(self):
 
         datamean = 244.88947368421051
         datamin = 112
         datamax = 255
 
-        data, lon_new, lat_new, _, _ = bbox_img(self.testfilename, self.region,
-                                                self.fileExtension)
+        data, lon_new, lat_new, _, _ = imf.bbox_img(self.testfilename,
+                                                    self.region,
+                                                    self.fileExtension)
 
         nptest.assert_array_equal(lon_new, self.lon)
         nptest.assert_array_equal(lat_new, self.lat)
@@ -77,6 +85,11 @@ class Test(unittest.TestCase):
         assert data['dataset'].min() == datamin
         assert data['dataset'].max() == datamax
 
+    def test_lonlat2px(self):
+        pass
+
+    def test_lonlat2px_rearr(self):
+        pass
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
