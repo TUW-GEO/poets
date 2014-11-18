@@ -33,20 +33,17 @@
 # Creation date: 2014-06-13
 
 import os
-
-from pytesmo.grid import resample
-
+import ogr
 import numpy as np
 import pandas as pd
-from poets.grid.grids import ShapeGrid
-import poets.image.hdf5 as h5
-from poets.image.imagefile import bbox_img
 import poets.image.netcdf as nc
-from poets.shape.shapes import Shape
+import poets.image.hdf5 as h5
 import pyresample as pr
-
-import ogr
 import matplotlib.path
+from poets.grid.grids import ShapeGrid
+from poets.image.imagefile import bbox_img
+from poets.shape.shapes import Shape
+from pytesmo.grid import resample
 
 
 imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
@@ -68,6 +65,8 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
         used, this would be the FIPS country code.
     sp_res : int or float
         Spatial resolution of the shape-grid.
+    grid : poets.grid.RegularGrid or poets.grid.ShapeGrid
+        Grid to resample data to.
     prefix : str, optional
         Prefix for the variable in the NetCDF file, should be name of source
     nan_value : int, float, optional
@@ -82,16 +81,18 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
 
     Returns
     -------
-    data : dict of numpy.arrays
+    res_data : dict of numpy.arrays
         resampled image
-    lons : numpy.array
+    dest_lon : numpy.array
         longitudes of the points in the resampled image
-    lats : numpy.array
+    dest_lat : numpy.array
         latitudes of the points in the resampled image
     gpis : numpy.array
         grid point indices
     timestamp : datetime.date
         date of the image
+    metadata : dict
+        Metadata derived from input file.
     """
 
     if prefix is not None:
@@ -197,65 +198,16 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
     return res_data, dest_lon, dest_lat, gpis, timestamp, metadata
 
 
-def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
-    """Resamples image to predefined gridpoints.
-
-    Parameters
-    ----------
-    source_file : str
-        Path to source file.
-    region : str
-        Latitudes of source image.
-    sp_res : int or float
-        Spatial resolution of the shape-grid.
-    shapefile : str, optional
-        Path to shape file, uses "world country admin boundary shapefile" by
-        default.
-
-    Returns
-    -------
-    dframe : pandas.DataFrame
-        Resampled data with gridpoints as index.
-    """
-
-    shp = Shape(region, shapefile)
-    lon_min = shp.bbox[0]
-    lon_max = shp.bbox[2]
-    lat_min = shp.bbox[1]
-    lat_max = shp.bbox[3]
-    grid = ShapeGrid(region, sp_res, shapefile)
-    gridpoints = grid.get_gridpoints()
-
-    data, lon, lat, _, _ = nc.read_image(source_file)
-    data, lon, lat = nc.clip_bbox(data, lon, lat, lon_min, lat_min, lon_max,
-                                  lat_max)
-
-    lon, lat = np.meshgrid(lon, lat)
-
-    src_grid = pr.geometry.GridDefinition(lon, lat)
-    des_swath = pr.geometry.SwathDefinition(gridpoints['lon'].values,
-                                            gridpoints['lat'].values)
-
-    dframe = pd.DataFrame(index=gridpoints.index)
-    dframe['lon'] = gridpoints.lon
-    dframe['lat'] = gridpoints.lat
-
-    # resampling to country gridpoints
-    for var in data.keys():
-        dframe[var] = pr.kd_tree.resample_nearest(src_grid, data[var],
-                                                  des_swath, 20000)
-
-    return dframe
-
-
 def average_layers(image, dest_nan_value):
     """
-    Averages image layers, given as ndimensional masked arrays to one image
+    Averages image layers, given as n-dimensional masked arrays to one image.
 
     Parameters
     ----------
     image : numpy.ma.MaskedArray
         Input image to average.
+    dest_nan_value : int
+        NaN value to be used.
 
     Returns
     -------

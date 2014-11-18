@@ -37,12 +37,10 @@ import unittest
 import os
 import numpy.testing as nptest
 import numpy as np
-import pandas as pd
-from pandas.util.testing import assert_frame_equal
+import poets.grid.grids as gr
 from datetime import datetime
 from poets.image.netcdf import save_image
-from poets.image.resampling import resample_to_shape, resample_to_gridpoints, \
-    average_layers
+from poets.image.resampling import resample_to_shape, average_layers
 
 
 def curpath():
@@ -78,6 +76,8 @@ class Test(unittest.TestCase):
         if os.path.exists(self.testfilename):
             os.remove(self.testfilename)
 
+        self.grid = gr.ShapeGrid(self.region, self.sp_res)
+
     def tearDown(self):
         if os.path.exists(self.testfilename):
             os.remove(self.testfilename)
@@ -97,7 +97,7 @@ class Test(unittest.TestCase):
 
         data, dest_lon, dest_lat, gpis, timestamp, metadata = \
             resample_to_shape(self.testfilename, self.region, self.sp_res,
-                              nan_value=self.fill_value,
+                              self.grid, nan_value=self.fill_value,
                               dest_nan_value=self.fill_value)
 
         timediff = self.timestamp - timestamp
@@ -108,20 +108,6 @@ class Test(unittest.TestCase):
         assert gpis[0] == 0
         assert timediff.days == 0
         assert metadata == self.metadata
-
-    def test_resample_to_gridpoints(self):
-
-        resgp = pd.DataFrame(np.array(([[30., 0., self.fill_value]])),
-                             columns=['lon', 'lat', 'data'])
-
-        save_image(self.image, self.timestamp, 'global', self.metadata,
-                   self.testfilename, self.start_date, self.sp_res,
-                   temp_res=self.temp_res)
-
-        gridpoints = resample_to_gridpoints(self.testfilename, self.region,
-                                            self.sp_res)
-
-        assert_frame_equal(gridpoints, resgp)
 
     def test_average_layers(self):
 
