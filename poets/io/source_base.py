@@ -36,17 +36,17 @@ import os
 import shutil
 import pandas as pd
 import numpy as np
+import poets.image.netcdf as nc
+import poets.timedate.dateindex as dt
+import poets.grid.grids as gr
 from netCDF4 import Dataset, num2date, date2num
 from datetime import datetime, timedelta
 from poets.grid.grids import ShapeGrid, RegularGrid
-import poets.image.netcdf as nc
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date, download_local
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
-import poets.timedate.dateindex as dt
-import poets.grid.grids as gr
 
 
 class BasicSource(object):
