@@ -37,9 +37,9 @@ This module provides functions for loading from and writing to NetCDF4 files.
 """
 
 import os.path
+import numpy as np
 from netCDF4 import Dataset, date2num, num2date
 from pytesmo.grid.netcdf import save_grid
-import numpy as np
 from poets.grid import grids
 from poets.timedate.dateindex import get_dtindex
 
@@ -66,6 +66,8 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
         Path to the output file.
     start_date : datetime.datetime
         First date of available data.
+    sp_res :  int or float
+        Spatial resolution of the grid.
     nan_value : int, optional
         Not a number value for dataset, defaults to -99.
     shapefile : str, optional
@@ -74,7 +76,7 @@ def save_image(image, timestamp, region, metadata, dest_file, start_date,
     temp_res : string or int, optional
         Temporal resolution of the output NetCDF4 file, defaults to dekad.
     compression : bool, optional
-        If True, ncfile compression is active. 
+        If True, ncfile compression is active.
     """
 
     if region == 'global':
@@ -161,6 +163,10 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
         NetCDF metadata from source file.
     dest_file : str
         Path to the output file.
+    start_date : datetime.datetime
+        First date of available data.
+    sp_res :  int or float
+        Spatial resolution of the grid.
     nan_value : int, optional
         Not a number value for dataset, defaults to -99.
     shapefile : str, optional
@@ -372,9 +378,6 @@ def read_variable(source_file, variable, date, date_to=None):
 
     return image, lon, lat, metadata
 
-if __name__ == "__main__":
-    pass
-
 
 def get_properties(src_file):
     """Gets variables, dimensions and time period from a netCDF file.
@@ -410,3 +413,7 @@ def get_properties(src_file):
         variables.remove('gpi')
 
     return variables, dimensions, period
+
+
+if __name__ == "__main__":
+    pass
