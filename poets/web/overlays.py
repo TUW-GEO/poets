@@ -44,14 +44,27 @@ def bounds(country, shapefile=None):
     Returns the bounding box, center coordinates and zoom level
     for web overlay purposes.
 
-    Parameters:
+    Parameters
     ----------
     Country : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
 
-    Returns:
-    --------
-    Selfspeaking Coordinates as Integer
+    Returns
+    -------
+    lon_min : int
+        Minimum longitude.
+    lon_max : int
+        Maximum longitude.
+    lat_min : int
+        Minimum latitude.
+    lat_max : int
+        Maximum latitude.
+    c_lat : int
+        Center latidute of image.
+    c_lon : int
+        Center longitude of image.
+    zoom : int
+        Zoom level for openlayers.
     """
     shp = Shape(country, shapefile)
 
