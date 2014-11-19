@@ -166,6 +166,16 @@ def index(**kwargs):
         begindate = ndate[region][variable][0]
         enddate = ndate[region][variable][1]
 
+        if begindate is None and enddate is None:
+
+            error = 'No data available for this dataset.'
+
+            return render_template('index.html',
+                                   regions=regions,
+                                   sources=sources.keys(),
+                                   variables=variables,
+                                   error=error)
+
         d = get_dtindex(tmp_res, begindate, enddate)
         dates = d.to_pydatetime()
         idxdates = len(dates) - 1

@@ -84,6 +84,16 @@ $(document).ready(function () {
 		</div>
 		<a href='' class='btn btn-primary btn-lg' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
 	</form>
+	{% if error %}
+    <br><br>
+    <div class="alert alert-danger" role="alert">
+    	<p class="error">
+	  		<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+	  		<span class="sr-only">Error:</span>
+	  		<strong>Error:</strong> {{ error }}
+	  	</p>
+	</div>
+  	{% endif %}
 </div>
 
 
