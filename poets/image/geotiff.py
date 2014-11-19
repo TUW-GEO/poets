@@ -81,7 +81,7 @@ def lonlat2px_gt(img, lon, lat, lon_min, lat_min, lon_max, lat_max):
 
 def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
     """
-    Converts two arrays of row and column pixels into their corresponding 
+    Converts two arrays of row and column pixels into their corresponding
     longitude and latitude arrays
 
     Parameters
