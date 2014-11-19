@@ -40,13 +40,15 @@ import h5py
 import numpy as np
 
 
-def read_image(source_file):
-    """Reads data out of netCDF file and returns it as numpy.ndarray
+def read_image(source_file, variables=None):
+    """Reads data out of hdf5 file and returns it as numpy.ndarray
 
     Parameters
     ----------
     source_file : str
         Path to source file.
+    variables : list of str, optional
+        Variables to read from file, reads all variables if not set.
 
     Returns
     -------
@@ -81,21 +83,23 @@ def read_image(source_file):
 
         for grp in h5:
             for var in h5[grp].keys():
-                metadata[var] = {}
-                data[var] = h5[grp][var].value
-                for attr in meta_global:
-                    metadata[var][attr] = meta_global[attr]
-                for attr in h5[grp][var].attrs:
-                    if (isinstance(h5[grp][var].attrs[attr], list) or
-                        isinstance(h5[grp][var].attrs[attr], dict) or
-                        isinstance(h5[grp][var].attrs[attr], tuple)):
-                        attr_value = h5[grp][var].attrs[attr][0]
-                    else:
-                        attr_value = h5[grp][var].attrs[attr]
-                    metadata[var][str(attr).lower()] = attr_value
-                    if str(attr).lower() == 'scaling_factor':
-                        metadata[var]['scale_factor'] = \
-                            attr_value
+                if ((variables is not None and var in variables)
+                    or variables is None):
+                    metadata[var] = {}
+                    data[var] = h5[grp][var].value
+                    for attr in meta_global:
+                        metadata[var][attr] = meta_global[attr]
+                    for attr in h5[grp][var].attrs:
+                        if (isinstance(h5[grp][var].attrs[attr], list) or
+                            isinstance(h5[grp][var].attrs[attr], dict) or
+                            isinstance(h5[grp][var].attrs[attr], tuple)):
+                            attr_value = h5[grp][var].attrs[attr][0]
+                        else:
+                            attr_value = h5[grp][var].attrs[attr]
+                        metadata[var][str(attr).lower()] = attr_value
+                        if str(attr).lower() == 'scaling_factor':
+                            metadata[var]['scale_factor'] = \
+                                attr_value
 
         sp_res = 180. / data[data.keys()[0]].shape[0]
 
