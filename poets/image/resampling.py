@@ -44,6 +44,7 @@ from poets.grid.grids import ShapeGrid
 from poets.image.imagefile import bbox_img
 from poets.shape.shapes import Shape
 from pytesmo.grid import resample
+import scipy
 
 
 imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
@@ -146,22 +147,20 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
                                      dest_lat, search_rad=search_rad)
 
     res_data = {}
+    path = []
 
-    shapefile = os.path.join(os.path.abspath(os.path.join(os.path.dirname\
-                                                          (__file__), '..')),
-                             'shape', 'ancillary', 'world_country_admin_'
-                             'boundary_shapefile_with_fips_codes.shp')
-    shapef = ogr.Open(shapefile)
-    lyr = shapef.GetLayer()
-    poly = lyr.GetNextFeature()
-    poly_verts = poly.geometry().Boundary().GetPoints()
-    path = matplotlib.path.Path(poly_verts)
+    _, _, multipoly = shp._get_shape()
+    for ring in multipoly:
+        poly_verts = list(ring.exterior.coords)
+        path.append(matplotlib.path.Path(poly_verts))
 
     coords = [grid.arrlon, grid.arrlat[::-1]]
     coords2 = np.zeros((len(coords[0]), 2))
 
     for idx in range(0, len(coords[0])):
         coords2[idx] = [coords[0][idx], coords[1][idx]]
+
+    mask_old = path[0].contains_points(coords2)
 
     for key in data.keys():
         if variables is not None:
@@ -170,7 +169,11 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
                 continue
 
         if region != 'global':
-            mask_rev = path.contains_points(coords2)
+            for ring in path:
+                mask_new = (ring.contains_points(coords2))
+                mask_rev = scipy.logical_or(mask_old, mask_new)
+                mask_old = mask_rev
+
             mask_rev = mask_rev.reshape(dest_lon.shape)
             mask = np.invert(mask_rev)
 
