@@ -58,7 +58,7 @@ else:
                                               "requests >= 1.14.0",
                                               "pillow >= 2.5.1",
                                               "Flask >= 0.10.1",
-                                              "Flask-Cors >= 1.9.0"
+                                              "Flask-Cors >= 1.9.0",
                                               "patool >= 1.7",
                                               "pyunpack >= 0.0.3"
                                               ],
