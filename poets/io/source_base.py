@@ -217,13 +217,13 @@ class BasicSource(object):
         Parameters
         ----------
         begin : bool, optional
-            If set True, begin will be returned as None
+            If set True, begin will be returned as None.
         end : bool, optional
-            If set True, end will be returned as None
+            If set True, end will be returned as None.
         Returns
         -------
         dates : dict of dicts
-            None if no date available
+            Dictionary with dates of each parameter. None if no date available.
         """
 
         dates = {}
@@ -853,12 +853,12 @@ class BasicSource(object):
 
     def get_variables(self):
         """
-        Gets all variables from source given in the NetCDF file.
+        Gets all variables given in the NetCDF file.
 
         Returns
         -------
         variables : list of str
-            Variables from source given in NetCDF file.
+            Variables from given in the NetCDF file.
         """
 
         nc_name = os.path.join(self.data_path, self.dest_regions[0] + '_'
