@@ -70,12 +70,9 @@ setup(
     url='http://rs.geo.tuwien.ac.at/poets',
     description='python Open Earth Observation Tools',
     long_description=open('README.rst').read(),
-
     author='poets Team',
     author_email='Thomas.Mistelbauer@geo.tuwien.ac.at',
-
     license='LICENSE.txt',
-
     packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
               'poets.timedate', 'poets.web'],
     package_data={'poets': [os.path.join('shape', 'ancillary', '*.dbf'),
@@ -103,6 +100,4 @@ setup(
                             ]
                   },
     **setuptools_kwargs)
-
-
 
