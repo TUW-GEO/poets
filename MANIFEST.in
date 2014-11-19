@@ -1,4 +1,8 @@
+include versioneer.py
 include *.txt
-recursive-include docs *.txt *.html *.css *.png *.gif *.js
-recursive-include poets *.dbf *.README *.shp *.shx
+include *.rst
+include tox.ini
+recursive-include poets *.py *.c *.h *.pxd *.pyx *.dbf *.README *.shp *.shx
+recursive-include docs *.rst *.py *.txt *.html *.css *.png *.gif *.js
 recursive-include tests *.py *.png *.csv *.tiff
+include poets/_version.py
