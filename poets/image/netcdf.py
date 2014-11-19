@@ -225,13 +225,15 @@ def write_tmp_file(image, timestamp, region, metadata, dest_file, start_date,
                         var.setncattr(str(item), metadata[key][item])
 
 
-def read_image(source_file):
+def read_image(source_file, variables=None):
     """Reads data out of netCDF file and returns it as numpy.ndarray
 
     Parameters
     ----------
     source_file : str
         Path to source file.
+    variables : list of str, optional
+        Variables to read from file, reads all variables if not set
 
     Returns
     -------
@@ -258,26 +260,28 @@ def read_image(source_file):
         lon = np.copy(nc.variables['lon'])
         lat = np.copy(nc.variables['lat'])
 
-        variables = nc.variables.keys()
-        if 'gpi' in variables:
-            variables.remove('gpi')
-        if 'lat' in variables:
-            variables.remove('lat')
-        if 'lon' in variables:
-            variables.remove('lon')
-        if 'time' in variables:
-            variables.remove('time')
+        ncvars = nc.variables.keys()
+        if 'gpi' in ncvars:
+            ncvars.remove('gpi')
+        if 'lat' in ncvars:
+            ncvars.remove('lat')
+        if 'lon' in ncvars:
+            ncvars.remove('lon')
+        if 'time' in ncvars:
+            ncvars.remove('time')
 
         data = {}
         metadata = {}
 
-        for var in variables:
-            dat = nc.variables[var][:][0]
-            data[var] = dat[:]
-            metadata[var] = {}
-            for attr in nc.variables[var].ncattrs():
-                if attr[0] != '_' and attr != 'scale_factor':
-                    metadata[var][attr] = nc.variables[var].getncattr(attr)
+        for var in ncvars:
+            if ((variables is not None and var in variables)
+                or variables is None):
+                dat = nc.variables[var][:][0]
+                data[var] = dat[:]
+                metadata[var] = {}
+                for attr in nc.variables[var].ncattrs():
+                    if attr[0] != '_' and attr != 'scale_factor':
+                        metadata[var][attr] = nc.variables[var].getncattr(attr)
 
     return data, lon, lat, timestamp, metadata
 

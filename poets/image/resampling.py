@@ -114,11 +114,13 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
         lat_max = shp.bbox[3]
 
     if fileExtension in ['.nc', '.nc3', '.nc4']:
-        data_src, lon, lat, timestamp, metadata = nc.read_image(source_file)
+        data_src, lon, lat, timestamp, metadata = nc.read_image(source_file,
+                                                                variables)
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
     elif fileExtension in ['.h5']:
-        data_src, lon, lat, timestamp, metadata = h5.read_image(source_file)
+        data_src, lon, lat, timestamp, metadata = h5.read_image(source_file,
+                                                                variables)
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
     elif fileExtension in imgfiletypes:
