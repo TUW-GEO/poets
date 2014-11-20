@@ -115,5 +115,3 @@ def check_period(interval, date):
 
     return date
 
-if __name__ == "__main__":
-    pass

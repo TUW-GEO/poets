@@ -133,5 +133,3 @@ class Shape(object):
 
         return sh.record, sh.shape.bbox, multipoly
 
-if __name__ == '__main__':
-    pass

@@ -690,5 +690,3 @@ def filesInDir_ftp(path, ftp, filedate, begin, end, filelist):
 
     return filelist
 
-if __name__ == "__main__":
-    pass

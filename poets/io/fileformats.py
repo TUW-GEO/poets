@@ -92,6 +92,3 @@ def select_file(filelist):
     else:
         return filelist[idx]
 
-if __name__ == '__main__':
-    pass
-

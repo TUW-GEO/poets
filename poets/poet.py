@@ -401,5 +401,3 @@ class Poet(object):
 
         app.start(self, host, port, debug)
 
-if __name__ == "__main__":
-    pass
