@@ -278,7 +278,7 @@ def read_image(source_file, variables=None):
                 or variables is None):
                 dat = nc.variables[var][:][0]
                 data[var] = dat[:]
-                metadata[var] = {}
+                metadata[str(var)] = {}
                 for attr in nc.variables[var].ncattrs():
                     if attr[0] != '_' and attr != 'scale_factor':
                         metadata[var][attr] = nc.variables[var].getncattr(attr)

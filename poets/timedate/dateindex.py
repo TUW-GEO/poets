@@ -76,34 +76,18 @@ def get_dtindex(interval, begin, end=None):
     return dtindex
 
 
-def get_periods(dates):
-    """Checks number of the period in the current year for dates given as list.
-    Dates must be distributed on a day-based interval.
+def check_period(interval, date):
+    """
+    Checks the contining interval of a date and returns the date of the 
+    interval.
 
     Parameters
     ----------
-    dates : list of datetime
-        Dates to check.
-
-    Returns
-    -------
-    period : list of int
-        List of period, numbers.
+    interval : str
+        Interval to check, one of (dekad, week, month).
+    date : datetime
+        Date to check.
     """
-
-    # check temporal resolution
-    stepsize = (dates[1] - dates[0]).days
-
-    periods = []
-
-    for dat in dates:
-        doy = dat.timetuple().tm_yday
-        periods.append(int(math.ceil(float(doy) / stepsize)))
-
-    return periods
-
-
-def check_period(interval, date):
 
     if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
         date = check_dekad(date)

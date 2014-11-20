@@ -85,7 +85,7 @@ def read_image(source_file, variables=None):
             for var in h5[grp].keys():
                 if ((variables is not None and var in variables)
                     or variables is None):
-                    metadata[var] = {}
+                    metadata[str(var)] = {}
                     data[var] = h5[grp][var].value
                     for attr in meta_global:
                         metadata[var][attr] = meta_global[attr]
@@ -96,7 +96,7 @@ def read_image(source_file, variables=None):
                             attr_value = h5[grp][var].attrs[attr][0]
                         else:
                             attr_value = h5[grp][var].attrs[attr]
-                        metadata[var][str(attr).lower()] = attr_value
+                        metadata[var][str(attr)] = attr_value
                         if str(attr).lower() == 'scaling_factor':
                             metadata[var]['scale_factor'] = \
                                 attr_value

@@ -145,18 +145,19 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
     res_data = {}
     path = []
 
-    _, _, multipoly = shp._get_shape()
-    for ring in multipoly:
-        poly_verts = list(ring.exterior.coords)
-        path.append(matplotlib.path.Path(poly_verts))
+    if region != 'global':
+        _, _, multipoly = shp._get_shape()
+        for ring in multipoly:
+            poly_verts = list(ring.exterior.coords)
+            path.append(matplotlib.path.Path(poly_verts))
 
-    coords = [grid.arrlon, grid.arrlat[::-1]]
-    coords2 = np.zeros((len(coords[0]), 2))
+        coords = [grid.arrlon, grid.arrlat[::-1]]
+        coords2 = np.zeros((len(coords[0]), 2))
 
-    for idx in range(0, len(coords[0])):
-        coords2[idx] = [coords[0][idx], coords[1][idx]]
+        for idx in range(0, len(coords[0])):
+            coords2[idx] = [coords[0][idx], coords[1][idx]]
 
-    mask_old = path[0].contains_points(coords2)
+        mask_old = path[0].contains_points(coords2)
 
     for key in data.keys():
         if variables is not None:
@@ -174,14 +175,13 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
             mask = np.invert(mask_rev)
 
             mask[data[key].mask == True] = True
+        else:
+            mask = data[key].mask
 
         if prefix is None:
             var = key
         else:
             var = prefix + key
-
-        if region == 'global':
-            mask = data[key].mask
 
         if metadata is not None:
             metadata[var] = metadata[key]
