@@ -123,7 +123,3 @@ def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
         lat_new[i] = lat_max - lat_px[i] / mh
 
     return lon_new, lat_new
-
-
-if __name__ == "__main__":
-    pass

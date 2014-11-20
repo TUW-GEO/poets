@@ -33,14 +33,10 @@
 # Creation date: 2014-06-13
 
 import os
-import ogr
 import numpy as np
-import pandas as pd
 import poets.image.netcdf as nc
 import poets.image.hdf5 as h5
-import pyresample as pr
 import matplotlib.path
-from poets.grid.grids import ShapeGrid
 from poets.image.imagefile import bbox_img
 from poets.shape.shapes import Shape
 from pytesmo.grid import resample

@@ -418,6 +418,3 @@ def get_properties(src_file):
 
     return variables, dimensions, period
 
-
-if __name__ == "__main__":
-    pass

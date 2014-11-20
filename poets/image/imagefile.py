@@ -413,6 +413,3 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
     metadata = None
 
     return data, lon_new, lat_new, timestamp, metadata
-
-if __name__ == "__main__":
-    pass
