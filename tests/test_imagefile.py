@@ -47,17 +47,17 @@ def curpath():
 class Test(unittest.TestCase):
 
     def setUp(self):
-        self.testfilename = os.path.join(curpath(), 'data', 'test.png')
+        self.testfile = os.path.join(curpath(), 'data', 'test.png')
         self.region = 'NZ'
         self.fileExtension = '.png'
 
-        self.lon = np.array([165., 166., 167., 168., 169., 170., 171., 172.,
-                             173., 174., 175., 176., 177., 178., 179., -180.,
-                             - 179., -178., -177., -176.])
+        self.lon = np.array([165.5, 166.5, 167.5, 168.5, 169.5, 170.5, 171.5,
+                             172.5, 173.5, 174.5, 175.5, 176.5, 177.5, 178.5,
+                             179.5, -180.5, -179.5, -178.5, -177.5, -176.5])
 
-        self.lat = np.array([-34., -35., -36., -37., -38., -39., -40., -41.,
-                             - 42., -43., -44., -45., -46., -47., -48., -49.,
-                             - 50., -51., -52.])
+        self.lat = np.array([-34.5, -35.5, -36.5, -37.5, -38.5, -39.5, -40.5,
+                             - 41.5, -42.5, -43.5, -44.5, -45.5, -46.5, -47.5,
+                             - 48.5, -49.5, -50.5, -51.5, -52.5])
 
     def tearDown(self):
         pass
@@ -66,8 +66,8 @@ class Test(unittest.TestCase):
             lon_min, lat_min, lon_max, lat_max = \
                 imf.get_layer_extent(self.testfile)
 
-            assert (lon_min, lon_max) == self.lon
-            assert (lat_min, lat_max) == self.lat
+            assert (lon_min, lon_max) == (0.0, 360.0)
+            assert (lat_min, lat_max) == (180.0, 0.0)
 
     def test_bbox_img(self):
 
@@ -75,7 +75,7 @@ class Test(unittest.TestCase):
         datamin = 112
         datamax = 255
 
-        data, lon_new, lat_new, _, _ = imf.bbox_img(self.testfilename,
+        data, lon_new, lat_new, _, _ = imf.bbox_img(self.testfile,
                                                     self.region,
                                                     self.fileExtension)
 
