@@ -47,21 +47,23 @@ class Test(unittest.TestCase):
         pass
 
     def test_ShapeGrid(self):
-        points_number = 290
-        bbox = (46.625, 48.875, 9.875, 16.875)
-        cpoints_shape = (158, 2)
-
+        # general case
         cgrid = ShapeGrid(self.region, sp_res=self.sp_res)
-        grid_bbox = (cgrid.arrlat.min(), cgrid.arrlat.max(),
-                     cgrid.arrlon.min(), cgrid.arrlon.max())
+        bbox = (cgrid.arrlat.min(), cgrid.arrlat.max(),
+                cgrid.arrlon.min(), cgrid.arrlon.max())
 
-        grid_points_number = cgrid.get_grid_points()[0].size
+        assert cgrid.get_grid_points()[0].size == 290
+        assert bbox == (46.625, 48.875, 9.875, 16.875)
+        assert cgrid.get_gridpoints().shape == (158, 2)
 
-        country_points_shape = cgrid.get_gridpoints().shape
+        # test special case NZ
+        cgrid = ShapeGrid('NZ', sp_res=self.sp_res1)
+        bbox = (cgrid.arrlat[0], cgrid.arrlat[-1],
+                cgrid.arrlon[0], cgrid.arrlon[-1])
 
-        assert points_number == grid_points_number
-        assert bbox == grid_bbox
-        assert cpoints_shape == country_points_shape
+        assert cgrid.shape == (24, 34)
+        assert cgrid.get_gridpoints().shape == (116, 2)
+        assert bbox == (-46.75, -35.25, 167.37, -176.5)
 
     def test_RegularGrid(self):
         points_number = 259200
