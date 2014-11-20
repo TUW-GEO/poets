@@ -412,4 +412,10 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
     # metadata
     metadata = None
 
+    # move coordinates to pixel center
+    if lon_new.size > 2:
+        lon_new += (lon_new[1] - lon_new[0]) / 2
+    if lat_new.size > 2:
+        lat_new += (lat_new[1] - lat_new[0]) / 2
+
     return data, lon_new, lat_new, timestamp, metadata
