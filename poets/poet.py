@@ -76,7 +76,7 @@ class Poet(object):
         NaN value to use, defaults to -99
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
-        default.
+        default. Custom shapefile must use WGS84 as reference system.
     delete_rawdata : bool, optional
         Original files will be deleted from rawdata_path if set True. Defaults
         to False.
