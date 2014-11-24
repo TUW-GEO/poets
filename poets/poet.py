@@ -189,6 +189,9 @@ class Poet(object):
             Colorbar to use, use one from
             http://matplotlib.org/examples/color/colormaps_reference.html;
             defaults to jet.
+        unit : str, optional
+            Unit of dataset for displaying in legend. Does not have to be set
+            if unit is specified in input file metadata. Defaults to None.
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
@@ -197,6 +200,7 @@ class Poet(object):
                              directory=directory, dirstruct=dirstruct,
                              begin_date=begin_date, variables=variables,
                              nan_value=nan_value, valid_range=valid_range,
+                             unit=unit,
                              data_range=data_range, colorbar=colorbar,
                              dest_nan_value=self.nan_value,
                              dest_regions=self.regions,

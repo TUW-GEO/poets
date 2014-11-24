@@ -259,7 +259,9 @@ def download_sftp(download_path, host, directory, port, username, password,
         for f in files:
             filename = os.path.basename(f)
             fdate = get_file_date(filename, filedate)
-            if fdate >= begin and fdate <= end and ffilter in f:
+            if fdate >= begin and fdate <= end:
+                if ffilter is not None and ffilter not in f:
+                    continue
                 print '.',
                 if os.path.isfile(os.path.join(localpath, filename)) is False:
                     sftp.get(f, os.path.join(localpath, filename))
@@ -306,17 +308,17 @@ def download_http(download_path, host, directory, filename, filedate,
     """
 
     if begin is None:
-        begin = datetime.datetime(1900, 1, 1)
+        begin = datetime(1900, 1, 1)
 
     if end is None:
-        end = datetime.datetime.now()
+        end = datetime.now()
 
     print('[INFO] downloading data from ' + str(begin) + ' - '
           + str(end)),
 
     # create daterange on monthly basis
-    mon_from = datetime.date(begin.year, begin.month, 1)
-    mon_to = datetime.date(end.year, end.month, 1)
+    mon_from = datetime(begin.year, begin.month, 1)
+    mon_to = datetime(end.year, end.month, 1)
     daterange = pd.date_range(start=mon_from, end=mon_to, freq='MS')
 
     if '{MM}' in filename:
@@ -427,7 +429,7 @@ def download_http(download_path, host, directory, filename, filedate,
                 continue
 
             try:
-                r = requests.get(fp, timeout=10.)  # , proxies=proxies, timeout=10.)
+                r = requests.get(fp, timeout=20.)  # , proxies=proxies, timeout=10.)
             except ConnectionError as e:
                 print ''
                 print '[WARNING] File not available at resource, skipping...'
@@ -569,8 +571,7 @@ def get_file_date(fname, fdate):
     fname = str(fname)
 
     if 'YYYY' in fdate.keys():
-        year = int(fname[fdate['YYYY'][0]:
-                         fdate['YYYY'][1]])
+        year = int(fname[fdate['YYYY'][0]:fdate['YYYY'][1]])
 
     if 'MM' in fdate.keys():
         month = int(fname[fdate['MM'][0]:fdate['MM'][1]])
@@ -689,4 +690,3 @@ def filesInDir_ftp(path, ftp, filedate, begin, end, filelist):
                                       begin, end, filelist)
 
     return filelist
-

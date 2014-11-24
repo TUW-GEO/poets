@@ -97,6 +97,9 @@ class BasicSource(object):
         Colorbar to use, use one from
         http://matplotlib.org/examples/color/colormaps_reference.html,
         defaults to jet.
+    unit : str, optional
+        Unit of dataset for displaying in legend. Does not have to be set
+        if unit is specified in input file metadata. Defaults to None.
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     dest_regions : list of str, optional
@@ -141,6 +144,8 @@ class BasicSource(object):
         Pattern that apperas in filename.
     colorbar : str, optional
         Colorbar to used.
+    unit : str
+        Unit of dataset for displaying in legend.
     variables : list of strings
         Variables used from data source.
     nan_value : int, float
@@ -169,7 +174,7 @@ class BasicSource(object):
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
                  begin_date=datetime(2000, 1, 1), ffilter=None, colorbar='jet',
-                 variables=None, nan_value=None, valid_range=None,
+                 variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
                  dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
                  data_range=None):
@@ -191,6 +196,7 @@ class BasicSource(object):
         else:
             self.variables = variables
         self.ffilter = ffilter
+        self.unit = unit
         self.nan_value = nan_value
         self.valid_range = valid_range
         self.data_range = data_range

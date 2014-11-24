@@ -383,8 +383,11 @@ def request_legend(**kwargs):
                                     orientation='horizontal')
     plt.xticks(fontsize=9)
 
-    if metadata and ('units' in metadata or 'unit' in metadata):
-        cb1.set_label(metadata['units'], fontsize=10)
+    if metadata:
+        units = ['units', 'unit', 'UNITS', 'UNIT']
+        for unit in units:
+            if unit in metadata:
+                cb1.set_label(metadata[unit], fontsize=10)
 
     buf = StringIO()
 
