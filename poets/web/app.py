@@ -336,6 +336,13 @@ def request_image(**kwargs):
 
     img, _, _, metadata = source.read_img(pidx, region, variable)
 
+    if source.unit is not None:
+        if metadata is not None and 'unit' not in metadata:
+            metadata['unit'] = source.unit
+        elif metadata is None:
+            metadata = {}
+            metadata['unit'] = source.unit
+
     if source.valid_range is not None:
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
