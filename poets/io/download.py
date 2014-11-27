@@ -644,7 +644,6 @@ def filesInDir_sftp(path, sftp, filedate, begin, end, filelist):
         elif 'd' in lstatout:  # fname is dir
             filelist = filesInDir_sftp(path + fname + '/', sftp, filedate,
                                        begin, end, filelist)
-            print fname, len(filelist)
 
     return filelist
 

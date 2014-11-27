@@ -717,15 +717,15 @@ class BasicSource(object):
         if region is None:
             region = self.dest_regions[0]
 
-        if type(location) is int:
-            gp = location
-        elif type(location) is tuple:
+        if type(location) is tuple:
             if region == 'global':
                 grid = RegularGrid(self.dest_sp_res)
             else:
                 grid = ShapeGrid(region, self.dest_sp_res, shapefile)
 
             gp, _ = grid.find_nearest_gpi(location[0], location[1])
+        else:
+            gp = location
 
         if variable is None:
             if self.variables is None:
