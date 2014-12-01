@@ -168,6 +168,8 @@ class BasicSource(object):
         Spatial resolution of the destination NetCDF file.
     dest_temp_res : string
         Temporal resolution of the destination NetCDF file.
+    dest_start_date : datetime.datetime
+        First date of the dataset in the destination NetCDF file.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
