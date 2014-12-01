@@ -30,7 +30,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Isabella Pfeil, isy.pfeil@gmx.at
-# Creation date: 2014-08-14
+# Creation date: 2014-11-24
 
 import unittest
 import os
@@ -48,41 +48,45 @@ def curpath():
 class Test(unittest.TestCase):
 
     def setUp(self):
-        self.fname = os.path.join(curpath(), 'test.zip')
-        self.outpath = os.path.join(curpath(), 'test')
-        self.dirpath = os.path.join(curpath(), 'testdir')
+        self.fname = os.path.join(curpath(), 'data', 'test.zip')
+        self.outpath = os.path.join(curpath(), 'data', 'test')
+        self.dirpath = os.path.join(curpath(), 'data', 'testdir')
 
     def tearDown(self):
+
+        if os.path.exists(self.dirpath):
+            shutil.rmtree(self.dirpath)
+        if os.path.exists(os.path.join(curpath(), 'data', 'test2.txt')):
+            os.remove(os.path.join(curpath(), 'data', 'test2.txt'))
+
+    def test_check_compressed(self):
         test = up.check_compressed(self.fname)
         self.failUnless(test == True)
 
-    def test_check_compressed(self):
-        pass
-
     def test_unpack(self):
         # create txt-file
-        txt1 = open(os.path.join(curpath(), 'test1.txt'), 'w')
+        txt1 = open(os.path.join(curpath(), 'data', 'test1.txt'), 'w')
         txt1.close()
 
         # create first zip archive
-        ziparc = zipfile.ZipFile(os.path.join(curpath(),
+        ziparc = zipfile.ZipFile(os.path.join(curpath(), 'data',
                                                    'ziparc.zip'), 'w')
 
-        # create second zip archive
-        ziparc2 = zipfile.ZipFile(os.path.join(curpath(),
-                                                    'ziparc2.zip'), 'w')
-
         # write txt-file and folder to zip archive
-        ziparc.write('test1.txt')
+        ziparc.write(os.path.join(curpath(), 'data', 'test1.txt'))
         ziparc.close()
 
         # 'create' second txt-file
-        os.rename(os.path.join(curpath(), 'test1.txt'),
-                  os.path.join(curpath(), 'test2.txt'))
+        os.rename(os.path.join(curpath(), 'data', 'test1.txt'),
+                  os.path.join(curpath(), 'data', 'test2.txt'))
+
+        # create second zip archive
+        ziparc2 = zipfile.ZipFile(os.path.join(curpath(), 'data',
+                                               'ziparc2.zip'), 'w')
 
         # write second txt-file and first zip archive to second zip archive
-        ziparc2.write('test2.txt')
-        ziparc2.write('ziparc.zip')
+        ziparc2.write(os.path.join(curpath(), 'data', 'test2.txt'))
+        ziparc2.write(os.path.join(curpath(), 'data', 'ziparc.zip'))
         ziparc2.close()
 
         dirlen = 2
@@ -92,11 +96,9 @@ class Test(unittest.TestCase):
 
         assert unpack_len == dirlen
 
-        os.remove('test2.txt')
         shutil.rmtree(self.outpath)
-
-        os.remove(ziparc.filename)
-        os.remove(ziparc2.filename)
+        os.remove(os.path.join(curpath(), 'data', ziparc.filename))
+        os.remove(os.path.join(curpath(), 'data', ziparc2.filename))
 
     def test_flatten(self):
         if not os.path.exists(self.dirpath):
@@ -116,8 +118,6 @@ class Test(unittest.TestCase):
         flatten_len = len(os.listdir(self.dirpath))
 
         assert flatten_len == dirlen
-
-        shutil.rmtree(self.dirpath)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
