@@ -3,15 +3,15 @@ Introduction to poets, the Python Open Earth Observation Tools
 ==============================================================
 
 poets is a package with aims to provide a standard library that can be used for
-collecting and resampling geospatial image datasets.
+collecting, resampling and displaying geospatial image datasets.
 
 
 Features
 ========
 
-* easy download of geospatial image datasets provided via `Supported Data Sources`_.
-* spatial resampling to a regular grid globally or to a specific country
-* temporal resampling to monthly or dekadal intervals (more options will be available in future versions)
+* easy download of geospatial image datasets provided via `Supported Data Sources`_
+* spatial resampling to a regular grid globally or clipped to a specific country or shape, provided as shapefile
+* temporal resampling to daily, weekly, monthly or dekadal intervals
 * saves resampled images as NetCDF4 file
 * web interface for displaying images and time series in a browser
 
@@ -22,12 +22,8 @@ Supported Data
 Supported Data Sources
 ----------------------
 
-In order to work properly, all datasets must be provided via one of the 
-following protocols:
-
-* HTTP
-* FTP
-* SFTP
+In order to work properly, all datasets must be provided via HTTP, FTP, SFTP
+or accessible on the local file system.
 
 All files within a repository must be named following a certain structure, 
 this structure MUST NOT vary.
@@ -38,7 +34,7 @@ Supported File Types
 poets supports following file types:
 
 * NetCDF version >= 4.0
-* GeoTiff
+* GeoTiff and other file types supported by GDAL
 * png, jpg, and gif image files
 
 The latter image files must have global coverage with longitudes from -180 to 
@@ -55,18 +51,22 @@ Prerequisites
 
 In order to use all poets features python version 2.7.5 with the following packages has to be installed
 
-* pytesmo >= 0.2.0 http://rs.geo.tuwien.ac.at/validation_tool/pytesmo/
-* numpy >= 1.7.0 http://www.numpy.org/
-* pandas >= 0.12.0 http://pandas.pydata.org/
-* scipy >= 0.12.0 http://www.scipy.org/
-* statsmodels >= 0.4.3 http://statsmodels.sourceforge.net/
-* netCDF4 >= 1.0.1 https://pypi.python.org/pypi/netCDF4
-* Shapely >= 1.3.2 http://toblerity.org/shapely/
-* pyshp >= 1.2.1 https://code.google.com/p/pyshp/
-* paramiko >= 1.14.0 http://paramiko-www.readthedocs.org/
-* requests >= 1.14.0 http://docs.python-requests.org/
-* pillow >= 2.5.1 http://pillow.readthedocs.org/
-* flask >= 0.10.1 http://flask.pocoo.org/
+* numpy>=1.7 http://www.numpy.org/
+* pandas>=0.12 http://pandas.pydata.org/
+* scipy>=0.12 http://www.scipy.org/
+* statsmodels>=0.4.3 http://statsmodels.sourceforge.net/
+* netcdf4>=1.1.0 https://pypi.python.org/pypi/netCDF4
+* GDAL>=1.10.1 https://pypi.python.org/pypi/GDAL/1.11.1
+* pytesmo>=0.2.3 http://rs.geo.tuwien.ac.at/validation_tool/pytesmo/
+* Shapely>=1.3.2 http://toblerity.org/shapely/
+* pyshp>=1.2.1 https://code.google.com/p/pyshp/
+* paramiko>=1.14.0 http://paramiko-www.readthedocs.org/
+* requests>=1.14.0 http://docs.python-requests.org/
+* pillow>=2.5.1 http://pillow.readthedocs.org/
+* Flask>=0.10.1 http://flask.pocoo.org/
+* Flask-Cors>=1.9.0 http://flask-cors.readthedocs.org
+* patool>=1.7 https://pypi.python.org/pypi/patool
+* pyunpack>=0.0.3 http://ponty.github.io/pyunpack/
 
 How to install python packages
 ------------------------------

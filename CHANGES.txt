@@ -15,3 +15,4 @@ v0.3.0, 2014-09-22
 v0.3.1, 2014-11-24
 * Preformance boost on resampling of datasets.
 * Tons of bugfixes.
+* Added missing unit test, implemented test suite.

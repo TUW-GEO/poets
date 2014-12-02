@@ -47,6 +47,8 @@ from poets.grid.grids import ShapeGrid
 from poets.image.netcdf import get_properties
 from poets.io.source_base import BasicSource
 import poets.web.app as app
+import multiprocessing
+from joblib import Parallel, delayed
 
 valid_temp_res = ['dekad', 'dekadal', 'month', 'monthly', 'week', 'weekly',
                   'day', 'daily']
@@ -68,8 +70,8 @@ class Poet(object):
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
-        temporal resolution of the data, possible values: month, dekad,
-        defaults to dekad
+        temporal resolution of the data, possible values: day, week, month, 
+        dekad; defaults to dekad
     start_date : datetime.datetime, optional
         first date of the dataset, defaults to 2000-01-01
     nan_value : int

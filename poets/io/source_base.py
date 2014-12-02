@@ -109,7 +109,7 @@ class BasicSource(object):
         degree.
     dest_temp_res : string, optional
         Temporal resolution of the destination NetCDF file, possible values:
-        ('month', 'dekad'), defaults to dekad.
+        ('day', 'week', 'dekad', 'month'), defaults to dekad.
     dest_start_date : datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
 
@@ -674,6 +674,8 @@ class BasicSource(object):
             return '[INFO] everything up to date'
 
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
+
+        intervals = []
 
         for i, date in enumerate(drange):
             if date > end:
