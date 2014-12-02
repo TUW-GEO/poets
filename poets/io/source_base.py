@@ -210,7 +210,11 @@ class BasicSource(object):
         self.dest_start_date = dest_start_date
         self.rawdata_path = os.path.join(rootpath, 'RAWDATA', name)
         self.tmp_path = os.path.join(rootpath, 'TMP')
+        if not os.path.exists(self.tmp_path):
+            os.mkdir(self.tmp_path)
         self.data_path = os.path.join(rootpath, 'DATA')
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
 
         if self.host[-1] != '/':
             self.host += '/'
