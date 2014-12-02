@@ -37,14 +37,13 @@ import os
 from flask import Flask, render_template, jsonify, make_response
 from flask.ext.cors import CORS
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import bounds
 import pytesmo.time_series as ts
-
-mpl.use('Agg')
 
 
 def curpath():
@@ -368,7 +367,8 @@ def request_image(**kwargs):
     return response
 
 
-@app.route('/_rlegend/')
+@app.route('/_rlegend/<reg>&<var>', methods=['GET', 'POST'])
+@app.route('/_rlegend/<reg>&<var>&<idx>', methods=['GET', 'POST'])
 def request_legend(**kwargs):
     """
     Creates Legend for OpenLayers overlay.
@@ -378,6 +378,7 @@ def request_legend(**kwargs):
     StringIO
         Legend in StringIO.
     """
+
     global vmin
     global vmax
     global metadata

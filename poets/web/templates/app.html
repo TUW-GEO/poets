@@ -172,7 +172,7 @@ $(document).ready(function () {
 		// lcode is important for avoiding keeping image in cache, in order
 		// to refresh legend if dataset is changed.
         var lcode = $("#region").val()+'&'+$("#dataset").val(); 
-        $('#legend').attr('src', '/_rlegend/?' +lcode);
+        $('#legend').attr('src', '/_rlegend/' +lcode);
     }
 	   
     $("#region").change(function() {
