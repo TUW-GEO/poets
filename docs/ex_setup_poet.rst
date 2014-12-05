@@ -19,8 +19,36 @@ In[1]::
    nan_value = -99
    
    # initializing Poet class:
-   p = Poet(rootpath, regions, spatial_resolution, temporal_resolution, start_date, nan_value)
+   p = Poet(rootpath, regions, spatial_resolution, temporal_resolution, 
+            start_date, nan_value)
+
+
+Usage of custom shapefiles
+==========================
+
+Resampling and clipping data to a specific regions is enabled since poets v0.3.1.
+A link to the custom shapefile must be set with the 
+:class:`poets.poet.Poet` `shapefile` parameter.
+The shapefile itself must contain one attribute whicht contains a unique ID or Code,
+which is used to select the desired region/area with the :class:`poets.poet.Poet`
+`regions` parameter. The shapefile must be in given in WGS 84.
+
+The following example extends the code from In[1] with the shapefile parameter. In this case,
+the shapefile is locally stored at `D:\\Shapefiles\\shapefile1.shp`, and we want to clip the data
+to `region1` and `region2`.
+Please note that the file-suffix ".shp" MUST NOT be set in the shapefile parameter!
+
+In[1a]::
+
+   # use custom shapefile:
+   shapefile = os.path.join('D:\\', 'Shapefiles', 'shapefile1')
+   regions = ['region1', 'region2']
    
+   # initializing Poet class:
+   p = Poet(rootpath, regions, spatial_resolution, temporal_resolution, 
+            start_date, nan_value, shapefile=shapefile)
+
+
 Adding a source
 ===============
 

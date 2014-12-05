@@ -16,3 +16,4 @@ v0.3.1, 2014-11-24
 * Preformance boost on resampling of datasets.
 * Tons of bugfixes.
 * Added missing unit test, implemented test suite.
+* Supports compressed input files.

@@ -41,8 +41,6 @@ The latter image files must have global coverage with longitudes from -180 to
 180 and latitudes from -90 to 90, with the left upper pixel at -180, 90 and the
 right lower pixel at 180,-90.
 
-Input files MUST NOT be compressed, support of compressed files will be enabled in future versions
-
 Installation
 ============
 
