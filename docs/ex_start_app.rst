@@ -1,5 +1,5 @@
-Start Web Interface
-===================
+Web Interface
+=============
 
 Once Poets is set up, data is downloaded and resampled it is time to check out
 the built in web interface. All you have to do is run the :class:`poets.poet.Poet.start_app` command.
@@ -7,6 +7,18 @@ the built in web interface. All you have to do is run the :class:`poets.poet.Poe
 In[10]::
 
    p.start_app()
+   
+
+Using colorbars
+---------------
+
+The default colorbar used for displaying images is matplotlibs `jet`. You choose any colorbar
+from `this list <http://matplotlib.org/examples/color/colormaps_reference.html>`_ by setting
+the :class:`poets.poet.Poet.add_source` colorbar parameter.
+
+In[10a]::   
+   # setting the colobar for a source:
+   p.add_source(..., colorbar='Blues')
 
 
 Complete Example

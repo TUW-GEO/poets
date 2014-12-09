@@ -243,7 +243,7 @@ def download_sftp(download_path, host, directory, port, username, password,
 
     try:
         transport = paramiko.Transport((host, port))
-    except paramiko.ssh_exception.SSHException, e:
+    except paramiko.ssh_exception.SSHException:
         print ''
         print '[ERROR] Cannot connect to source. Please contact data provider.'
         return False
