@@ -70,7 +70,7 @@ class Poet(object):
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
-        temporal resolution of the data, possible values: day, week, month, 
+        temporal resolution of the data, possible values: day, week, month,
         dekad; defaults to dekad
     start_date : datetime.datetime, optional
         first date of the dataset, defaults to 2000-01-01
@@ -143,7 +143,7 @@ class Poet(object):
 
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
-                   dirstruct=None, begin_date=datetime(2000, 1, 1),
+                   dirstruct=None, begin_date=None,
                    variables=None, nan_value=None, valid_range=None,
                    unit=None, ffilter=None, data_range=None, colorbar=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
@@ -174,7 +174,7 @@ class Poet(object):
             Structure of source directory, each list item represents a
             subdirectory.
         begin_date : datetime.date, optional
-            Date from which on data is available, defaults to 2000-01-01.
+            Date from which on data is available.
         variables : string or list of strings, optional
             Variables used from data source.
         nan_value : int, float, optional

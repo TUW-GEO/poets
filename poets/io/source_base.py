@@ -80,7 +80,7 @@ class BasicSource(object):
         Structure of source directory, each list item represents a
         subdirectory.
     begin_date : datetime, optional
-        Date from which on data is available, defaults to 2000-01-01.
+        Date from which on data is available.
     variables : string or list of strings, optional
         Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
@@ -175,7 +175,7 @@ class BasicSource(object):
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime(2000, 1, 1), ffilter=None, colorbar='jet',
+                 begin_date=None, ffilter=None, colorbar='jet',
                  variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
                  dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
@@ -192,7 +192,10 @@ class BasicSource(object):
         self.port = port
         self.directory = directory
         self.dirstruct = dirstruct
-        self.begin_date = begin_date
+        if begin_date is None:
+            self.begin_date = dest_start_date
+        else:
+            self.begin_date = begin_date
         if type(variables) == str:
             self.variables = [variables]
         else:

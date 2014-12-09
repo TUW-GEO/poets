@@ -49,7 +49,7 @@ from requests.exceptions import ConnectionError, Timeout
 
 def download_ftp(download_path, host, directory, filedate, port=21,
                  username='', password='', dirstruct=None, ffilter='',
-                 begin=datetime(1900, 1, 1), end=datetime.now()):
+                 begin=None, end=None):
     """Downloads data via FTP.
 
     Parameters
@@ -73,10 +73,10 @@ def download_ftp(download_path, host, directory, filedate, port=21,
     ffilter : str, optional
         Used for filtering files on a server, defaults to emtpy str.
     begin : datetime, optional
-        Set either to first date of remote repository or date of last file in 
-        local repository, defaults to datetime(1900, 1, 1).
+        Set either to first date of remote repository or date of last file in
+        local repository.
     end : datetime, optional
-        Date until which data should be downloaded, defaults to datetime.now().
+        Date until which data should be downloaded.
 
     Returns
     -------
@@ -84,11 +84,28 @@ def download_ftp(download_path, host, directory, filedate, port=21,
         True if data is available, False if not.
     """
 
+    if begin is None:
+        begin = datetime(1900, 1, 1)
+
+    if end is None:
+        end = datetime.now()
+
     if host[-1] == '/':
         host = host[:-1]
 
-    ftp = FTP(host)
-    ftp.login(username, password)
+    try:
+        ftp = FTP(host)
+    except:
+        print ''
+        print '[ERROR] Cannot connect to source. Please contact data provider.'
+        return False
+
+    try:
+        ftp.login(username, password)
+    except:
+        print ''
+        print '[ERROR] Cannot login at source - wrong login credentials.'
+        return False
 
     ftp.cwd(directory)
     subdirs = []
@@ -136,9 +153,25 @@ def download_ftp(download_path, host, directory, filedate, port=21,
             if not os.path.exists(os.path.join(download_path, fname2)):
                 if ffilter is None or ffilter in fname2:
                     loc = '/'.join(fname.split('/')[:-1])
-                    ftp.cwd(loc)
-                    ftp.retrbinary("RETR " + fname2, open(fname2, "wb").write)
-                    print '.',
+                    try:
+                        ftp.cwd(loc)
+                        ftp.retrbinary("RETR " + fname2, open(fname2, "wb").write)
+                        print '.',
+                    except:
+                        print ''
+                        print '[WARNING] Connection timed out, retrying...'
+                        try:
+                            ftp.close()
+                            ftp = FTP(host)
+                            ftp.login(username, password)
+                            ftp.cwd(directory)
+                            ftp.cwd(loc)
+                            ftp.retrbinary("RETR " + fname2,
+                                           open(fname2, "wb").write)
+                            print '.',
+                        except:
+                            '[ERROR] Retry not successful, skipping download.'
+                            return False
         ftp.close()
         print ''
         return True
@@ -152,7 +185,7 @@ def download_ftp(download_path, host, directory, filedate, port=21,
 
 def download_sftp(download_path, host, directory, port, username, password,
                   filedate, dirstruct=None, ffilter='',
-                  begin=datetime(1900, 1, 1), end=datetime.now()):
+                  begin=None, end=None):
     """Download data via SFTP.
 
     Parameters
@@ -176,16 +209,22 @@ def download_sftp(download_path, host, directory, port, username, password,
     ffilter : str, optional
         Used for filtering files on a server, defaults to emtpy str.
     begin : datetime, optional
-        Set either to first date of remote repository or date of last file in 
-        local repository, defaults to datetime(1900, 1, 1).
+        Set either to first date of remote repository or date of last file in
+        local repository.
     end : datetime, optional
-        Date until which data should be downloaded, defaults to datetime.now().
+        Date until which data should be downloaded.
 
     Returns
     -------
     bool
         True if data is available, false if not.
     """
+
+    if begin is None:
+        begin = datetime(1900, 1, 1)
+
+    if end is None:
+        end = datetime.now()
 
     if not os.path.exists(download_path):
         print('[INFO] output path does not exist... creating path')
@@ -201,10 +240,21 @@ def download_sftp(download_path, host, directory, port, username, password,
     # connect to ftp server
     if host[-1] == '/':
         host = host[:-1]
-    transport = paramiko.Transport((host, port))
-    transport.connect(username=username, password=password)
 
-    sftp = paramiko.SFTPClient.from_transport(transport)
+    try:
+        transport = paramiko.Transport((host, port))
+    except paramiko.ssh_exception.SSHException, e:
+        print ''
+        print '[ERROR] Cannot connect to source. Please contact data provider.'
+        return False
+
+    try:
+        transport.connect(username=username, password=password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+    except:
+        print ''
+        print '[ERROR] Cannot login at source.'
+        return False
 
     subdirs = sftp.listdir(directory)
 
@@ -264,7 +314,20 @@ def download_sftp(download_path, host, directory, port, username, password,
                     continue
                 print '.',
                 if os.path.isfile(os.path.join(localpath, filename)) is False:
-                    sftp.get(f, os.path.join(localpath, filename))
+                    try:
+                        sftp.get(f, os.path.join(localpath, filename))
+                    except:
+                        print ''
+                        print '[WARNING] Connection timed out, retrying...'
+                        try:
+                            sftp.close
+                            transport = paramiko.Transport((host, port))
+                            transport.connect(username=username, password=password)
+                            sftp = paramiko.SFTPClient.from_transport(transport)
+                            sftp.get(f, os.path.join(localpath, filename))
+                        except:
+                            '[ERROR] Retry not successful, skipping download.'
+                            return False
         sftp.close
         print ''
         return True
@@ -275,7 +338,7 @@ def download_sftp(download_path, host, directory, port, username, password,
 
 
 def download_http(download_path, host, directory, filename, filedate,
-                  dirstruct, ffilter=None, begin=datetime(1900, 1, 1),
+                  dirstruct, ffilter=None, begin=None,
                   end=datetime.now()):
     """Download data via HTTP
 
@@ -297,9 +360,9 @@ def download_http(download_path, host, directory, filename, filedate,
         Used for filtering files on a server, defaults to None.
     begin : datetime, optional
         Set either to first date of remote repository or date of last file in
-        local repository, defaults to datetime(1900, 1, 1).
+        local repository.
     end : datetime, optional
-        Date until which data should be downloaded, defaults to datetime.now()
+        Date until which data should be downloaded.
 
     Returns
     -------
