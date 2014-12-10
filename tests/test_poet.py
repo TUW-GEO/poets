@@ -110,6 +110,7 @@ class Test(unittest.TestCase):
         username = 'ecv_sm_v2'
         password = 'Gn03KGNyWmQp'
         port = 22
+        dirstruct = ['YYYY']
         begin_date = datetime(1978, 11, 01)
         variables = ['sm']
         valid_range = (0, 0.6)
@@ -118,8 +119,9 @@ class Test(unittest.TestCase):
         self.poet.add_source(name, filename, filedate, temp_res, host,
                              protocol, username=username, password=password,
                              port=port, directory=directory,
-                             begin_date=begin_date, variables=variables,
-                             colorbar=colorbar, valid_range=valid_range)
+                             dirstruct=dirstruct, begin_date=begin_date,
+                             variables=variables, colorbar=colorbar,
+                             valid_range=valid_range)
 
         assert len(self.poet.sources['CCI'].__dict__.keys()) == 27
 

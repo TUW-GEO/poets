@@ -33,12 +33,12 @@ The shapefile itself must contain one attribute whicht contains a unique ID or C
 which is used to select the desired region/area with the :class:`poets.poet.Poet`
 `regions` parameter. The shapefile must be in given in WGS 84.
 
-The following example extends the code from In[1] with the shapefile parameter. In this case,
+The following example extends the code from `In[1]` with the shapefile parameter. In this case,
 the shapefile is locally stored at `D:\\Shapefiles\\shapefile1.shp`, and we want to clip the data
 to `region1` and `region2`.
 Please note that the file-suffix ".shp" MUST NOT be set in the shapefile parameter!
 
-In[1a]::
+   In[2]::
 
    # use custom shapefile:
    shapefile = os.path.join('D:\\', 'Shapefiles', 'shapefile1')
@@ -57,7 +57,7 @@ In order to be able to extract the date out of the filename of imagefiles, it is
 the location of the date attributes within the filename with the parameter `filedate`. We know that
 this is very unfortunate, but we'll promise to work on a more convenient method.
 
-In[2]::
+In[3]::
    
    # source attributes:
    name = 'MODIS_LST'
