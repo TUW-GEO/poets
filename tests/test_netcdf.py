@@ -149,8 +149,8 @@ class Test(unittest.TestCase):
                    temp_res=self.temp_res)
 
         image, lon, lat, metadata = read_variable(self.testfilename,
-                                               self.variable,
-                                               self.timestamp)
+                                                  self.variable,
+                                                  self.timestamp)
 
         nptest.assert_array_equal(image, self.data)
         nptest.assert_array_equal(lon, self.lon)
