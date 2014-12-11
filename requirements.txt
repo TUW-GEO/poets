@@ -14,3 +14,4 @@ Flask>=0.10.1,
 Flask-Cors>=1.9.0,
 patool>=1.7,
 pyunpack>=0.0.3
+sphinx_rtd_theme>=0.1.6

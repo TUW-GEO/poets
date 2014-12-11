@@ -34,7 +34,7 @@ Supported File Types
 poets supports following file types:
 
 * NetCDF version >= 4.0
-* GeoTiff and other file types supported by GDAL
+* GeoTiff
 * png, jpg, and gif image files
 
 The latter image files must have global coverage with longitudes from -180 to 
@@ -66,6 +66,12 @@ In order to use all poets features python version 2.7.5 with the following packa
 * patool>=1.7 https://pypi.python.org/pypi/patool
 * pyunpack>=0.0.3 http://ponty.github.io/pyunpack/
 
+Developers might also install the following packages:
+
+* pytest>=2.6.4
+* sphinx_rtd_theme>=0.1.6
+* sphinx>=1.2
+
 How to install python packages
 ------------------------------
 
@@ -94,11 +100,7 @@ or if you'd rather use pip then use the command::
 Contribute
 ==========
 
-If you would like to help this project by improving the documentation, 
-providing examples of how you use it or by extending the functionality of poets we would be very happy.
-
-Please browse the source code which is available at http://github.com/TUW-GEO/poets
-
+You are very welcome to contribute to poets! The source code is abailable at http://github.com/TUW-GEO/poets
 Feel free to contact `Thomas Mistelbauer <http://rs.geo.tuwien.ac.at/our-team/thomas-mistelbauer/>`_ in case of any questions or requests.
 
 Ancillary data
