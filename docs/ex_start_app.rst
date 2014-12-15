@@ -24,20 +24,21 @@ The default colorbar used for displaying images is matplotlibs `jet`. You choose
 from `this list <http://matplotlib.org/examples/color/colormaps_reference.html>`_ by setting
 the :class:`poets.poet.Poet.add_source` colorbar parameter. Further, if the physical unit
 of the dataset is not given in its metadata, you can set the unit manually with the `unit` parameter.
+In our example the unit would be `degree celsius`.
 
 In[14]::
   
    # setting the colobar for a source:
-   p.add_source(..., colorbar='Blues', unit='meter')
+   p.add_source(..., colorbar='Blues', unit='degree celsius')
    
 
 Scaling data
 ------------
 By default, poets supports scaling of data if a corresponding parameter is given in the metadata of the source data.
-Sometimes, this information is missing although the data is scaled. Let's take for example a `png` file with values
+Sometimes, this information is missing although the data is scaled. In our example the each MODIS_LST file contains values
 between 0 and 255, where 255 represents the NaN value. In this case, we need to set the parameters
-`nan_value` and `data_range` when adding a source with :class:`poets.poet.Poet.add_source`. To scale the dataset to
-its original range (let's say -25 and 45), we need to set the `valid_range` parameter.
+`nan_value` and `data_range` when adding a source with :class:`poets.poet.Poet.add_source`. Further, we need to scale the 
+dataset to its actual value range between min -25°C and max 45°C.
 
 in[15]::
 

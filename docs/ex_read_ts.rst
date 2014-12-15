@@ -18,10 +18,10 @@ In[11]::
    gridpoints = p.get_gridpoints()
    
    # Reading the time series for point 1632
-   ts = p.read_timeseries(1632, 'MODIS_LST')
+   ts = p.read_timeseries('MODIS_LST', 1632)
    
    # Reading the time series with given lon/lat values:
-   ts = p.read_timeseries((15.391416550, 48.497042624), 'MODIS_LST')
+   ts = p.read_timeseries('MODIS_LST', (15.391416550, 48.497042624))
    
    # Plot time series
    ts.plot()

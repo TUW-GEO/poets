@@ -35,7 +35,7 @@ In[6]::
 Download and resample data from sources individually
 ----------------------------------------------------
 The :class:`poets.poet.Poet.fetch_data` downloads and resamples data from all sources.
-However, if you want to fetch data from only one source, you can do so by calling the :class:`poets.io.source_base.download_and_resample` method.
+However, if you want to fetch data from only one source, you can do so by calling the :class:`poets.io.source_base.BasicSource.download_and_resample` method.
 This method can be called within the :class:`poets.poet.Poet` class by accessing the source as followed:
 
 In[7]::
@@ -46,7 +46,7 @@ You can use the parameters begin, end and delete_rawdata as described in `Downlo
    
 Download only
 -------------
-If you only want to download the data without resampling it, you can do so by calling the :class:`poets.io.source_base.download` method.
+If you only want to download the data without resampling it, you can do so by calling the :class:`poets.io.source_base.BasicSource.download` method.
 You can use the parameters begin, end and delete_rawdata as described in `Download and resample data`_.
 
 In[8]::
@@ -56,7 +56,7 @@ In[8]::
 Resampling only
 ---------------
 
-If you already downloaded data manually and only want to resample it, you can do so by calling the :class:`poets.io.source_base.resample` method.
+If you already downloaded data manually and only want to resample it, you can do so by calling the :class:`poets.io.source_base.BasicSource.resample` method.
 You can use the parameters begin, end and delete_rawdata as described in `Download and resample data`_.
 
 In[9]::

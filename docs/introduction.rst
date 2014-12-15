@@ -100,7 +100,7 @@ or if you'd rather use pip then use the command::
 Contribute
 ==========
 
-You are very welcome to contribute to poets! The source code is abailable at http://github.com/TUW-GEO/poets
+You are very welcome to contribute to poets! The source code is abailable at http://github.com/TUW-GEO/poets.
 Feel free to contact `Thomas Mistelbauer <http://rs.geo.tuwien.ac.at/our-team/thomas-mistelbauer/>`_ in case of any questions or requests.
 
 Ancillary data

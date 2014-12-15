@@ -26,7 +26,7 @@ In[1]::
 Usage of custom shapefiles
 ==========================
 
-Resampling and clipping data to a specific regions is enabled since poets v0.3.1.
+Resampling and clipping data to a regions specified in a custom shapefile is available since v0.3.1.
 A link to the custom shapefile must be set with the 
 :class:`poets.poet.Poet` `shapefile` parameter.
 The shapefile itself must contain one attribute whicht contains a unique ID or Code,
@@ -38,7 +38,7 @@ the shapefile is locally stored at `D:\\Shapefiles\\shapefile1.shp`, and we want
 to `region1` and `region2`.
 Please note that the file-suffix ".shp" MUST NOT be set in the shapefile parameter!
 
-   In[2]::
+In[2]::
 
    # use custom shapefile:
    shapefile = os.path.join('D:\\', 'Shapefiles', 'shapefile1')
