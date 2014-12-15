@@ -107,7 +107,13 @@ def download_ftp(download_path, host, directory, filedate, port=21,
         print '[ERROR] Cannot login at source - wrong login credentials.'
         return False
 
-    ftp.cwd(directory)
+    try:
+        ftp.cwd(directory)
+    except:
+        print ''
+        print '[ERROR] Directory not found on host!'
+        return False
+
     subdirs = []
 
     ftp.retrlines("NLST", subdirs.append)  # NLIST retrieves filename only
@@ -155,7 +161,8 @@ def download_ftp(download_path, host, directory, filedate, port=21,
                     loc = '/'.join(fname.split('/')[:-1])
                     try:
                         ftp.cwd(loc)
-                        ftp.retrbinary("RETR " + fname2, open(fname2, "wb").write)
+                        ftp.retrbinary("RETR " + fname2,
+                                       open(fname2, "wb").write)
                         print '.',
                     except:
                         print ''
@@ -256,7 +263,12 @@ def download_sftp(download_path, host, directory, port, username, password,
         print '[ERROR] Cannot login at source.'
         return False
 
-    subdirs = sftp.listdir(directory)
+    try:
+        subdirs = sftp.listdir(directory)
+    except:
+        print ''
+        print '[ERROR] Directory not found on host!'
+        return False
 
     files = []
 
@@ -322,8 +334,10 @@ def download_sftp(download_path, host, directory, port, username, password,
                         try:
                             sftp.close
                             transport = paramiko.Transport((host, port))
-                            transport.connect(username=username, password=password)
-                            sftp = paramiko.SFTPClient.from_transport(transport)
+                            transport.connect(username=username,
+                                              password=password)
+                            sftp = (paramiko.SFTPClient
+                                    .from_transport(transport))
                             sftp.get(f, os.path.join(localpath, filename))
                         except:
                             '[ERROR] Retry not successful, skipping download.'
@@ -492,12 +506,12 @@ def download_http(download_path, host, directory, filename, filedate,
                 continue
 
             try:
-                r = requests.get(fp, timeout=20.)  # , proxies=proxies, timeout=10.)
-            except ConnectionError as e:
+                r = requests.get(fp, timeout=20.)
+            except ConnectionError:
                 print ''
                 print '[WARNING] File not available at resource, skipping...'
                 continue
-            except Timeout as t:
+            except Timeout:
                 print ''
                 print '[WARNING] File not available at resource, skipping...'
                 continue
