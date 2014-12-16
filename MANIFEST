@@ -239,3 +239,7 @@ tests/data/test.png
 tests/data/test.tif
 tests/data/test.tiff
 tests/data/ts_sm.csv
+tests/data/shape/noe_shp.dbf
+tests/data/shape/noe_shp.prj
+tests/data/shape/noe_shp.shp
+tests/data/shape/noe_shp.shx
