@@ -36,17 +36,17 @@ import os
 import shutil
 import pandas as pd
 import numpy as np
+import poets.image.netcdf as nc
+import poets.timedate.dateindex as dt
+import poets.grid.grids as gr
 from netCDF4 import Dataset, num2date, date2num
 from datetime import datetime, timedelta
 from poets.grid.grids import ShapeGrid, RegularGrid
-import poets.image.netcdf as nc
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date, download_local
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
-import poets.timedate.dateindex as dt
-import poets.grid.grids as gr
 
 
 class BasicSource(object):
@@ -80,7 +80,7 @@ class BasicSource(object):
         Structure of source directory, each list item represents a
         subdirectory.
     begin_date : datetime, optional
-        Date from which on data is available, defaults to 2000-01-01.
+        Date from which on data is available.
     variables : string or list of strings, optional
         Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
@@ -97,6 +97,9 @@ class BasicSource(object):
         Colorbar to use, use one from
         http://matplotlib.org/examples/color/colormaps_reference.html,
         defaults to jet.
+    unit : str, optional
+        Unit of dataset for displaying in legend. Does not have to be set
+        if unit is specified in input file metadata. Defaults to None.
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     dest_regions : list of str, optional
@@ -106,7 +109,7 @@ class BasicSource(object):
         degree.
     dest_temp_res : string, optional
         Temporal resolution of the destination NetCDF file, possible values:
-        ('month', 'dekad'), defaults to dekad.
+        ('day', 'week', 'dekad', 'month'), defaults to dekad.
     dest_start_date : datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
 
@@ -141,6 +144,8 @@ class BasicSource(object):
         Pattern that apperas in filename.
     colorbar : str, optional
         Colorbar to used.
+    unit : str
+        Unit of dataset for displaying in legend.
     variables : list of strings
         Variables used from data source.
     nan_value : int, float
@@ -163,13 +168,15 @@ class BasicSource(object):
         Spatial resolution of the destination NetCDF file.
     dest_temp_res : string
         Temporal resolution of the destination NetCDF file.
+    dest_start_date : datetime.datetime
+        First date of the dataset in the destination NetCDF file.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime(2000, 1, 1), ffilter=None, colorbar='jet',
-                 variables=None, nan_value=None, valid_range=None,
+                 begin_date=None, ffilter=None, colorbar='jet',
+                 variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
                  dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
                  data_range=None):
@@ -185,12 +192,16 @@ class BasicSource(object):
         self.port = port
         self.directory = directory
         self.dirstruct = dirstruct
-        self.begin_date = begin_date
+        if begin_date is None:
+            self.begin_date = dest_start_date
+        else:
+            self.begin_date = begin_date
         if type(variables) == str:
             self.variables = [variables]
         else:
             self.variables = variables
         self.ffilter = ffilter
+        self.unit = unit
         self.nan_value = nan_value
         self.valid_range = valid_range
         self.data_range = data_range
@@ -202,7 +213,11 @@ class BasicSource(object):
         self.dest_start_date = dest_start_date
         self.rawdata_path = os.path.join(rootpath, 'RAWDATA', name)
         self.tmp_path = os.path.join(rootpath, 'TMP')
+        if not os.path.exists(self.tmp_path):
+            os.mkdir(self.tmp_path)
         self.data_path = os.path.join(rootpath, 'DATA')
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
 
         if self.host[-1] != '/':
             self.host += '/'
@@ -217,13 +232,13 @@ class BasicSource(object):
         Parameters
         ----------
         begin : bool, optional
-            If set True, begin will be returned as None
+            If set True, begin will be returned as None.
         end : bool, optional
-            If set True, end will be returned as None
+            If set True, end will be returned as None.
         Returns
         -------
         dates : dict of dicts
-            None if no date available
+            Dictionary with dates of each parameter. None if no date available.
         """
 
         dates = {}
@@ -547,7 +562,8 @@ class BasicSource(object):
 
         if len(os.listdir(self.tmp_path)) != 0:
             for fname in os.listdir(self.tmp_path):
-                os.remove(os.path.join(self.tmp_path, fname))
+                if '.nc' in fname:
+                    os.remove(os.path.join(self.tmp_path, fname))
 
         if begin is None:
             if self.dest_start_date < self.begin_date:
@@ -663,6 +679,8 @@ class BasicSource(object):
 
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
+        intervals = []
+
         for i, date in enumerate(drange):
             if date > end:
                 continue
@@ -711,15 +729,15 @@ class BasicSource(object):
         if region is None:
             region = self.dest_regions[0]
 
-        if type(location) is int:
-            gp = location
-        elif type(location) is tuple:
+        if type(location) is tuple:
             if region == 'global':
                 grid = RegularGrid(self.dest_sp_res)
             else:
                 grid = ShapeGrid(region, self.dest_sp_res, shapefile)
 
             gp, _ = grid.find_nearest_gpi(location[0], location[1])
+        else:
+            gp = location
 
         if variable is None:
             if self.variables is None:
@@ -853,12 +871,12 @@ class BasicSource(object):
 
     def get_variables(self):
         """
-        Gets all variables from source given in the NetCDF file.
+        Gets all variables given in the NetCDF file.
 
         Returns
         -------
         variables : list of str
-            Variables from source given in NetCDF file.
+            Variables from given in the NetCDF file.
         """
 
         nc_name = os.path.join(self.data_path, self.dest_regions[0] + '_'
@@ -875,6 +893,3 @@ class BasicSource(object):
 
         return variables
 
-
-if __name__ == "__main__":
-    pass

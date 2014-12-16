@@ -30,80 +30,33 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Isabella Pfeil, isy.pfeil@gmx.at
-# Creation date: 2014-08-18
+# Creation date: 2014-08-14
 
 import unittest
 import os
-import pandas as pd
-from datetime import datetime
-from poets.time_series.filtering import group_months, group_seasons, ctrd_mov_avg
-from poets.time_series.deseasonalizing import seasonal_indices, zscore
-
-
-def curpath():
-    pth, _ = os.path.split(os.path.abspath(__file__))
-    return pth
+import poets.io.fileformats as ff
 
 
 class Test(unittest.TestCase):
 
     def setUp(self):
-        # read WACMOS soil moisture time series for lon=15, lat=10
-        self.testfilename = os.path.join(curpath(), 'data', 'ts_sm.csv')
-        self.ts = pd.read_csv(self.testfilename, index_col=0)
-        ts2 = []
-        for ind in range(0, len(self.ts.index)):
-            ts2.append(datetime.strptime(self.ts.index[ind], '%Y-%m-%d'))
-        self.ts.index = ts2
-        self.attribute = 'sm'
+        self.formats = ['.nc', '.nc4', '.h5', '.tiff', '.tif', '.png', '.jpg',
+                        '.jpeg', '.gif']
+        self.filelist = ['test.doc', 'test.nc', 'test.abc']
 
     def tearDown(self):
         pass
 
-    def test_group_months(self):
-        len_ts_mon = 132
-        lenDates = 45
+    def test_check_supported(self):
+        for fExt in self.formats:
+            test = ff.check_supported(os.path.join('test.' + fExt))
+            self.failUnless(test == True)
 
-        ts_mon = len(group_months(self.ts, self.attribute)[0])
-        ts_dat = len(group_months(self.ts, self.attribute)[1])
+    def test_select_file(self):
+        fname = 'test.nc'
+        flist = ff.select_file(self.filelist)
 
-        assert len_ts_mon == ts_mon
-        assert lenDates == ts_dat
-
-    def test_group_seasons(self):
-        len_ts_seas = 45
-        lenDates = 45
-
-        ts_months, dates = group_months(self.ts, self.attribute)
-
-        ts_seas = len(group_seasons(ts_months, dates)[0])
-        ts_dat = len(group_seasons(ts_months, dates)[1])
-
-        assert len_ts_seas == ts_seas
-        assert lenDates == ts_dat
-
-    def test_ctrd_mov_avg(self):
-        len_ts_ctrd = 40
-        ts_months, dates = group_months(self.ts, self.attribute)
-        ts_seas, _ = group_seasons(ts_months, dates)
-        ts_ctrd = len(ctrd_mov_avg(ts_seas))
-
-        assert len_ts_ctrd == ts_ctrd
-
-    def test_seasonal_indices(self):
-        len_ts_des = 45
-
-        ts_des = len(seasonal_indices(self.ts, self.attribute))
-
-        assert len_ts_des == ts_des
-
-    def test_zscore(self):
-        len_ts_des = 45
-
-        ts_des = len(zscore(self.ts, self.attribute))
-
-        assert len_ts_des == ts_des
-
+        assert flist == fname
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

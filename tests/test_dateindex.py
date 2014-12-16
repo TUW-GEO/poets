@@ -34,7 +34,7 @@
 
 import unittest
 from datetime import datetime
-from poets.timedate.dateindex import get_dtindex
+from poets.timedate.dateindex import get_dtindex, check_period
 
 
 class Test(unittest.TestCase):
@@ -79,6 +79,12 @@ class Test(unittest.TestCase):
         assert dtindex5.size == 8
         assert dtindex5[0] == datetime(2004, 2, 1)
         assert dtindex5[-1] == datetime(2004, 3, 28)
+
+    def test_check_period(self):
+        dat = datetime(2014, 11, 20)
+        assert check_period('dekad', dat) == datetime(2014, 11, 20, 0, 0)
+        assert check_period('week', dat) == datetime(2014, 11, 23, 0, 0)
+        assert check_period('monthly', dat) == datetime(2014, 11, 30, 0, 0)
 
 
 if __name__ == "__main__":

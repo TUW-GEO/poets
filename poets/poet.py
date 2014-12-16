@@ -68,15 +68,15 @@ class Poet(object):
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
-        temporal resolution of the data, possible values: month, dekad,
-        defaults to dekad
+        temporal resolution of the data, possible values: day, week, month,
+        dekad; defaults to dekad
     start_date : datetime.datetime, optional
         first date of the dataset, defaults to 2000-01-01
     nan_value : int
         NaN value to use, defaults to -99
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
-        default.
+        default. Custom shapefile must use WGS84 as reference system.
     delete_rawdata : bool, optional
         Original files will be deleted from rawdata_path if set True. Defaults
         to False.
@@ -141,7 +141,7 @@ class Poet(object):
 
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
-                   dirstruct=None, begin_date=datetime(2000, 1, 1),
+                   dirstruct=None, begin_date=None,
                    variables=None, nan_value=None, valid_range=None,
                    unit=None, ffilter=None, data_range=None, colorbar=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
@@ -172,7 +172,7 @@ class Poet(object):
             Structure of source directory, each list item represents a
             subdirectory.
         begin_date : datetime.date, optional
-            Date from which on data is available, defaults to 2000-01-01.
+            Date from which on data is available.
         variables : string or list of strings, optional
             Variables used from data source.
         nan_value : int, float, optional
@@ -189,6 +189,9 @@ class Poet(object):
             Colorbar to use, use one from
             http://matplotlib.org/examples/color/colormaps_reference.html;
             defaults to jet.
+        unit : str, optional
+            Unit of dataset for displaying in legend. Does not have to be set
+            if unit is specified in input file metadata. Defaults to None.
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
@@ -197,6 +200,7 @@ class Poet(object):
                              directory=directory, dirstruct=dirstruct,
                              begin_date=begin_date, variables=variables,
                              nan_value=nan_value, valid_range=valid_range,
+                             unit=unit,
                              data_range=data_range, colorbar=colorbar,
                              dest_nan_value=self.nan_value,
                              dest_regions=self.regions,
@@ -401,5 +405,3 @@ class Poet(object):
 
         app.start(self, host, port, debug)
 
-if __name__ == "__main__":
-    pass

@@ -1,102 +1,232 @@
-# Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
-# of Geodesy and Geoinformation (GEO).
-# All rights reserved.
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+    Setup file for poets.
 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright notice,
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-#
-# * Neither the name of the Vienna University of Technology - Department of
-#   Geodesy and Geoinformation nor the names of its contributors may be used to
-#   endorse or promote products derived from this software without specific
-#   prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL VIENNA UNIVERSITY OF TECHNOLOGY,
-# DEPARTMENT OF GEODESY AND GEOINFORMATION BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-# Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-05-19
+    This file was generated with PyScaffold 1.3, a tool that easily
+    puts up a scaffold for your new Python project. Learn more under:
+    http://pyscaffold.readthedocs.org/
+"""
 
 import os
+import sys
+import inspect
+from distutils.cmd import Command
 
-try:
-    from setuptools import setup
-    have_setuptools = True
-except ImportError:
-    have_setuptools = False
-    from distutils.core import setup
+import versioneer
+import setuptools
+from setuptools.command.test import test as TestCommand
+from setuptools import setup
 
+__location__ = os.path.join(os.getcwd(), os.path.dirname(
+    inspect.getfile(inspect.currentframe())))
 
-if not have_setuptools:
-    setuptools_kwargs = {}
-else:
-    setuptools_kwargs = {'install_requires': ["numpy >= 1.7",
-                                              "pandas >= 0.12",
-                                              "scipy >= 0.12",
-                                              "statsmodels >= 0.4.3",
-                                              "netcdf4 >= 1.1.0",
-                                              "GDAL >= 1.11.1",
-                                              "pytesmo >= 0.2.0",
-                                              "Shapely >= 1.3.2",
-                                              "pyshp >=1.2.1",
-                                              "paramiko >= 1.14.0",
-                                              "requests >= 1.14.0",
-                                              "pillow >= 2.5.1",
-                                              "Flask >= 0.10.1",
-                                              "Flask-Cors >= 1.9.0"
-                                              "patool >= 1.7",
-                                              "pyunpack >= 0.0.3"
-                                              ],
-                         'test_suite': 'tests/'}
+# Change these settings according to your needs
+MAIN_PACKAGE = "poets"
+DESCRIPTION = "None"
+LICENSE = "none"
+URL = "None"
+AUTHOR = "tmistelbauer"
+EMAIL = "t.mistelbauer@gmail.com"
 
-setup(
-    name='poets',
-    version='0.4.0',
-    url='http://rs.geo.tuwien.ac.at/poets',
-    description='python Open Earth Observation Tools',
-    long_description=open('README.rst').read(),
+COVERAGE_XML = False
+COVERAGE_HTML = False
+JUNIT_XML = False
 
-    author='poets Team',
-    author_email='Thomas.Mistelbauer@geo.tuwien.ac.at',
+# Add here all kinds of additional classifiers as defined under
+# https://pypi.python.org/pypi?%3Aaction=list_classifiers
+CLASSIFIERS = ['Development Status :: 4 - Beta',
+               'Programming Language :: Python']
 
-    license='LICENSE.txt',
+# Add here console scripts like ['hello_world = poets.module:function']
+CONSOLE_SCRIPTS = []
 
-    packages=['poets', 'poets.grid', 'poets.image', 'poets.io', 'poets.shape',
-              'poets.timedate', 'poets.web'],
-    package_data={'poets': [os.path.join('shape', 'ancillary', '*.dbf'),
-                            os.path.join('shape', 'ancillary', '*.README'),
-                            os.path.join('shape', 'ancillary', '*.shp'),
-                            os.path.join('shape', 'ancillary', '*.shx'),
-                            os.path.join('web', 'static', 'js', '*.js*'),
-                            os.path.join('web', 'static', 'ol2.13.1', '*.js*'),
-                            os.path.join('web', 'static', 'ol2.13.1', 'theme', 'default', '*.css*'),
-                            os.path.join('web', 'static', 'ol2.13.1', 'theme', 'default', 'img', '*.*'),
-                            os.path.join('web', 'static', 'ol2.13.1', 'img', '*.*'),
-                            os.path.join('web', 'static', 'ol2.13.1', '*.*'),
-                            os.path.join('web', 'static', 'slider', 'js', '*.js*'),
-                            os.path.join('web', 'static', 'slider', 'css', '*.css*'),
-                            os.path.join('web', 'static', 'slider', 'less', '*.less*'),
-                            os.path.join('web', 'templates', '*.html*'),
-                            os.path.join('web', 'static', '*.ico'),
-                            os.path.join('web', 'static', '*.png')
-                            ]
-                  },
-    **setuptools_kwargs)
+# Versioneer configuration
+versioneer.VCS = 'git'
+versioneer.versionfile_source = os.path.join(MAIN_PACKAGE, '_version.py')
+versioneer.versionfile_build = os.path.join(MAIN_PACKAGE, '_version.py')
+versioneer.tag_prefix = 'v'  # tags are like v1.2.0
+versioneer.parentdir_prefix = MAIN_PACKAGE + '-'
 
 
+class PyTest(TestCommand):
+    user_options = [("cov=", None, "Run coverage"),
+                    ("cov-xml=", None, "Generate junit xml report"),
+                    ("cov-html=", None, "Generate junit html report"),
+                    ("junitxml=", None, "Generate xml of test results")]
 
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.cov = None
+        self.cov_xml = False
+        self.cov_html = False
+        self.junitxml = None
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        if self.cov is not None:
+            self.cov = ["--cov", self.cov, "--cov-report", "term-missing"]
+            if self.cov_xml:
+                self.cov.extend(["--cov-report", "xml"])
+            if self.cov_html:
+                self.cov.extend(["--cov-report", "html"])
+        if self.junitxml is not None:
+            self.junitxml = ["--junitxml", self.junitxml]
+
+    def run_tests(self):
+        try:
+            import pytest
+        except:
+            raise RuntimeError("py.test is not installed, "
+                               "run: pip install pytest")
+        params = {"args": self.test_args}
+        if self.cov:
+            params["args"] += self.cov
+            params["plugins"] = ["cov"]
+        if self.junitxml:
+            params["args"] += self.junitxml
+        errno = pytest.main(**params)
+        sys.exit(errno)
+
+
+def sphinx_builder():
+    try:
+        from sphinx.setup_command import BuildDoc
+    except ImportError:
+        class NoSphinx(Command):
+            user_options = []
+
+            def initialize_options(self):
+                raise RuntimeError("Sphinx documentation is not installed, "
+                                   "run: pip install sphinx")
+
+        return NoSphinx
+
+    class BuildSphinxDocs(BuildDoc):
+
+        def run(self):
+            if self.builder == "doctest":
+                import sphinx.ext.doctest as doctest
+                # Capture the DocTestBuilder class in order to return the total
+                # number of failures when exiting
+                ref = capture_objs(doctest.DocTestBuilder)
+                BuildDoc.run(self)
+                errno = ref[-1].total_failures
+                sys.exit(errno)
+            else:
+                BuildDoc.run(self)
+
+    return BuildSphinxDocs
+
+
+class ObjKeeper(type):
+    instances = {}
+
+    def __init__(cls, name, bases, dct):
+        cls.instances[cls] = []
+
+    def __call__(cls, *args, **kwargs):
+        cls.instances[cls].append(super(ObjKeeper, cls).__call__(*args,
+                                                                 **kwargs))
+        return cls.instances[cls][-1]
+
+
+def capture_objs(cls):
+    from six import add_metaclass
+    module = inspect.getmodule(cls)
+    name = cls.__name__
+    keeper_class = add_metaclass(ObjKeeper)(cls)
+    setattr(module, name, keeper_class)
+    cls = getattr(module, name)
+    return keeper_class.instances[cls]
+
+
+def get_install_requirements(path):
+    content = open(os.path.join(__location__, path)).read()
+    return [req for req in content.splitlines() if req != '']
+
+
+def read(fname):
+    return open(os.path.join(__location__, fname)).read()
+
+
+def setup_package():
+    # Assemble additional setup commands
+    cmdclass = versioneer.get_cmdclass()
+    cmdclass['docs'] = sphinx_builder()
+    cmdclass['doctest'] = sphinx_builder()
+    cmdclass['test'] = PyTest
+
+    # Some helper variables
+    version = versioneer.get_version()
+    docs_path = os.path.join(__location__, "docs")
+    docs_build_path = os.path.join(docs_path, "_build")
+    install_reqs = get_install_requirements("requirements.txt")
+
+    command_options = {
+        'docs': {'project': ('setup.py', MAIN_PACKAGE),
+                 'version': ('setup.py', version.split('-', 1)[0]),
+                 'release': ('setup.py', version),
+                 'build_dir': ('setup.py', docs_build_path),
+                 'config_dir': ('setup.py', docs_path),
+                 'source_dir': ('setup.py', docs_path)},
+        'doctest': {'project': ('setup.py', MAIN_PACKAGE),
+                    'version': ('setup.py', version.split('-', 1)[0]),
+                    'release': ('setup.py', version),
+                    'build_dir': ('setup.py', docs_build_path),
+                    'config_dir': ('setup.py', docs_path),
+                    'source_dir': ('setup.py', docs_path),
+                    'builder': ('setup.py', 'doctest')},
+        'test': {'test_suite': ('setup.py', 'tests'),
+                 'cov': ('setup.py', 'poets')}}
+    if JUNIT_XML:
+        command_options['test']['junitxml'] = ('setup.py', 'junit.xml')
+    if COVERAGE_XML:
+        command_options['test']['cov_xml'] = ('setup.py', True)
+    if COVERAGE_HTML:
+        command_options['test']['cov_html'] = ('setup.py', True)
+
+    setup(name=MAIN_PACKAGE,
+          version=version,
+          url=URL,
+          description=DESCRIPTION,
+          author=AUTHOR,
+          author_email=EMAIL,
+          license=LICENSE,
+          long_description=read('README.rst'),
+          classifiers=CLASSIFIERS,
+          test_suite='tests',
+          packages=setuptools.find_packages(exclude=['tests', 'tests.*']),
+          package_data={'poets':
+                        [os.path.join('shape', 'ancillary', '*.dbf'),
+                         os.path.join('shape', 'ancillary', '*.README'),
+                         os.path.join('shape', 'ancillary', '*.shp'),
+                         os.path.join('shape', 'ancillary', '*.shx'),
+                         os.path.join('web', 'static', 'js', '*.js*'),
+                         os.path.join('web', 'static', 'ol2.13.1', '*.js*'),
+                         os.path.join('web', 'static', 'ol2.13.1', 'theme',
+                                      'default', '*.css*'),
+                         os.path.join('web', 'static', 'ol2.13.1', 'theme',
+                                      'default', 'img', '*.*'),
+                         os.path.join('web', 'static', 'ol2.13.1', 'img',
+                                      '*.*'),
+                         os.path.join('web', 'static', 'ol2.13.1', '*.*'),
+                         os.path.join('web', 'static', 'slider', 'js',
+                                      '*.js*'),
+                         os.path.join('web', 'static', 'slider', 'css',
+                                      '*.css*'),
+                         os.path.join('web', 'static', 'slider', 'less',
+                                      '*.less*'),
+                         os.path.join('web', 'templates', '*.html*'),
+                         os.path.join('web', 'static', '*.ico'),
+                         os.path.join('web', 'static', '*.png')]
+                        },
+          install_requires=install_reqs,
+          setup_requires=['six'],
+          cmdclass=cmdclass,
+          tests_require=['pytest-cov', 'pytest'],
+          command_options=command_options,
+          entry_points={'console_scripts': CONSOLE_SCRIPTS})
+
+if __name__ == "__main__":
+    setup_package()

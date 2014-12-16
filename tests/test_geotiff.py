@@ -5,9 +5,9 @@ Created on Sep 15, 2014
 '''
 import unittest
 import os
-from poets.image.imagefile import bbox_img
+import poets.image.geotiff as gt
 import numpy as np
-import numpy.testing as nptest
+from PIL import Image
 
 
 def curpath():
@@ -18,34 +18,42 @@ def curpath():
 class Test(unittest.TestCase):
 
     def setUp(self):
-        self.testfilename = os.path.join(curpath(), 'data', 'test.tiff')
+        self.testfile = os.path.join(curpath(), 'data', 'test.tiff')
+        self.img = Image.open(self.testfile)
         self.region = 'IT'
         self.fileExtension = '.tiff'
 
-        self.lon = np.array([6.,   7.,   8.,   9.,  10.,  11.,  12.,  13.,
-                             14.,  15.,  16., 17.,  18.])
+        self.lon = 10.5
+        self.lat = 40.0
 
-        self.lat = np.array([48.,  47.,  46.,  45.,  44.,  43.,  42.,  41.,
-                             40.,  39.,  38., 37.])
+        self.lon_min = 6.623967170715332
+        self.lon_max = 18.514442443847656
+        self.lat_min = 36.64916229248047
+        self.lat_max = 47.094581604003906
+
+        self.row = 31.922637612099024
+        self.col = 21.84052307386542
 
     def tearDown(self):
         pass
 
-    def test_bbox_img(self):
+    def test_lonlat2px_gt(self):
+        row, col = gt.lonlat2px_gt(self.img, self.lon, self.lat,
+                                         self.lon_min, self.lat_min,
+                                         self.lon_max, self.lat_max)
 
-        datamean = 5.2756410256410255
-        datamin = 0
-        datamax = 11
+        assert self.row == row
+        assert self.col == col
 
-        data, lon_new, lat_new, _, _ = bbox_img(self.testfilename, self.region,
-                                                self.fileExtension)
+    def test_px2lonlat_gt(self):
+        lon_array = np.array([self.col])
+        lat_array = np.array([self.row])
+        lon, lat = gt.px2lonlat_gt(self.img, lon_array, lat_array,
+                                         self.lon_min, self.lat_min,
+                                         self.lon_max, self.lat_max)
 
-        nptest.assert_array_equal(lon_new, self.lon)
-        nptest.assert_array_equal(lat_new, self.lat)
-        assert data['dataset'].mean() == datamean
-        assert data['dataset'].min() == datamin
-        assert data['dataset'].max() == datamax
+        assert self.lat == lat[0]
+        assert self.lon == lon[0]
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

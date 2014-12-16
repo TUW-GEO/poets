@@ -232,6 +232,3 @@ def get_dekad_period(dates):
 
     return period
 
-
-if __name__ == "__main__":
-    pass

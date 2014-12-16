@@ -3,13 +3,12 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPINXAPIDOC   = sphinx-apidoc
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
 # User-friendly check for sphinx-build
-ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
+ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $?), 1)
 $(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
 endif
 
@@ -46,11 +45,6 @@ help:
 	@echo "  pseudoxml  to make pseudoxml-XML files for display purposes"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
-
-updateapi:
-	$(SPINXAPIDOC) -o ../docs ../poets -H poets -f
-	@echo
-	@echo "API information updated"
 
 clean:
 	rm -rf $(BUILDDIR)/*
@@ -100,8 +94,8 @@ devhelp:
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/poets"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/poets"
+	@echo "# mkdir -p $HOME/.local/share/devhelp/poets"
+	@echo "# ln -s $(BUILDDIR)/devhelp $HOME/.local/share/devhelp/poets"
 	@echo "# devhelp"
 
 epub:

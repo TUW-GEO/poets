@@ -33,20 +33,14 @@
 # Creation date: 2014-06-13
 
 import os
-
-from pytesmo.grid import resample
-
 import numpy as np
-import pandas as pd
-from poets.grid.grids import ShapeGrid
-import poets.image.hdf5 as h5
-from poets.image.imagefile import bbox_img
 import poets.image.netcdf as nc
-from poets.shape.shapes import Shape
-import pyresample as pr
-
-import ogr
+import poets.image.hdf5 as h5
 import matplotlib.path
+from poets.image.imagefile import bbox_img
+from poets.shape.shapes import Shape
+from pytesmo.grid import resample
+import scipy
 
 
 imgfiletypes = ['.png', '.PNG', '.tif', '.tiff', '.TIF', '.TIFF', '.jpg',
@@ -68,6 +62,8 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
         used, this would be the FIPS country code.
     sp_res : int or float
         Spatial resolution of the shape-grid.
+    grid : poets.grid.RegularGrid or poets.grid.ShapeGrid
+        Grid to resample data to.
     prefix : str, optional
         Prefix for the variable in the NetCDF file, should be name of source
     nan_value : int, float, optional
@@ -82,16 +78,18 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
 
     Returns
     -------
-    data : dict of numpy.arrays
+    res_data : dict of numpy.arrays
         resampled image
-    lons : numpy.array
+    dest_lon : numpy.array
         longitudes of the points in the resampled image
-    lats : numpy.array
+    dest_lat : numpy.array
         latitudes of the points in the resampled image
     gpis : numpy.array
         grid point indices
     timestamp : datetime.date
         date of the image
+    metadata : dict
+        Metadata derived from input file.
     """
 
     if prefix is not None:
@@ -112,11 +110,13 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
         lat_max = shp.bbox[3]
 
     if fileExtension in ['.nc', '.nc3', '.nc4']:
-        data_src, lon, lat, timestamp, metadata = nc.read_image(source_file)
+        data_src, lon, lat, timestamp, metadata = nc.read_image(source_file,
+                                                                variables)
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
     elif fileExtension in ['.h5']:
-        data_src, lon, lat, timestamp, metadata = h5.read_image(source_file)
+        data_src, lon, lat, timestamp, metadata = h5.read_image(source_file,
+                                                                variables)
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
     elif fileExtension in imgfiletypes:
@@ -143,22 +143,21 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
                                      dest_lat, search_rad=search_rad)
 
     res_data = {}
+    path = []
 
-    shapefile = os.path.join(os.path.abspath(os.path.join(os.path.dirname\
-                                                          (__file__), '..')),
-                             'shape', 'ancillary', 'world_country_admin_'
-                             'boundary_shapefile_with_fips_codes.shp')
-    shapef = ogr.Open(shapefile)
-    lyr = shapef.GetLayer()
-    poly = lyr.GetNextFeature()
-    poly_verts = poly.geometry().Boundary().GetPoints()
-    path = matplotlib.path.Path(poly_verts)
+    if region != 'global':
+        _, _, multipoly = shp._get_shape()
+        for ring in multipoly:
+            poly_verts = list(ring.exterior.coords)
+            path.append(matplotlib.path.Path(poly_verts))
 
-    coords = [grid.arrlon, grid.arrlat[::-1]]
-    coords2 = np.zeros((len(coords[0]), 2))
+        coords = [grid.arrlon, grid.arrlat[::-1]]
+        coords2 = np.zeros((len(coords[0]), 2))
 
-    for idx in range(0, len(coords[0])):
-        coords2[idx] = [coords[0][idx], coords[1][idx]]
+        for idx in range(0, len(coords[0])):
+            coords2[idx] = [coords[0][idx], coords[1][idx]]
+
+        mask_old = path[0].contains_points(coords2)
 
     for key in data.keys():
         if variables is not None:
@@ -167,19 +166,22 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
                 continue
 
         if region != 'global':
-            mask_rev = path.contains_points(coords2)
+            for ring in path:
+                mask_new = (ring.contains_points(coords2))
+                mask_rev = scipy.logical_or(mask_old, mask_new)
+                mask_old = mask_rev
+
             mask_rev = mask_rev.reshape(dest_lon.shape)
             mask = np.invert(mask_rev)
 
             mask[data[key].mask == True] = True
+        else:
+            mask = data[key].mask
 
         if prefix is None:
             var = key
         else:
             var = prefix + key
-
-        if region == 'global':
-            mask = data[key].mask
 
         if metadata is not None:
             metadata[var] = metadata[key]
@@ -197,65 +199,16 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
     return res_data, dest_lon, dest_lat, gpis, timestamp, metadata
 
 
-def resample_to_gridpoints(source_file, region, sp_res, shapefile=None):
-    """Resamples image to predefined gridpoints.
-
-    Parameters
-    ----------
-    source_file : str
-        Path to source file.
-    region : str
-        Latitudes of source image.
-    sp_res : int or float
-        Spatial resolution of the shape-grid.
-    shapefile : str, optional
-        Path to shape file, uses "world country admin boundary shapefile" by
-        default.
-
-    Returns
-    -------
-    dframe : pandas.DataFrame
-        Resampled data with gridpoints as index.
-    """
-
-    shp = Shape(region, shapefile)
-    lon_min = shp.bbox[0]
-    lon_max = shp.bbox[2]
-    lat_min = shp.bbox[1]
-    lat_max = shp.bbox[3]
-    grid = ShapeGrid(region, sp_res, shapefile)
-    gridpoints = grid.get_gridpoints()
-
-    data, lon, lat, _, _ = nc.read_image(source_file)
-    data, lon, lat = nc.clip_bbox(data, lon, lat, lon_min, lat_min, lon_max,
-                                  lat_max)
-
-    lon, lat = np.meshgrid(lon, lat)
-
-    src_grid = pr.geometry.GridDefinition(lon, lat)
-    des_swath = pr.geometry.SwathDefinition(gridpoints['lon'].values,
-                                            gridpoints['lat'].values)
-
-    dframe = pd.DataFrame(index=gridpoints.index)
-    dframe['lon'] = gridpoints.lon
-    dframe['lat'] = gridpoints.lat
-
-    # resampling to country gridpoints
-    for var in data.keys():
-        dframe[var] = pr.kd_tree.resample_nearest(src_grid, data[var],
-                                                  des_swath, 20000)
-
-    return dframe
-
-
 def average_layers(image, dest_nan_value):
     """
-    Averages image layers, given as ndimensional masked arrays to one image
+    Averages image layers, given as n-dimensional masked arrays to one image.
 
     Parameters
     ----------
     image : numpy.ma.MaskedArray
         Input image to average.
+    dest_nan_value : int
+        NaN value to be used.
 
     Returns
     -------

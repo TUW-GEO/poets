@@ -37,14 +37,13 @@ import os
 from flask import Flask, render_template, jsonify, make_response
 from flask.ext.cors import CORS
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import bounds
 import pytesmo.time_series as ts
-
-mpl.use('Agg')
 
 
 def curpath():
@@ -165,6 +164,16 @@ def index(**kwargs):
         ndate = source._check_current_date()
         begindate = ndate[region][variable][0]
         enddate = ndate[region][variable][1]
+
+        if begindate is None and enddate is None:
+
+            error = 'No data available for this dataset.'
+
+            return render_template('index.html',
+                                   regions=regions,
+                                   sources=sources.keys(),
+                                   variables=variables,
+                                   error=error)
 
         d = get_dtindex(tmp_res, begindate, enddate)
         dates = d.to_pydatetime()
@@ -326,6 +335,13 @@ def request_image(**kwargs):
 
     img, _, _, metadata = source.read_img(pidx, region, variable)
 
+    if source.unit is not None:
+        if metadata is not None and 'unit' not in metadata:
+            metadata['unit'] = source.unit
+        elif metadata is None:
+            metadata = {}
+            metadata['unit'] = source.unit
+
     if source.valid_range is not None:
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
@@ -351,7 +367,8 @@ def request_image(**kwargs):
     return response
 
 
-@app.route('/_rlegend/')
+@app.route('/_rlegend/<reg>&<var>', methods=['GET', 'POST'])
+@app.route('/_rlegend/<reg>&<var>&<idx>', methods=['GET', 'POST'])
 def request_legend(**kwargs):
     """
     Creates Legend for OpenLayers overlay.
@@ -361,6 +378,7 @@ def request_legend(**kwargs):
     StringIO
         Legend in StringIO.
     """
+
     global vmin
     global vmax
     global metadata
@@ -373,8 +391,11 @@ def request_legend(**kwargs):
                                     orientation='horizontal')
     plt.xticks(fontsize=9)
 
-    if metadata and ('units' in metadata or 'unit' in metadata):
-        cb1.set_label(metadata['units'], fontsize=10)
+    if metadata:
+        units = ['units', 'unit', 'UNITS', 'UNIT']
+        for unit in units:
+            if unit in metadata:
+                cb1.set_label(metadata[unit], fontsize=10)
 
     buf = StringIO()
 

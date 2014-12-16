@@ -12,6 +12,14 @@ poets.image.geotiff module
     :undoc-members:
     :show-inheritance:
 
+poets.image.hdf5 module
+-----------------------
+
+.. automodule:: poets.image.hdf5
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 poets.image.imagefile module
 ----------------------------
 

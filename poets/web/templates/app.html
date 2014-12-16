@@ -77,12 +77,6 @@ $(document).ready(function () {
         initLegend();
 	}
 	
-	// LEGEND =================================================================
-	function initLegend() {
-		var lcode = $("#region").val()+$("#dataset").val()+$('#slider').val(); 
-		$('#legend').attr('src', '/_rlegend?' +lcode);
-	}
-	
 	// SLIDER =================================================================
 	var values = [0, {{max}}];
 	$("#slider").slider({
@@ -172,6 +166,14 @@ $(document).ready(function () {
           
         $(div).attr('href', link);
 	}
+	
+	// LEGEND =================================================================
+    function initLegend() {
+		// lcode is important for avoiding keeping image in cache, in order
+		// to refresh legend if dataset is changed.
+        var lcode = $("#region").val()+'&'+$("#dataset").val(); 
+        $('#legend').attr('src', '/_rlegend/' +lcode);
+    }
 	   
     $("#region").change(function() {
         initLink();

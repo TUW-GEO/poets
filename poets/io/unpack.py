@@ -139,5 +139,3 @@ def unpack(filepath, outpath=None):
     else:
         raise IOError('%s file does not exist' % filepath)
 
-if __name__ == '__main__':
-    pass
