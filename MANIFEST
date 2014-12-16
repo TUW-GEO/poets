@@ -16,7 +16,6 @@ docs/examples.rst
 docs/index.rst
 docs/introduction.rst
 docs/license.rst
-docs/modules.rst
 docs/_build/html/ex_download_resample.html
 docs/_build/html/ex_read_img.html
 docs/_build/html/ex_read_ts.html
@@ -28,12 +27,6 @@ docs/_build/html/index.html
 docs/_build/html/introduction.html
 docs/_build/html/license.html
 docs/_build/html/modules.html
-docs/_build/html/poets.grid.html
-docs/_build/html/poets.html
-docs/_build/html/poets.image.html
-docs/_build/html/poets.io.html
-docs/_build/html/poets.shape.html
-docs/_build/html/poets.timedate.html
 docs/_build/html/py-modindex.html
 docs/_build/html/search.html
 docs/_build/html/searchindex.js
@@ -74,12 +67,6 @@ docs/_build/html/_sources/index.txt
 docs/_build/html/_sources/introduction.txt
 docs/_build/html/_sources/license.txt
 docs/_build/html/_sources/modules.txt
-docs/_build/html/_sources/poets.grid.txt
-docs/_build/html/_sources/poets.image.txt
-docs/_build/html/_sources/poets.io.txt
-docs/_build/html/_sources/poets.shape.txt
-docs/_build/html/_sources/poets.timedate.txt
-docs/_build/html/_sources/poets.txt
 docs/_build/html/_sources/_rst/modules.txt
 docs/_build/html/_sources/_rst/poets.grid.txt
 docs/_build/html/_sources/_rst/poets.image.txt
@@ -94,6 +81,7 @@ docs/_build/html/_static/basic.css
 docs/_build/html/_static/comment-bright.png
 docs/_build/html/_static/comment-close.png
 docs/_build/html/_static/comment.png
+docs/_build/html/_static/default.css
 docs/_build/html/_static/doctools.js
 docs/_build/html/_static/down-pressed.png
 docs/_build/html/_static/down.png
@@ -104,6 +92,7 @@ docs/_build/html/_static/nature.css
 docs/_build/html/_static/plus.png
 docs/_build/html/_static/pygments.css
 docs/_build/html/_static/searchtools.js
+docs/_build/html/_static/sidebar.js
 docs/_build/html/_static/underscore.js
 docs/_build/html/_static/up-pressed.png
 docs/_build/html/_static/up.png
@@ -247,5 +236,6 @@ tests/test_resampling.py
 tests/test_shapes.py
 tests/test_unpack.py
 tests/data/test.png
+tests/data/test.tif
 tests/data/test.tiff
 tests/data/ts_sm.csv
