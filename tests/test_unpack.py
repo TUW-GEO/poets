@@ -61,7 +61,7 @@ class Test(unittest.TestCase):
 
     def test_check_compressed(self):
         test = up.check_compressed(self.fname)
-        self.failUnless(test == True)
+        self.failUnless(test is True)
 
     def test_unpack(self):
         # create txt-file
@@ -70,7 +70,7 @@ class Test(unittest.TestCase):
 
         # create first zip archive
         ziparc = zipfile.ZipFile(os.path.join(curpath(), 'data',
-                                                   'ziparc.zip'), 'w')
+                                              'ziparc.zip'), 'w')
 
         # write txt-file and folder to zip archive
         ziparc.write(os.path.join(curpath(), 'data', 'test1.txt'))
