@@ -10,7 +10,6 @@ Subpackages
     poets.image
     poets.io
     poets.shape
-    poets.time_series
     poets.timedate
     poets.web
 

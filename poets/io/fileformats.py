@@ -30,66 +30,65 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
-# Creation date: 2014-08-29
+# Creation date: 2014-10-02
 
-import unittest
-import numpy.testing as nptest
 import os
-import pandas as pd
-from datetime import datetime
-from poets.time_series.cdi import calc_DI, calc_CDI
+
+supported_formats = ['.nc', '.nc4',
+                     '.h5',
+                     '.tiff', '.tif',
+                     '.png', '.jpg', '.jpeg', '.gif']
 
 
-def curpath():
-    pth, _ = os.path.split(os.path.abspath(__file__))
-    return pth
+def check_supported(filename):
+    """Checks if file is in supported format.
+
+    Parameters
+    ----------
+    filename : str
+        Filename or filepath.
+
+    Returns
+    -------
+    bool
+        True if supported, False if not.
+    """
+
+    return os.path.splitext(filename)[1].lower() in supported_formats
 
 
-class Test(unittest.TestCase):
+def select_file(filelist):
+    """Selects a file out of a list of files, based on their extension.
 
-    def setUp(self):
-        self.testfilename = os.path.join(curpath(), 'data', 'ts_sm.csv')
-        self.ts = pd.read_csv(self.testfilename, index_col=0)
-        ts2 = []
-        for ind in range(0, len(self.ts.index)):
-            ts2.append(datetime.strptime(self.ts.index[ind], '%Y-%m-%d'))
-        self.ts.index = ts2
-        self.attribute = 'sm'
+    Parameters
+    ----------
+    filelist : list of str
+        List containing filepaths.
 
-    def tearDown(self):
-        pass
+    Returns
+    -------
+    filename : str
+        Filepath of selected file.
 
-    def test_calc_DI(self):
-        di6_mean = 0.41332512418600514
-        di12_mean = 0.47425204454677033
+    Raises
+    ------
+    IOError :
+        If filelist contains no supported file format.
+    """
 
-        ts_di = calc_DI(self.ts.copy(), 'soil_moisture',
-                        interest_period=[6, 12],
-                        scale_zero=False)
+    extlist = []
 
-        ts_di0 = calc_DI(self.ts.copy(), 'soil_moisture',
-                         interest_period=[6, 12],
-                         scale_zero=True)
+    for f in filelist:
+        fext = os.path.splitext(f)[1].lower()
+        if fext in supported_formats:
+            extlist.append(supported_formats.index(fext))
+        else:
+            extlist.append('X')
 
-        assert ts_di['sm_DI_6'].mean() == di6_mean
-        assert ts_di['sm_DI_12'].mean() == di12_mean
-        nptest.assert_almost_equal(ts_di0['sm_DI_6'].mean(), 0)
-        nptest.assert_almost_equal(ts_di0['sm_DI_12'].mean(), 0)
+    val, idx = min((val, idx) for (idx, val) in enumerate(extlist))
 
-    def test_calc_CDI(self):
-        cdi_mean = 0.32209785681714431
-        cdi2_mean = 0.28988807113543041
+    if val == 'X':
+        raise IOError("No valid file format found.")
+    else:
+        return filelist[idx]
 
-        ts = self.ts.copy()
-        ts['sm3'] = ts['sm'] * 3
-
-        cdi = calc_CDI(ts.copy())
-
-        cdi2 = calc_CDI(ts.copy(), [60, 40])
-
-        assert cdi['CDI'].mean() == cdi_mean
-        assert cdi2['CDI'].mean() == cdi2_mean
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()

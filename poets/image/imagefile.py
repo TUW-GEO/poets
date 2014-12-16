@@ -38,42 +38,76 @@ country bounding box.
 """
 
 import numpy as np
+import math
+from osgeo import gdal
 from PIL import Image
 from poets.shape.shapes import Shape
-import math
-from poets.image.geotiff import get_layer_extent, lonlat2px_gt, px2lonlat_gt
+from poets.image.geotiff import lonlat2px_gt, px2lonlat_gt
+
+
+def get_layer_extent(filepath):
+    """
+    Returns extent of imagefile as minimum and maximum longitudes and 
+    latitudes.
+
+    Parameters:
+    -----------
+    filepath : str
+        Path to image file.
+
+    Returns:
+    --------
+    lon_min : float
+        Minimum longitude.
+    lat_min : float
+        Minimum latitude.
+    lon_max : float
+        Maximum longitude.
+    lat_max : float
+        Maximum latitude.
+    """
+    ds = gdal.Open(filepath)
+    gt = ds.GetGeoTransform()
+    width = ds.RasterXSize
+    height = ds.RasterYSize
+    lon_min = gt[0]
+    lat_min = gt[3] + width * gt[4] + height * gt[5]
+    lon_max = gt[0] + width * gt[1] + height * gt[2]
+    lat_max = gt[3]
+
+    return lon_min, lat_min, lon_max, lat_max
 
 
 def lonlat2px(img, lon, lat):
     """
-    Converts a pair of lon and lat to its corresponding pixel
-    value in an image file.
+    Converts a pair of lon and lat to its corresponding pixel value in an
+    image file.
 
     Parameters
     ----------
-    img : Image File, e.g. PNG, TIFF
-        Input image file
+    img : PIL image
+        Input image file, e.g. PNG, TIFF.
     lon : float
-        Longitude
+        Longitude.
     lat : float
-        Latitude
+        Latitude.
 
     Returns
     -------
     Row : float
-        corresponding pixel value
+        Corresponding pixel value.
     Col : float
-        corresponding pixel value
+        Corresponding pixel value.
     """
 
     w, h = img.size
-    
+
     mw = w / 360.0
     mh = h / 180.0
-    
+
     row = h / 2 - lat * mh
     col = w / 2 + lon * mw
-    
+
     return row, col
 
 
@@ -84,8 +118,8 @@ def lonlat2px_rearr(img, lon, lat):
 
     Parameters
     ----------
-    img : Image File, e.g. PNG, TIFF
-        Input image file
+    img : PIL image
+        Input image file, e.g. PNG, TIFF.
     lon : float
         Longitude
     lat : float
@@ -115,40 +149,40 @@ def lonlat2px_rearr(img, lon, lat):
 
 def px2lonlat(img, lon_px, lat_px):
     """
-    Converts two arrays of row and column pixels into their
-    corresponding lon and lat arrays
+    Converts two arrays of row and column pixels into their corresponding lon 
+    and lat arrays.
 
     Parameters
     ----------
-    img : Image file
-        Image which the pixel values refer to
+    img : PIL image
+        Input image file, e.g. PNG, TIFF.
     lon_px : np.array
-        array of column pixels
+        Array of column pixels.
     lat_px : np.array
-        array of row pixels
+        Array of row pixels.
 
     Returns
     -------
     lon_new : np.array
-        List of corresponding longitude values
+        List of corresponding longitude values.
     lat_new: np.array
-        List of corresponding latitude values
+        List of corresponding latitude values.
     """
 
     w, h = img.size
-    
+
     mw = w / 360.0
     mh = h / 180.0
-    
+
     lon_new = np.zeros(len(lon_px))
     lat_new = np.zeros(len(lat_px))
-    
+
     for i in range(0, len(lon_px)):
         lon_new[i] = (lon_px[i] - w / 2) / mw
-    
+
     for i in range(0, len(lat_px)):
         lat_new[i] = -(lat_px[i] - h / 2) / mh
-    
+
     return lon_new, lat_new
 
 
@@ -159,19 +193,19 @@ def px2lonlat_rearr(img, lon_px, lat_px):
 
     Parameters
     ----------
-    img : Image file
+    img : PIL image
         Image which the pixel values refer to (rearranged image)
     lon_px : np.array
-        array of column pixels
+        Array of column pixels.
     lat_px : np.array
-        array of row pixels
+        Array of row pixels.
 
     Returns
     -------
     lon_new : np.array
-        List of corresponding longitude values
+        List of corresponding longitude values.
     lat_new: np.array
-        List of corresponding latitude values
+        List of corresponding latitude values.
     """
 
     w, h = img.size
@@ -201,13 +235,13 @@ def rearrange_img(img):
 
     Parameters
     ----------
-    img : Image File, e.g. PNG, TIFF
-        Image to be rearranged
+    img : PIL image
+        Image to be rearranged.
 
     Returns
     -------
-    img : Image file
-        Rearranged image
+    img2 : Image file
+        Rearranged image.
     """
 
     w, h = img.size
@@ -228,13 +262,15 @@ def rearrange_img(img):
 
 def dateline_country(country):
     """
-    Min and max longitude for countries that spread across the
-    international dateline.
+    Min and max longitude for countries that spread across the international 
+    dateline.
 
     Returns
     -------
-    lon_min, lon_max : float
-        Min and max longitude.
+    lon_min : float
+        Minimum longitude.
+    lon_max : float
+        Maximum longitude.
     """
 
     if country == 'NZ':
@@ -264,7 +300,7 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
         Identifier of the region in the shapefile. If the default shapefile is
         used, this would be the FIPS country code.
     fileExtension : str
-        filetype (e.g. png, tif)
+        Filetype (e.g. png, tif).
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
         default.
@@ -309,12 +345,12 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
     # get 2 pairs of points (upper left, lower right of bbox)
     if d > 350 and region not in ['AY', 'global']:
         if fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            if (round(lon_max_src-lon_min_src) == 360.0 and
-                round(lat_max_src-lat_min_src) == 180.0):
+            if (round(lon_max_src - lon_min_src) == 360.0 and
+                round(lat_max_src - lat_min_src) == 180.0):
                 orig_img = rearrange_img(orig_img)
                 row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
                 row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
-        
+
                 img = orig_img.crop((int(math.floor(col_min)),
                                      int(math.floor(row_min)),
                                      int(math.ceil(col_max)),
@@ -326,17 +362,19 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
             orig_img = rearrange_img(orig_img)
             row_min, col_min = lonlat2px_rearr(orig_img, lon_min, lat_max)
             row_max, col_max = lonlat2px_rearr(orig_img, lon_max, lat_min)
-    
+
             img = orig_img.crop((int(math.floor(col_min)),
                                  int(math.floor(row_min)),
                                  int(math.ceil(col_max)),
                                  int(math.ceil(row_max))))
-    
+
     elif fileExtension in ['.tif', '.tiff', '.TIF', '.TIFF']:
-        row_min, col_min = lonlat2px_gt(orig_img, lon_min, lat_max, lon_min_src,
-                                        lat_min_src, lon_max_src, lat_max_src)
-        row_max, col_max = lonlat2px_gt(orig_img, lon_max, lat_min, lon_min_src,
-                                        lat_min_src, lon_max_src, lat_max_src)
+        row_min, col_min = lonlat2px_gt(orig_img, lon_min, lat_max,
+                                        lon_min_src, lat_min_src, lon_max_src,
+                                        lat_max_src)
+        row_max, col_max = lonlat2px_gt(orig_img, lon_max, lat_min,
+                                        lon_min_src, lat_min_src, lon_max_src,
+                                        lat_max_src)
 
         # crop image
         img = orig_img.crop((int(math.floor(col_min)),
@@ -374,7 +412,10 @@ def bbox_img(source_file, region, fileExtension, shapefile=None):
     # metadata
     metadata = None
 
-    return data, lon_new, lat_new, timestamp, metadata
+    # move coordinates to pixel center
+    if lon_new.size > 2:
+        lon_new += (lon_new[1] - lon_new[0]) / 2
+    if lat_new.size > 2:
+        lat_new += (lat_new[1] - lat_new[0]) / 2
 
-if __name__ == "__main__":
-    pass
+    return data, lon_new, lat_new, timestamp, metadata

@@ -32,17 +32,18 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-05-26
 
+from cStringIO import StringIO
 import os
+from flask import Flask, render_template, jsonify, make_response
+from flask.ext.cors import CORS
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, jsonify, make_response
+from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import bounds
-from poets.timedate.dekad import dekad_index
 import pytesmo.time_series as ts
-from cStringIO import StringIO
 
 
 def curpath():
@@ -88,9 +89,11 @@ dest = os.path.join(curpath(), 'static', 'temp')
 
 app = Flask(__name__, static_folder='static', static_url_path='/static',
             template_folder="templates")
+app.config['CORS_HEADERS'] = 'Content-Type'
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
-def start(poet):
+def start(poet, host='127.0.0.1', port=5000, debug=False):
     """
     Starts application and sets global variables.
 
@@ -98,6 +101,12 @@ def start(poet):
     ----------
     poet : Poet()
         Instance of Poet class.
+    host : str, optional
+        Host that is used by the app, defaults to 127.0.0.1.
+    port : int, optional
+        Port where app runs on, defaults to 50000.
+    debug : bool, optional
+        Starts app in debug mode if set True, defaults to False.
     """
 
     global regions
@@ -105,16 +114,26 @@ def start(poet):
     global variables
     global dates
     global vmin, vmax, cmap
+    global shapefile
+    global nan_value
+    global host_gl
+    global port_gl
+    global tmp_res
 
     regions = poet.regions
     sources = poet.sources
     variables = poet.get_variables()
+    shapefile = poet.shapefile
+    nan_value = poet.nan_value
+    tmp_res = poet.temporal_resolution
+    host_gl = host
+    port_gl = port
 
-    vmin = 0
-    vmax = 20
-    cmap = 'jet'
-
-    app.run(debug=True, use_debugger=True, use_reloader=True)
+    if debug:
+        app.run(debug=True, use_debugger=True, use_reloader=True, host=host,
+                port=port)
+    else:
+        app.run(host=host, port=port)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -146,7 +165,17 @@ def index(**kwargs):
         begindate = ndate[region][variable][0]
         enddate = ndate[region][variable][1]
 
-        d = dekad_index(begindate, enddate)
+        if begindate is None and enddate is None:
+
+            error = 'No data available for this dataset.'
+
+            return render_template('index.html',
+                                   regions=regions,
+                                   sources=sources.keys(),
+                                   variables=variables,
+                                   error=error)
+
+        d = get_dtindex(tmp_res, begindate, enddate)
         dates = d.to_pydatetime()
         idxdates = len(dates) - 1
 
@@ -156,7 +185,8 @@ def index(**kwargs):
             dat = {'id': i, 'date': d.strftime('%Y-%m-%d')}
             fdates.append(dat)
 
-        lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(region)
+        lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = \
+            bounds(region, shapefile)
 
         return render_template('app.html',
                                max=idxdates,
@@ -169,7 +199,9 @@ def index(**kwargs):
                                variable=variable,
                                regions=regions,
                                variables=variables,
-                               dates=fdates)
+                               dates=fdates,
+                               host=host_gl,
+                               port=port_gl)
     else:
         return render_template('index.html',
                                regions=regions,
@@ -177,8 +209,8 @@ def index(**kwargs):
                                variables=variables)
 
 
-@app.route('/_ts/<reg>&<src>&<var>&<loc>')
-@app.route('/_ts/<reg>&<src>&<var>&<loc>&<anom>')
+@app.route('/_ts/<reg>&<src>&<var>&<loc>', methods=['GET', 'OPTIONS'])
+@app.route('/_ts/<reg>&<src>&<var>&<loc>&<anom>', methods=['GET', 'OPTIONS'])
 def get_ts(**kwargs):
     """
     Gets time series for selected location, gets anomaly of time series if
@@ -206,7 +238,7 @@ def get_ts(**kwargs):
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    df = source.read_ts(lonlat, region, variable)
+    df = source.read_ts(lonlat, region, variable, shapefile)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df, window_size=100)
@@ -251,7 +283,7 @@ def download_ts(**kwargs):
 
     filename = region + '_' + variable + '_' + loc[0][:6] + '_' + loc[1][:6]
 
-    df = source.read_ts(lonlat, region, variable)
+    df = source.read_ts(lonlat, region, variable, shapefile)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df)
@@ -288,6 +320,7 @@ def request_image(**kwargs):
     global vmin
     global vmax
     global metadata
+    global cmap
 
     if 'reg' in kwargs:
         region = kwargs['reg']
@@ -301,12 +334,27 @@ def request_image(**kwargs):
     pidx = (dates[int(idx)])
 
     img, _, _, metadata = source.read_img(pidx, region, variable)
+
+    if source.unit is not None:
+        if metadata is not None and 'unit' not in metadata:
+            metadata['unit'] = source.unit
+        elif metadata is None:
+            metadata = {}
+            metadata['unit'] = source.unit
+
     if source.valid_range is not None:
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
     else:
-        vmin = img.min()
-        vmax = img.max()
+        vmin = np.nanmin(img)
+        vmax = np.nanmax(img)
+
+    cmap = source.colorbar
+
+    # Resale the image
+    n = 10
+    img = np.kron(img, np.ones((n, n)))
+    img[img == nan_value] = np.NAN
 
     buf = StringIO()
     plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)
@@ -319,7 +367,8 @@ def request_image(**kwargs):
     return response
 
 
-@app.route('/_rlegend/')
+@app.route('/_rlegend/<reg>&<var>', methods=['GET', 'POST'])
+@app.route('/_rlegend/<reg>&<var>&<idx>', methods=['GET', 'POST'])
 def request_legend(**kwargs):
     """
     Creates Legend for OpenLayers overlay.
@@ -329,11 +378,11 @@ def request_legend(**kwargs):
     StringIO
         Legend in StringIO.
     """
+
     global vmin
     global vmax
     global metadata
-
-    cmap = 'jet'
+    global cmap
 
     fig = plt.figure(figsize=(4, 0.7))
     ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
@@ -342,8 +391,11 @@ def request_legend(**kwargs):
                                     orientation='horizontal')
     plt.xticks(fontsize=9)
 
-    if metadata and 'units' in metadata:
-        cb1.set_label(metadata['units'], fontsize=10)
+    if metadata:
+        units = ['units', 'unit', 'UNITS', 'UNIT']
+        for unit in units:
+            if unit in metadata:
+                cb1.set_label(metadata[unit], fontsize=10)
 
     buf = StringIO()
 

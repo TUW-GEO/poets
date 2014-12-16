@@ -35,22 +35,22 @@
 """
 Provides download functions for FTP/SFTP, HTTP and local data sources.
 """
-
 import calendar
-import datetime
+from datetime import datetime
 from ftplib import FTP
 import os
-
+import shutil
 import paramiko
 import requests
-
 import pandas as pd
-from poets.timedate.dekad import dekad2day
+from poets.timedate.dekad import dekad2day, runningdekad2date
+from requests.exceptions import ConnectionError, Timeout
 
 
-def download_ftp(download_path, host, directory, port, username, password,
-                 filedate, dirstruct, begin, end=None):
-    """Download data via SFTP
+def download_ftp(download_path, host, directory, filedate, port=21,
+                 username='', password='', dirstruct=None, ffilter='',
+                 begin=None, end=None):
+    """Downloads data via FTP.
 
     Parameters
     ----------
@@ -60,42 +60,63 @@ def download_ftp(download_path, host, directory, port, username, password,
         Link to host.
     directory : str
         Path to data on host.
-    port : int
-        Port to host.
-    username : str
-        Username for source.
-    password : str
-        Passwor for source.
     filedate : dict
         Dict which points to the date fields in the filename
-    dirstruct : list of str
-        Folder structure on host, each list element represents a subdirectory
-    begin : datetime.datetime
-        Set either to first date of remote repository or date of
-        last file in local repository
-    end : datetime.datetime, optional
-        Entered in [years]. End year is not downloaded anymore, defaults to
-        datetime.date.today()
+    port : int, optional
+        Port to host, defaults to 21.
+    username : str, optional
+        Username for source, defaults to emtpy str.
+    password : str, optional
+        Passwor for source, defaults to emtpy str.
+    dirstruct : list of str, optional
+        Folder structure on host, each list element represents a subdirectory.
+    ffilter : str, optional
+        Used for filtering files on a server, defaults to emtpy str.
+    begin : datetime, optional
+        Set either to first date of remote repository or date of last file in
+        local repository.
+    end : datetime, optional
+        Date until which data should be downloaded.
 
     Returns
     -------
     bool
-        true if data is available, false if not
+        True if data is available, False if not.
     """
+
+    if begin is None:
+        begin = datetime(1900, 1, 1)
+
+    if end is None:
+        end = datetime.now()
 
     if host[-1] == '/':
         host = host[:-1]
 
-    ftp = FTP(host)
-    ftp.login(username, password)
+    try:
+        ftp = FTP(host)
+    except:
+        print ''
+        print '[ERROR] Cannot connect to source. Please contact data provider.'
+        return False
 
-    ftp.cwd(directory)
+    try:
+        ftp.login(username, password)
+    except:
+        print ''
+        print '[ERROR] Cannot login at source - wrong login credentials.'
+        return False
+
+    try:
+        ftp.cwd(directory)
+    except:
+        print ''
+        print '[ERROR] Directory not found on host!'
+        return False
+
     subdirs = []
 
     ftp.retrlines("NLST", subdirs.append)  # NLIST retrieves filename only
-
-    if end is None:
-        end = datetime.datetime.now()
 
     if not os.path.exists(download_path):
         os.makedirs(download_path)
@@ -129,17 +150,35 @@ def download_ftp(download_path, host, directory, port, username, password,
             else:
                 files += year_filelist
     else:
-        files = subdirs
+        files = filesInDir_ftp(directory, ftp, filedate, begin, end, files)
 
+    ftp.cwd(directory)
     if len(files) > 0:
         for fname in files:
-            date = get_file_date(fname, filedate)
-            if date >= begin and date <= end:
-                if not os.path.exists(os.path.join(download_path, fname)):
-                    ftp.retrbinary("RETR " + fname, open(fname, "wb").write)
-                    print '.',
-                else:
-                    print ' file exists, skipping download'
+            fname2 = fname.split('/')[-1]
+            if not os.path.exists(os.path.join(download_path, fname2)):
+                if ffilter is None or ffilter in fname2:
+                    loc = '/'.join(fname.split('/')[:-1])
+                    try:
+                        ftp.cwd(loc)
+                        ftp.retrbinary("RETR " + fname2,
+                                       open(fname2, "wb").write)
+                        print '.',
+                    except:
+                        print ''
+                        print '[WARNING] Connection timed out, retrying...'
+                        try:
+                            ftp.close()
+                            ftp = FTP(host)
+                            ftp.login(username, password)
+                            ftp.cwd(directory)
+                            ftp.cwd(loc)
+                            ftp.retrbinary("RETR " + fname2,
+                                           open(fname2, "wb").write)
+                            print '.',
+                        except:
+                            '[ERROR] Retry not successful, skipping download.'
+                            return False
         ftp.close()
         print ''
         return True
@@ -152,8 +191,9 @@ def download_ftp(download_path, host, directory, port, username, password,
 
 
 def download_sftp(download_path, host, directory, port, username, password,
-                  filedate, dirstruct, begin, end=None):
-    """Download data via SFTP
+                  filedate, dirstruct=None, ffilter='',
+                  begin=None, end=None):
+    """Download data via SFTP.
 
     Parameters
     ----------
@@ -168,17 +208,18 @@ def download_sftp(download_path, host, directory, port, username, password,
     username : str
         Username for source.
     password : str
-        Passwor for source.
+        Password for source.
     filedate : dict
         Dict which points to the date fields in the filename.
-    dirstruct : list of str
+    dirstruct : list of str, optional
         Folder structure on host, each list element represents a subdirectory.
-    begin : datetime.datetime
-        Set either to first date of remote repository or date of last file in 
+    ffilter : str, optional
+        Used for filtering files on a server, defaults to emtpy str.
+    begin : datetime, optional
+        Set either to first date of remote repository or date of last file in
         local repository.
-    end : datetime.datetime, optional
-        Entered in [years]. End year is not downloaded anymore, defaults to
-        datetime.datetime.now()
+    end : datetime, optional
+        Date until which data should be downloaded.
 
     Returns
     -------
@@ -186,12 +227,15 @@ def download_sftp(download_path, host, directory, port, username, password,
         True if data is available, false if not.
     """
 
+    if begin is None:
+        begin = datetime(1900, 1, 1)
+
+    if end is None:
+        end = datetime.now()
+
     if not os.path.exists(download_path):
         print('[INFO] output path does not exist... creating path')
         os.makedirs(download_path)
-
-    if end is None:
-        end = datetime.datetime.now()
 
     print '[INFO] downloading data from ' + str(begin) + ' - ' + str(end),
 
@@ -203,12 +247,28 @@ def download_sftp(download_path, host, directory, port, username, password,
     # connect to ftp server
     if host[-1] == '/':
         host = host[:-1]
-    transport = paramiko.Transport((host, port))
-    transport.connect(username=username, password=password)
 
-    sftp = paramiko.SFTPClient.from_transport(transport)
+    try:
+        transport = paramiko.Transport((host, port))
+    except paramiko.ssh_exception.SSHException:
+        print ''
+        print '[ERROR] Cannot connect to source. Please contact data provider.'
+        return False
 
-    subdirs = sftp.listdir(directory)
+    try:
+        transport.connect(username=username, password=password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+    except:
+        print ''
+        print '[ERROR] Cannot login at source.'
+        return False
+
+    try:
+        subdirs = sftp.listdir(directory)
+    except:
+        print ''
+        print '[ERROR] Directory not found on host!'
+        return False
 
     files = []
 
@@ -255,16 +315,33 @@ def download_sftp(download_path, host, directory, port, username, password,
                                 for f in day_filelist:
                                     files.append(day_subdir + f)
     else:
-        files = subdirs
+        files = filesInDir_sftp(directory, sftp, filedate, begin, end, files)
 
     if len(files) > 0:
         for f in files:
             filename = os.path.basename(f)
             fdate = get_file_date(filename, filedate)
             if fdate >= begin and fdate <= end:
+                if ffilter is not None and ffilter not in f:
+                    continue
                 print '.',
                 if os.path.isfile(os.path.join(localpath, filename)) is False:
-                    sftp.get(f, os.path.join(localpath, filename))
+                    try:
+                        sftp.get(f, os.path.join(localpath, filename))
+                    except:
+                        print ''
+                        print '[WARNING] Connection timed out, retrying...'
+                        try:
+                            sftp.close
+                            transport = paramiko.Transport((host, port))
+                            transport.connect(username=username,
+                                              password=password)
+                            sftp = (paramiko.SFTPClient
+                                    .from_transport(transport))
+                            sftp.get(f, os.path.join(localpath, filename))
+                        except:
+                            '[ERROR] Retry not successful, skipping download.'
+                            return False
         sftp.close
         print ''
         return True
@@ -275,7 +352,8 @@ def download_sftp(download_path, host, directory, port, username, password,
 
 
 def download_http(download_path, host, directory, filename, filedate,
-                  dirstruct, begin, end=None):
+                  dirstruct, ffilter=None, begin=None,
+                  end=datetime.now()):
     """Download data via HTTP
 
     Parameters
@@ -292,11 +370,13 @@ def download_http(download_path, host, directory, filename, filedate,
         Dict which points to the date fields in the filename.
     dirstruct : list of str
         Folder structure on host, each list element represents a subdirectory.
-    begin : datetime.date
+    ffilter : str, optional
+        Used for filtering files on a server, defaults to None.
+    begin : datetime, optional
         Set either to first date of remote repository or date of last file in
         local repository.
-    end : datetime.date, optional
-        Set to today if none given.
+    end : datetime, optional
+        Date until which data should be downloaded.
 
     Returns
     -------
@@ -304,15 +384,18 @@ def download_http(download_path, host, directory, filename, filedate,
         true if data is available, false if not
     """
 
+    if begin is None:
+        begin = datetime(1900, 1, 1)
+
     if end is None:
-        end = datetime.datetime.now()
+        end = datetime.now()
 
     print('[INFO] downloading data from ' + str(begin) + ' - '
           + str(end)),
 
     # create daterange on monthly basis
-    mon_from = datetime.date(begin.year, begin.month, 1)
-    mon_to = datetime.date(end.year, end.month, 1)
+    mon_from = datetime(begin.year, begin.month, 1)
+    mon_to = datetime(end.year, end.month, 1)
     daterange = pd.date_range(start=mon_from, end=mon_to, freq='MS')
 
     if '{MM}' in filename:
@@ -337,7 +420,7 @@ def download_http(download_path, host, directory, filename, filedate,
         elif dirstruct == ['YYYY', 'M']:
             path = host + directory + year + '/' + dat.month + '/'
         else:
-            path = host
+            path = host + directory  # + subdirectories!
 
         if leading_month is True:
             month = str("%02d" % (dat.month,))
@@ -420,28 +503,129 @@ def download_http(download_path, host, directory, filename, filedate,
         for fp in files:
             newfile = os.path.join(download_path, fp.split('/')[-1])
             if os.path.exists(newfile):
-                print ''
-                print '[INFO] File already exists, nothing to download',
                 continue
 
-            r = requests.get(fp)
+            try:
+                r = requests.get(fp, timeout=20.)
+            except ConnectionError:
+                print ''
+                print '[WARNING] File not available at resource, skipping...'
+                continue
+            except Timeout:
+                print ''
+                print '[WARNING] File not available at resource, skipping...'
+                continue
+
             if r.status_code == 200:
                 # check if year folder is existing
-                if not os.path.exists(download_path):
-                    print('[INFO] output path does not exist...'
-                          'creating path')
-                    os.makedirs(download_path)
+                if ffilter is None or ffilter in os.path.split(fp)[-1]:
+                    if not os.path.exists(download_path):
+                        print('[INFO] output path does not exist...'
+                              'creating path')
+                        os.makedirs(download_path)
 
-                # download file
-                newfile = os.path.join(download_path,
-                                       fp.split('/')[-1])
-                r = requests.get(fp, stream=True)
-                with open(newfile, 'wb') as f:
-                    f.write(r.content)
-                    print '.',
+                    # download file
+                    newfile = os.path.join(download_path,
+                                           fp.split('/')[-1])
+                    r = requests.get(fp, stream=True)
+                    with open(newfile, 'wb') as f:
+                        f.write(r.content)
+                        print '.',
 
-    print ''
-    return True
+    if len(files) > 0:
+        print ''
+        return True
+    else:
+        print ''
+        return False
+
+
+def download_local(download_path, directory, filedate, dirstruct=None,
+                   ffilter='', begin=datetime(1900, 1, 1), end=datetime.now()):
+    """Download data from local path
+
+    Parameters
+    ----------
+    download_path : str
+        Path where to save the downloaded files.
+    directory : str
+        Path to locally stored data.
+    filedate : dict
+        Dict which points to the date fields in the filename.
+    dirstruct : list of str, optional
+        Folder structure in directory, each list element represents
+        a subdirectory.
+    ffilter : str, optional
+        Used for filtering files on a server, defaults to empty string.
+    begin : datetime, optional
+        Set either to first date of remote repository or date of last file in
+        local repository, defaults to datetime(1900, 1, 1).
+    end : datetime, optional
+        Date until which data should be downloaded, defaults to datetime.now()
+
+    Returns
+    -------
+    bool
+        True if data is available, false if not.
+    """
+
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
+
+    files = []
+
+    print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end),
+
+    # directory/folder (len(dirstruct) == 1)
+    if dirstruct is not None and len(dirstruct) == 1:
+        folders = os.listdir(directory)
+        for folder in folders:
+            filelist = os.listdir(os.path.join(directory, folder))
+            for fname in sorted(filelist):
+                date = get_file_date(fname, filedate)
+                if date >= begin and date <= end:
+                    files.append(fname)
+                    if not os.path.exists(os.path.join(download_path,
+                                                       fname)):
+                        shutil.copy(os.path.join(directory, folder, fname),
+                                    os.path.join(download_path, fname))
+
+    # directory/folder/subfolder (len(dirstruct) == 2)
+    elif dirstruct is not None and len(dirstruct) == 2:
+        folders = os.listdir(directory)
+        for folder in folders:
+            subfolders = os.listdir(os.path.join(directory, folder))
+            for subfolder in subfolders:
+                filelist = os.listdir(os.path.join(directory, folder,
+                                                   subfolder))
+                for fname in sorted(filelist):
+                    if date >= begin and date <= end:
+                        files.append(fname)
+                        if not os.path.exists(os.path.join(download_path,
+                                                           fname)):
+                            shutil.copy(os.path.join(directory, folder,
+                                                     subfolder, fname),
+                                        os.path.join(download_path, fname))
+
+    # general case: unknown folder structure
+    if dirstruct is None:
+        for path, _, filelist in os.walk(directory):
+            for fname in filelist:
+                if ffilter is None or ffilter in fname:
+                    date = get_file_date(fname, filedate)
+                    if date >= begin and date <= end:
+                        files.append(fname)
+                        if not os.path.exists(os.path.join(download_path,
+                                                           fname)):
+                            shutil.copy(os.path.join(path, fname),
+                                        os.path.join(download_path, fname))
+
+    if len(files) > 0:
+        print ''
+        return True
+    else:
+        print ''
+        return False
 
 
 def get_file_date(fname, fdate):
@@ -450,22 +634,21 @@ def get_file_date(fname, fdate):
     Parameters
     ----------
     fname : str
-        Filename
+        Filename.
     fdate : str
         Structure of the date in filename, dict which points to the date fields
-        in the filename
+        in the filename.
 
     Returns
     -------
-    datetime.datetime
+    datetime
         Date and, if given, time from filename
     """
 
     fname = str(fname)
 
     if 'YYYY' in fdate.keys():
-        year = int(fname[fdate['YYYY'][0]:
-                         fdate['YYYY'][1]])
+        year = int(fname[fdate['YYYY'][0]:fdate['YYYY'][1]])
 
     if 'MM' in fdate.keys():
         month = int(fname[fdate['MM'][0]:fdate['MM'][1]])
@@ -478,6 +661,12 @@ def get_file_date(fname, fdate):
     if 'P' in fdate.keys():
         dekad = int(fname[fdate['P'][0]:fdate['P'][1]])
         day = dekad2day(year, month, dekad)
+
+    if 'RP' in fdate.keys():
+        dat = runningdekad2date(year,
+                                int(fname[fdate['RP'][0]:fdate['RP'][1]]))
+        month = dat.month
+        day = dat.day
 
     if 'hh' in fdate.keys():
         hour = int(fname[fdate['hh'][0]:fdate['hh'][1]])
@@ -494,7 +683,86 @@ def get_file_date(fname, fdate):
     else:
         second = 0
 
-    return datetime.datetime(year, month, day, hour, minute, second)
+    return datetime(year, month, day, hour, minute, second)
 
-if __name__ == "__main__":
-    pass
+
+def filesInDir_sftp(path, sftp, filedate, begin, end, filelist):
+    """List all files in directory and subdirectories on an SFTP server.
+
+    Parameters
+    ----------
+    path : str
+        Path to data on host.
+    sftp : paramiko Transport
+        Connection to Server.
+    filedate : dict
+        Dict which points to the date fields in the filename.
+    begin : datetime,
+        Date from which on to download data.
+    end : datetime
+        Date until which to download data.
+    filelist : list of str
+        List of filepaths or empty list.
+
+    Returns
+    -------
+    filelist : list
+        List containing all files in directory and subdirectories
+    """
+
+    files = sorted(sftp.listdir(path))
+
+    for fname in files:
+        lstatout = str(sftp.lstat(os.path.join(path, fname))).split()[0]
+        if 'd' not in lstatout:  # fname is file
+            date = get_file_date(fname, filedate)
+            if date >= begin and date <= end:
+                filelist.append(path + fname)
+        elif 'd' in lstatout:  # fname is dir
+            filelist = filesInDir_sftp(path + fname + '/', sftp, filedate,
+                                       begin, end, filelist)
+
+    return filelist
+
+
+def filesInDir_ftp(path, ftp, filedate, begin, end, filelist):
+    """List all files in directory and subdirectories on an FTP server.
+
+    Parameters
+    ----------
+    path : str
+        Path to data on host.
+    ftp : ftplib connection
+        Connection to Server.
+    filedate : dict
+        Dict which points to the date fields in the filename.
+    begin : datetime,
+        Date from which on to download data.
+    end : datetime
+        Date until which to download data.
+    filelist : list of str
+        List of filepaths or empty list.
+
+    Returns
+    -------
+    filelist : list
+        List containing all files in directory and subdirectories
+    """
+
+    files = []
+    ftp.cwd(path)
+    ftp.retrlines('NLST', files.append)
+    stats = []
+    ftp.retrlines("LIST", stats.append)
+
+    for idx, fname in enumerate(files):
+        lstatout = stats[idx].split()[0]
+        if 'd' not in lstatout:  # fname is file
+            date = get_file_date(fname, filedate)
+            if date >= begin and date <= end:
+                filelist.append(path + fname)
+        elif 'd' in lstatout:  # fname is dir
+            filelist = filesInDir_ftp(path + fname + '/', ftp, filedate,
+                                      begin, end, filelist)
+
+    return filelist

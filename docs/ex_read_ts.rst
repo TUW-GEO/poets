@@ -10,7 +10,7 @@ You can read time series only for gridpoints given in the defined region(s). To 
 gridpoints, you can call :class:`poets.poet.Poet.get_gridpoints`. It is also possible to call the read_timeseries function with longitude/latitude values. In this case the location parameter must be given as tuple
 
 
-In[10]::
+In[11]::
 
    import matplotlib.pyplot as plt
    
@@ -18,10 +18,10 @@ In[10]::
    gridpoints = p.get_gridpoints()
    
    # Reading the time series for point 1632
-   ts = p.read_timeseries(1632, 'MODIS_LST')
+   ts = p.read_timeseries('MODIS_LST', 1632)
    
    # Reading the time series with given lon/lat values:
-   ts = p.read_timeseries((15.391416550, 48.497042624), 'MODIS_LST')
+   ts = p.read_timeseries('MODIS_LST', (15.391416550, 48.497042624))
    
    # Plot time series
    ts.plot()

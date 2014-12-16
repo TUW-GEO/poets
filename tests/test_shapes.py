@@ -32,8 +32,14 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-07-08
 
+import os
 import unittest
-from poets.shape.shapes import Shape
+from poets.shape.shapes import Shape, FipsError
+
+
+def curpath():
+    pth, _ = os.path.split(os.path.abspath(__file__))
+    return pth
 
 
 class Test(unittest.TestCase):
@@ -42,19 +48,30 @@ class Test(unittest.TestCase):
         self.region = 'AU'
         self.name = 'Austria'
 
+        self.shapefile = os.path.join(curpath(), 'data', 'shape', 'noe_shp')
+
     def tearDown(self):
         pass
 
     def test_Shape(self):
 
-        bbox = (9.5335693359375, 46.407493591308594, 17.166385650634766,
-                49.01874542236328)
-
+        # test default shapefile
         shp = Shape(self.region)
 
         assert shp.code == self.region
         assert shp.name == self.name
-        assert shp.bbox == bbox
+        assert shp.bbox == (9.5335693359375, 46.407493591308594,
+                            17.166385650634766, 49.01874542236328)
+
+        # test custom shapefile
+        cshp = Shape('NOE', shapefile=self.shapefile)
+        assert cshp.code == 'NOE'
+        assert cshp.name == 'NOE'
+        assert cshp.bbox == (14.455012306812042, 47.422602087551724,
+                             17.07012761362633, 49.021162769139316)
+
+        # test if error is raised
+        self.assertRaises(FipsError, Shape, 'XYZ')
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

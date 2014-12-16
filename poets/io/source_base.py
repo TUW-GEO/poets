@@ -33,18 +33,20 @@
 # Creation date: 2014-06-30
 
 import os
+import shutil
+import pandas as pd
+import numpy as np
+import poets.image.netcdf as nc
+import poets.timedate.dateindex as dt
+import poets.grid.grids as gr
 from netCDF4 import Dataset, num2date, date2num
 from datetime import datetime, timedelta
-import numpy as np
-import pandas as pd
-import poets.image.netcdf as nt
-import poets.timedate.dateindex as dt
+from poets.grid.grids import ShapeGrid, RegularGrid
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
-    get_file_date
-from poets.timedate.dekad import check_dekad
-from poets.image.netcdf import get_properties
-from poets.grid.grids import ShapeGrid, RegularGrid
+    get_file_date, download_local
+from poets.io.fileformats import select_file
+from poets.io.unpack import unpack, check_compressed
 
 
 class BasicSource(object):
@@ -74,17 +76,30 @@ class BasicSource(object):
         Port to data host, defaults to 22.
     directory : str, optional
         Path to data on host.
-    dirstruct : list of strings
+    dirstruct : list of strings, optional
         Structure of source directory, each list item represents a
         subdirectory.
     begin_date : datetime, optional
-        Date from which on data is available, defaults to 2000-01-01.
+        Date from which on data is available.
     variables : string or list of strings, optional
         Variables used from data source, defaults to ['dataset'].
     nan_value : int, float, optional
         Nan value of the original data as given by the data provider.
     valid_range : tuple of int of float, optional
         Valid range of data, given as (minimum, maximum).
+    data_range : tuple of int of float, optional
+        Range of the values as data given in rawdata (minimum, maximum).
+        Will be scaled to valid_range.
+    ffilter : str, optional
+        Pattern that apperas in filename. Can be used to select out not
+        needed files if multiple files per date are provided.
+    colorbar : str, optional
+        Colorbar to use, use one from
+        http://matplotlib.org/examples/color/colormaps_reference.html,
+        defaults to jet.
+    unit : str, optional
+        Unit of dataset for displaying in legend. Does not have to be set
+        if unit is specified in input file metadata. Defaults to None.
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     dest_regions : list of str, optional
@@ -94,7 +109,7 @@ class BasicSource(object):
         degree.
     dest_temp_res : string, optional
         Temporal resolution of the destination NetCDF file, possible values:
-        ('month', 'dekad'), defaults to dekad.
+        ('day', 'week', 'dekad', 'month'), defaults to dekad.
     dest_start_date : datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
 
@@ -125,12 +140,20 @@ class BasicSource(object):
         subdirectory.
     begin_date : datetime
         Date from which on data is available.
+    ffilter : str
+        Pattern that apperas in filename.
+    colorbar : str, optional
+        Colorbar to used.
+    unit : str
+        Unit of dataset for displaying in legend.
     variables : list of strings
         Variables used from data source.
     nan_value : int, float
         Not a number value of the original data as given by the data provider.
     valid_range : tuple of int of float
         Valid range of data, given as (minimum, maximum).
+    data_range : tuple of int of float
+        Range of the values as data given in rawdata (minimum, maximum).
     dest_nan_value : int, float, optional
         NaN value in the final NetCDF file.
     tmp_path : str
@@ -145,15 +168,18 @@ class BasicSource(object):
         Spatial resolution of the destination NetCDF file.
     dest_temp_res : string
         Temporal resolution of the destination NetCDF file.
+    dest_start_date : datetime.datetime
+        First date of the dataset in the destination NetCDF file.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
                  directory=None, dirstruct=None,
-                 begin_date=datetime(2000, 1, 1),
-                 variables=None, nan_value=None, valid_range=None,
+                 begin_date=None, ffilter=None, colorbar='jet',
+                 variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
-                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1)):
+                 dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
+                 data_range=None):
 
         self.name = name
         self.filename = filename
@@ -166,13 +192,20 @@ class BasicSource(object):
         self.port = port
         self.directory = directory
         self.dirstruct = dirstruct
-        self.begin_date = begin_date
+        if begin_date is None:
+            self.begin_date = dest_start_date
+        else:
+            self.begin_date = begin_date
         if type(variables) == str:
             self.variables = [variables]
         else:
             self.variables = variables
+        self.ffilter = ffilter
+        self.unit = unit
         self.nan_value = nan_value
         self.valid_range = valid_range
+        self.data_range = data_range
+        self.colorbar = colorbar
         self.dest_nan_value = dest_nan_value
         self.dest_regions = dest_regions
         self.dest_sp_res = dest_sp_res
@@ -180,7 +213,11 @@ class BasicSource(object):
         self.dest_start_date = dest_start_date
         self.rawdata_path = os.path.join(rootpath, 'RAWDATA', name)
         self.tmp_path = os.path.join(rootpath, 'TMP')
+        if not os.path.exists(self.tmp_path):
+            os.mkdir(self.tmp_path)
         self.data_path = os.path.join(rootpath, 'DATA')
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
 
         if self.host[-1] != '/':
             self.host += '/'
@@ -195,13 +232,13 @@ class BasicSource(object):
         Parameters
         ----------
         begin : bool, optional
-            If set True, begin will be returned as None
+            If set True, begin will be returned as None.
         end : bool, optional
-            If set True, end will be returned as None
+            If set True, end will be returned as None.
         Returns
         -------
         dates : dict of dicts
-            None if no date available
+            Dictionary with dates of each parameter. None if no date available.
         """
 
         dates = {}
@@ -316,31 +353,54 @@ class BasicSource(object):
             resampling
         """
 
-        raw_files = []
-
         dest_file = self._get_tmp_filepath('spatial', region)
 
         dirList = os.listdir(self.rawdata_path)
         dirList.sort()
 
+        if region == 'global':
+            grid = gr.RegularGrid(sp_res=self.dest_sp_res)
+        else:
+            grid = gr.ShapeGrid(region, self.dest_sp_res, shapefile)
+
         for item in dirList:
 
             src_file = os.path.join(self.rawdata_path, item)
-            raw_files.append(src_file)
 
             fdate = get_file_date(item, self.filedate)
 
             if begin is not None:
                 if fdate < begin:
                     continue
+
             if end is not None:
                 if fdate > end:
+                    continue
+
+            if check_compressed(src_file):
+                dirname = os.path.splitext(item)[0]
+                dirpath = os.path.join(self.rawdata_path, dirname)
+                unpack(src_file)
+                src_file = select_file(os.listdir(dirpath))
+                src_file = os.path.join(dirpath, src_file)
+
+            if begin is not None:
+                if fdate < begin:
+                    if check_compressed(item):
+                        shutil.rmtree(os.path.join(self.rawdata_path,
+                                                   os.path.splitext(item)[0]))
+                    continue
+            if end is not None:
+                if fdate > end:
+                    if check_compressed(item):
+                        shutil.rmtree(os.path.join(self.rawdata_path,
+                                                   os.path.splitext(item)[0]))
                     continue
 
             print '.',
 
             image, _, _, _, timestamp, metadata = \
-                resample_to_shape(src_file, region, self.dest_sp_res,
+                resample_to_shape(src_file, region, self.dest_sp_res, grid,
                                   self.name, self.nan_value,
                                   self.dest_nan_value, self.variables,
                                   shapefile)
@@ -352,15 +412,20 @@ class BasicSource(object):
                 filename = (region + '_' + str(self.dest_sp_res) + '_'
                             + str(self.dest_temp_res) + '.nc')
                 dfile = os.path.join(self.data_path, filename)
-                nt.save_image(image, timestamp, region, metadata, dfile,
+                nc.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
                               self.dest_nan_value, shapefile,
                               self.dest_temp_res)
             else:
-                nt.write_tmp_file(image, timestamp, region, metadata,
+                nc.write_tmp_file(image, timestamp, region, metadata,
                                   dest_file, self.dest_start_date,
                                   self.dest_sp_res, self.dest_nan_value,
                                   shapefile)
+
+            # deletes unpacked files if existing
+            if check_compressed(item):
+                shutil.rmtree(os.path.join(self.rawdata_path,
+                                           os.path.splitext(item)[0]))
 
         print ''
 
@@ -384,7 +449,7 @@ class BasicSource(object):
             return False
 
         data = {}
-        variables, _, period = nt.get_properties(src_file)
+        variables, _, period = nc.get_properties(src_file)
 
         dtindex = dt.get_dtindex(self.dest_temp_res, period[0], period[1])
 
@@ -407,7 +472,7 @@ class BasicSource(object):
 
             for var in variables:
                 img, _, _, meta = \
-                    nt.read_variable(src_file, var, begin, end)
+                    nc.read_variable(src_file, var, begin, end)
 
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)
@@ -416,13 +481,24 @@ class BasicSource(object):
                         + str(self.dest_temp_res) + '.nc')
             dest_file = os.path.join(self.data_path, filename)
 
-            nt.save_image(data, date, region, metadata, dest_file,
+            nc.save_image(data, date, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
                           self.dest_nan_value, shapefile, self.dest_temp_res)
 
         # delete intermediate netCDF file
         print ''
         os.unlink(src_file)
+
+    def _scale_values(self, data):
+
+        if self.valid_range is not None:
+            if self.data_range is not None:
+                data = ((data - self.data_range[0]) /
+                        (self.data_range[1] - self.data_range[0]) *
+                        (self.valid_range[1] - self.valid_range[0]) +
+                        self.valid_range[0])
+
+        return data
 
     def download(self, download_path=None, begin=None, end=None):
         """"Download data
@@ -444,22 +520,28 @@ class BasicSource(object):
         if self.protocol in ['HTTP', 'http']:
             check = download_http(self.rawdata_path, self.host,
                                   self.directory, self.filename, self.filedate,
-                                  self.dirstruct, begin, end=end)
+                                  self.dirstruct, begin=begin, end=end,
+                                  ffilter=self.ffilter)
         elif self.protocol in ['FTP', 'ftp']:
             check = download_ftp(self.rawdata_path, self.host, self.directory,
-                                 self.port, self.username, self.password,
-                                 self.filedate, self.dirstruct, begin, end=end)
-
+                                 self.filedate, self.port, self.username,
+                                 self.password, self.dirstruct, begin=begin,
+                                 end=end, ffilter=self.ffilter)
         elif self.protocol in ['SFTP', 'sftp']:
             check = download_sftp(self.rawdata_path, self.host,
                                   self.directory, self.port, self.username,
                                   self.password, self.filedate, self.dirstruct,
-                                  begin, end=end)
+                                  begin=begin, end=end, ffilter=self.ffilter)
+        elif self.protocol in ['local', 'LOCAL']:
+            check = download_local(self.rawdata_path, directory=self.host,
+                                   filedate=self.filedate,
+                                   dirstruct=self.dirstruct, begin=begin,
+                                   end=end, ffilter=self.ffilter)
 
         return check
 
     def resample(self, begin=None, end=None, delete_rawdata=False,
-                 shapefile=None):
+                 shapefile=None, stepwise=True):
         """Resamples source data to given spatial and temporal resolution.
 
         Writes resampled images into a netCDF data file. Deletes original
@@ -478,19 +560,77 @@ class BasicSource(object):
             by default.
         """
 
-        for region in self.dest_regions:
+        if len(os.listdir(self.tmp_path)) != 0:
+            for fname in os.listdir(self.tmp_path):
+                if '.nc' in fname:
+                    os.remove(os.path.join(self.tmp_path, fname))
 
-            print '[INFO] resampling to region ' + region
-            print '[INFO] performing spatial resampling ',
-
-            self._resample_spatial(region, begin, end, delete_rawdata,
-                                   shapefile)
-
-            if self.temp_res == self.dest_temp_res:
-                print '[INFO] skipping temporal resampling'
+        if begin is None:
+            if self.dest_start_date < self.begin_date:
+                begin = self.begin_date
             else:
-                print '[INFO] performing temporal resampling ',
-                self._resample_temporal(region, shapefile)
+                begin = self.dest_start_date
+
+            if begin < self._get_download_date():
+                begin = self._get_download_date()
+
+        if end is None:
+            end = datetime.now()
+
+        if begin > end:
+            print '[INFO] everything up to date'
+            return '[INFO] everything up to date'
+
+        if stepwise:
+
+            drange = dt.get_dtindex(self.dest_temp_res, begin, end)
+
+            for i, date in enumerate(drange):
+                if date > end:
+                    continue
+                if i == 0:
+                    start = begin
+                else:
+                    if self.dest_temp_res in ['dekadal', 'weekly']:
+                        start = drange[i - 1] + timedelta(days=1)
+                    else:
+                        start = date
+
+                stop = date
+
+                print '[INFO] ' + str(start) + '-' + str(stop)
+
+                for region in self.dest_regions:
+
+                    print '[INFO] resampling to region ' + region
+                    print '[INFO] performing spatial resampling ',
+
+                    self._resample_spatial(region, start, stop, delete_rawdata,
+                                           shapefile)
+
+                    if self.temp_res == self.dest_temp_res:
+                        print '[INFO] skipping temporal resampling'
+                    else:
+                        print '[INFO] performing temporal resampling ',
+                        self._resample_temporal(region, shapefile)
+
+        else:
+
+            print '[INFO] ' + str(begin) + '-' + str(end)
+
+            for region in self.dest_regions:
+
+                print '[INFO] resampling to region ' + region
+                print '[INFO] performing spatial resampling ',
+
+                self._resample_spatial(region, begin, end, delete_rawdata,
+                                       shapefile)
+
+                if self.temp_res == self.dest_temp_res:
+                    print '[INFO] skipping temporal resampling'
+                else:
+                    print '[INFO] performing temporal resampling ',
+                    self._resample_temporal(region, shapefile)
 
         if delete_rawdata:
             print '[INFO] Cleaning up rawdata'
@@ -539,13 +679,16 @@ class BasicSource(object):
 
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
+        intervals = []
+
         for i, date in enumerate(drange):
             if date > end:
                 continue
             if i == 0:
                 start = begin
             else:
-                if self.dest_temp_res == 'dekad':
+                if self.dest_temp_res in ['dekad', 'dekadal', 'week',
+                                          'weekly']:
                     start = drange[i - 1] + timedelta(days=1)
                 else:
                     start = date
@@ -554,11 +697,12 @@ class BasicSource(object):
 
             filecheck = self.download(download_path, start, stop)
             if filecheck is True:
-                self.resample(start, stop, delete_rawdata, shapefile)
+                self.resample(start, stop, delete_rawdata, shapefile, False)
             else:
                 print '[WARNING] no data available for this date'
 
-    def read_ts(self, location, region=None, variable=None):
+    def read_ts(self, location, region=None, variable=None, shapefile=None,
+                scaled=True):
         """Gets timeseries from netCDF file for a gridpoint.
 
         Parameters
@@ -570,6 +714,11 @@ class BasicSource(object):
             Region of interest, set to first defined region if not set.
         variable : str, optional
             Variable to display, selects all available variables if None.
+        shapefile : str, optional
+            Path to custom shapefile.
+        scaled : bool, optional
+            If true, data will be scaled to a predefined range; if false, data
+            will be shown as given in rawdata file; defaults to True
 
         Returns
         -------
@@ -580,15 +729,15 @@ class BasicSource(object):
         if region is None:
             region = self.dest_regions[0]
 
-        if type(location) is int:
-            gp = location
-        elif type(location) is tuple:
+        if type(location) is tuple:
             if region == 'global':
                 grid = RegularGrid(self.dest_sp_res)
             else:
-                grid = ShapeGrid(region, self.dest_sp_res)
+                grid = ShapeGrid(region, self.dest_sp_res, shapefile)
 
             gp, _ = grid.find_nearest_gpi(location[0], location[1])
+        else:
+            gp = location
 
         if variable is None:
             if self.variables is None:
@@ -624,9 +773,22 @@ class BasicSource(object):
                 for i in range(begin, end + 1):
                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
 
+                if 'scaling_factor' in nc.variables[ncvar].ncattrs():
+                    vvar = nc.variables[ncvar]
+                    if vvar.getncattr('scaling_factor') < 0:
+                        df[ncvar] = (df[ncvar] *
+                                     float(vvar.getncattr('scaling_factor')))
+                    else:
+                        df[ncvar] = (df[ncvar] /
+                                     float(vvar.getncattr('scaling_factor')))
+                if scaled:
+                    if self.valid_range is not None:
+                        if self.data_range is not None:
+                            df[ncvar] = self._scale_values(df[ncvar])
+
         return df
 
-    def read_img(self, date, region=None, variable=None):
+    def read_img(self, date, region=None, variable=None, scaled=True):
         """Gets images from netCDF file for certain date
 
         Parameters
@@ -637,6 +799,9 @@ class BasicSource(object):
             Region of interest, set to first defined region if not set.
         variable : str, optional
             Variable to display, selects first available variables if None.
+        scaled : bool, optional
+            If true, data will be scaled to a predefined range; if false, data
+            will be shown as given in rawdata file; defaults to True.
 
         Returns
         -------
@@ -668,7 +833,7 @@ class BasicSource(object):
                                    + '_' + str(self.dest_temp_res) + '.nc')
 
         # get dekad of date:
-        date = check_dekad(date)
+        date = dt.check_period(self.dest_temp_res, date)
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
             time = nc.variables['time']
@@ -691,23 +856,34 @@ class BasicSource(object):
             if not metadata:
                 metadata = None
 
+            if 'scaling_factor' in var.ncattrs():
+                if metadata['scaling_factor'] < 0:
+                    img = img * float(metadata['scaling_factor'])
+                else:
+                    img = img / float(metadata['scaling_factor'])
+
+        if scaled:
+            if self.valid_range is not None:
+                if self.data_range is not None:
+                    img = self._scale_values(img)
+
         return img, lon, lat, metadata
 
     def get_variables(self):
         """
-        Gets all variables from source given in the NetCDF file.
+        Gets all variables given in the NetCDF file.
 
         Returns
         -------
         variables : list of str
-            Variables from source given in NetCDF file.
+            Variables from given in the NetCDF file.
         """
 
         nc_name = os.path.join(self.data_path, self.dest_regions[0] + '_'
                                + str(self.dest_sp_res) + '_'
                                + str(self.dest_temp_res) + '.nc')
 
-        nc_vars, _, _ = get_properties(nc_name)
+        nc_vars, _, _ = nc.get_properties(nc_name)
 
         variables = []
 
@@ -717,6 +893,3 @@ class BasicSource(object):
 
         return variables
 
-
-if __name__ == "__main__":
-    pass

@@ -1,26 +1,27 @@
-.. poets documentation master file, created by
-   sphinx-quickstart on Mon Aug 18 14:32:53 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+=====
+poets
+=====
 
-Welcome to poets's documentation!
-=================================
+This is the documentation of **poets**, a package with aims to provide a 
+standard library that can be used for collecting and resampling geospatial 
+image datasets.
 
 Contents
---------
+========
 
 .. toctree::
-   :maxdepth: 4
-   
+   :maxdepth: 3
+
    introduction.rst
    examples.rst
-   
-   poets
+
+   License <license>
+   Module Reference <_rst/modules>
+
 
 Indices and tables
-------------------
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

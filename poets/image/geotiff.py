@@ -36,68 +36,13 @@
 GeoTIFF operations.
 """
 
-from osgeo import gdal
-from poets.shape.shapes import Shape
 import numpy as np
-
-
-def get_layer_extent(filepath):
-    """
-    as in: 'http://stackoverflow.com/questions/2922532/obtain-latitude-and-
-            longitude-from-a-geotiff-file'
-
-    Parameters:
-    -----------
-    filepath : str
-        path to geotiff
-        
-    Returns:
-    --------
-    lon_min, lat_min : float
-        lower left coordinate
-    lon_max, lat_max : float
-        upper right coordinate
-    """
-    ds = gdal.Open(filepath)
-    gt = ds.GetGeoTransform()
-    width = ds.RasterXSize
-    height = ds.RasterYSize
-    lon_min = gt[0]
-    lat_min = gt[3] + width * gt[4] + height * gt[5]
-    lon_max = gt[0] + width * gt[1] + height * gt[2]
-    lat_max = gt[3]
-
-    return lon_min, lat_min, lon_max, lat_max
-
-
-def region_in_geotiff(lon_min, lat_min, lon_max, lat_max, region):
-    """ Checks if geotiff covers country.
-    
-    Parameters:
-    -----------
-    lon_min, lat_min : float
-        lower left coordinate of geotiff
-    lon_max, lat_max : float
-        upper right coordinate of geotiff
-    region : str
-        country FIPS code
-    
-    Returns:
-    --------
-    True, if region in geotiff
-    """
-    
-    shp = Shape(region)
-    region_ext = shp.bbox
-    if (region_ext[0] >= lon_min and region_ext[1] >= lat_min and
-        region_ext[2] <= lon_max and region_ext[3] <= lat_max):
-        return True
 
 
 def lonlat2px_gt(img, lon, lat, lon_min, lat_min, lon_max, lat_max):
     """
-    Converts a pair of lon and lat to its corresponding pixel
-    value in an image file.
+    Converts a pair of lon and lat to its corresponding pixel value in an
+    geotiff image file.
 
     Parameters
     ----------
@@ -121,23 +66,23 @@ def lonlat2px_gt(img, lon, lat, lon_min, lat_min, lon_max, lat_max):
     """
 
     w, h = img.size
-    
-    londiff = lon_max-lon_min
-    latdiff = lat_max-lat_min
-    
+
+    londiff = lon_max - lon_min
+    latdiff = lat_max - lat_min
+
     mw = w / londiff
     mh = h / latdiff
-    
-    row = (-lat+lat_max) * mh
-    col = (lon-lon_min) * mw
+
+    row = (-lat + lat_max) * mh
+    col = (lon - lon_min) * mw
 
     return row, col
 
 
 def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
     """
-    Converts two arrays of row and column pixels into their
-    corresponding lon and lat arrays
+    Converts two arrays of row and column pixels into their corresponding
+    longitude and latitude arrays
 
     Parameters
     ----------
@@ -159,12 +104,12 @@ def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
     lon_max, lat_max : float
         upper right coordinate of geotiff
     """
-    
+
     w, h = img.size
-    
-    londiff = lon_max-lon_min
-    latdiff = lat_max-lat_min
-    
+
+    londiff = lon_max - lon_min
+    latdiff = lat_max - lat_min
+
     mw = w / londiff
     mh = h / latdiff
 
@@ -178,6 +123,3 @@ def px2lonlat_gt(img, lon_px, lat_px, lon_min, lat_min, lon_max, lat_max):
         lat_new[i] = lat_max - lat_px[i] / mh
 
     return lon_new, lat_new
-
-if __name__ == "__main__":
-    pass

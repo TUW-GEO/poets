@@ -1,5 +1,5 @@
-function poetsViewer(div) {
-	this.host = 'http://127.0.0.1:5000'
+function poetsViewer(div, host, port) {
+	this.host = 'http://'+host+':'+port.toString();
 }
 
 poetsViewer.prototype.loadTS = function(lon, lat, anom) {

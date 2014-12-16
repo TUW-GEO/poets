@@ -8,7 +8,7 @@ given in `Setting up a Poet base class`_. For plotting, we will use `Matplotlib 
 Reading the image can be done with the :class:`poets.poet.Poet.read_image` method.
 Please note that this method returns the image as numpy array and additionally the longitudes and latitudes of the image.
 
-In[9]::
+In[10]::
 
    import matplotlib.pyplot as plt
    

@@ -33,8 +33,10 @@
 # Creation date: 2014-05-27
 
 import pandas as pd
-from datetime import datetime
-from poets.timedate.dekad import dekad_index
+import math
+import calendar
+from datetime import datetime, timedelta
+from poets.timedate.dekad import dekad_index, check_dekad
 
 
 def get_dtindex(interval, begin, end=None):
@@ -63,7 +65,8 @@ def get_dtindex(interval, begin, end=None):
     elif interval in ['daily', 'day', '1']:
         dtindex = pd.date_range(begin, end, freq='D')
     elif interval in ['weekly', 'week', '7']:
-        dtindex = pd.date_range(begin, end, freq='7D')
+        begin2 = begin - timedelta(begin.weekday()) + timedelta(6)
+        dtindex = pd.date_range(begin2, end, freq='7D')
     elif interval in ['monthly', 'month']:
         dtindex = pd.date_range(begin, end, freq='M')
 
@@ -71,3 +74,28 @@ def get_dtindex(interval, begin, end=None):
         dtindex = pd.date_range(begin, end, freq=str(str(interval) + 'D'))
 
     return dtindex
+
+
+def check_period(interval, date):
+    """
+    Checks the contining interval of a date and returns the date of the 
+    interval.
+
+    Parameters
+    ----------
+    interval : str
+        Interval to check, one of (dekad, week, month).
+    date : datetime
+        Date to check.
+    """
+
+    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
+        date = check_dekad(date)
+    elif interval in ['weekly', 'week', '7']:
+        date = date - timedelta(date.weekday()) + timedelta(6)
+    elif interval in ['monthly', 'month']:
+        lday = calendar.monthrange(date.year, date.month)[1]
+        date = datetime(date.year, date.month, lday)
+
+    return date
+

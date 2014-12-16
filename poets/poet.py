@@ -1,7 +1,6 @@
 # Copyright (c) 2014, Vienna University of Technology (TU Wien), Department
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
-from poets.image.netcdf import get_properties
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -37,17 +36,20 @@ from poets.image.netcdf import get_properties
 This module includes the poets base class `Poet`.
 """
 
+from datetime import datetime
 import os
+
+from netCDF4 import Dataset
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from netCDF4 import Dataset
-from poets.io.source_base import BasicSource
-from poets.image.netcdf import get_properties
 from poets.grid.grids import ShapeGrid
+from poets.image.netcdf import get_properties
+from poets.io.source_base import BasicSource
 import poets.web.app as app
 
-valid_temp_res = ['dekad', 'month']
+valid_temp_res = ['dekad', 'dekadal', 'month', 'monthly', 'week', 'weekly',
+                  'day', 'daily']
 
 
 class Poet(object):
@@ -66,18 +68,18 @@ class Poet(object):
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
-        temporal resolution of the data, possible values: month, dekad,
-        defaults to dekad
+        temporal resolution of the data, possible values: day, week, month,
+        dekad; defaults to dekad
     start_date : datetime.datetime, optional
         first date of the dataset, defaults to 2000-01-01
     nan_value : int
         NaN value to use, defaults to -99
     shapefile : str, optional
         Path to shape file, uses "world country admin boundary shapefile" by
-        default.
+        default. Custom shapefile must use WGS84 as reference system.
     delete_rawdata : bool, optional
         Original files will be deleted from rawdata_path if set True. Defaults
-        to False
+        to False.
 
     Attributes
     ----------
@@ -116,7 +118,7 @@ class Poet(object):
         self.regions = regions
         self.spatial_resolution = spatial_resolution
 
-        if temporal_resolution not in ['dekad', 'month']:
+        if temporal_resolution not in valid_temp_res:
             raise ValueError("Temporal resulution must be one of " +
                              str(valid_temp_res))
 
@@ -139,9 +141,9 @@ class Poet(object):
 
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
-                   dirstruct=None, begin_date=datetime(2000, 1, 1),
+                   dirstruct=None, begin_date=None,
                    variables=None, nan_value=None, valid_range=None,
-                   unit=None):
+                   unit=None, ffilter=None, data_range=None, colorbar=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -170,21 +172,41 @@ class Poet(object):
             Structure of source directory, each list item represents a
             subdirectory.
         begin_date : datetime.date, optional
-            Date from which on data is available, defaults to 2000-01-01.
+            Date from which on data is available.
         variables : string or list of strings, optional
             Variables used from data source.
         nan_value : int, float, optional
             Nan value of the original data as given by the data provider.
         valid_range : tuple of int of float, optional
             Valid range of data, given as (minimum, maximum).
+        data_range : tuple of int of float, optional
+            Range of the values as data given in rawdata (minimum, maximum).
+            Will be scaled to valid_range.
+        ffilter : str, optional
+            Pattern that apperas in filename. Can be used to select out not
+            needed files if multiple files per date are provided.
+        colorbar : str, optional
+            Colorbar to use, use one from
+            http://matplotlib.org/examples/color/colormaps_reference.html;
+            defaults to jet.
+        unit : str, optional
+            Unit of dataset for displaying in legend. Does not have to be set
+            if unit is specified in input file metadata. Defaults to None.
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
-                             host, protocol, username, password, port,
-                             directory, dirstruct, begin_date, variables,
-                             nan_value, valid_range, self.nan_value,
-                             self.regions, self.spatial_resolution,
-                             self.temporal_resolution, self.start_date)
+                             host, protocol, username=username,
+                             password=password, port=port, ffilter=ffilter,
+                             directory=directory, dirstruct=dirstruct,
+                             begin_date=begin_date, variables=variables,
+                             nan_value=nan_value, valid_range=valid_range,
+                             unit=unit,
+                             data_range=data_range, colorbar=colorbar,
+                             dest_nan_value=self.nan_value,
+                             dest_regions=self.regions,
+                             dest_sp_res=self.spatial_resolution,
+                             dest_temp_res=self.temporal_resolution,
+                             dest_start_date=self.start_date)
 
         self.sources[name] = source
 
@@ -215,6 +237,48 @@ class Poet(object):
                                       delete_rawdata=delete_rawdata)
 
         print '[SUCCESS] Download and resampling complete!'
+
+    def download(self, begin=None, end=None):
+        """Starts download of input data for sources as added
+        to `Poets.sources`.
+
+        Parameters
+        ----------
+        begin : datetime, optional
+            Start date of data to download, defaults to start date as defined
+            in poets class.
+        end : datetime, optional
+            End date of data to download, defaults to current datetime.
+        """
+
+        for source in self.sources.keys():
+            src = self.sources[source]
+            print '[INFO] Download data for source ' + source
+            src.download(begin=begin, end=end)
+
+        print '[SUCCESS] Download complete!'
+
+    def resample(self, begin=None, end=None, delete_rawdata=None):
+        """Starts download of input data for sources as added
+        to `Poets.sources`.
+
+        Parameters
+        ----------
+        begin : datetime, optional
+            Start date of data to download, defaults to start date as defined
+            in poets class.
+        end : datetime, optional
+            End date of data to download, defaults to current datetime.
+        """
+
+        for source in self.sources.keys():
+            src = self.sources[source]
+            print '[INFO] Resampling data for source ' + source
+            src.resample(begin=begin, end=end,
+                         shapefile=self.shapefile,
+                         delete_rawdata=delete_rawdata)
+
+        print '[SUCCESS] Resampling complete!'
 
     def get_gridpoints(self):
         """Returns gridpoints from NetCDF file.
@@ -321,22 +385,23 @@ class Poet(object):
         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
                     '_' + str(self.temporal_resolution) + '.nc')
 
-        variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
+        variables, _, _ = get_properties(os.path.join(self.data_path,
+                                                      src_file))
 
         return variables
 
-    def start_app(self):
+    def start_app(self, host='127.0.0.1', port=5000, debug=False):
+        """Starts web interface.
 
-#==============================================================================
-#         src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
-#                     '_' + str(self.temporal_resolution) + '.nc')
-#
-#         variables, _, _ = get_properties(os.path.join(self.data_path, src_file))
-#
-#         app.start(self.regions, self.sources, variables)
-#==============================================================================
+        Parameters
+        ----------
+        host : str, optional
+            Host that is used by the app, defaults to 127.0.0.1.
+        port : int, optional
+            Port where app runs on, defaults to 50000.
+        debug : bool, optional
+            Starts app in debug mode if set True, defaults to False.
+        """
 
-        app.start(self)
+        app.start(self, host, port, debug)
 
-if __name__ == "__main__":
-    pass
