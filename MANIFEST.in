@@ -4,6 +4,5 @@ include *.rst
 include tox.ini
 recursive-include poets *.py *.c *.h *.pxd *.pyx *.dbf *.README *.shp *.shx
 recursive-include docs *.rst *.py *.txt *.html *.css *.png *.gif *.js
-recursive-include tests *.py *.png *.csv  *.tif *.tiff
-recursive-include tests/shape *.dbf *.prj *.qgj *.shp *.shx
+recursive-include tests *.py *.png *.csv  *.tif *.tiff *.dbf *.prj *.qgj *.shp *.shx
 include poets/_version.py
