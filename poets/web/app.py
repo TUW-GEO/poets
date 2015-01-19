@@ -180,6 +180,8 @@ def index(**kwargs):
         lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = \
             bounds(region, p.shapefile)
 
+        print p.spatial_resolution
+
         return render_template('app.html',
                                max=idxdates,
                                coord=[c_lon, c_lat],
@@ -193,7 +195,8 @@ def index(**kwargs):
                                variables=variables,
                                dates=fdates,
                                host=host_gl,
-                               port=port_gl)
+                               port=port_gl,
+                               sp_res=p.spatial_resolution)
     else:
         return render_template('index.html',
                                regions=p.regions,

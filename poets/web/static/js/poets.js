@@ -2,7 +2,7 @@ function poetsViewer(div, host, port) {
 	this.host = 'http://'+host+':'+port.toString();
 }
 
-poetsViewer.prototype.loadTS = function(lon, lat, anom) {
+poetsViewer.prototype.loadTS = function(lon, lat, sp_res, anom) {
 	
 	var reg = $("#region").val()
 	var src = $("#source").val()
@@ -14,8 +14,12 @@ poetsViewer.prototype.loadTS = function(lon, lat, anom) {
 	
 	color = '#DF7401';
 	
-	tlon = parseInt(lon).toFixed(2);
-	tlat = parseInt(lat).toFixed(2);
+	var roundr = 1/sp_res;
+	var rdec = sp_res.toString()
+	rdec = (rdec.split('.')[1].length)
+	
+	tlon = (Math.round(lon*roundr)/roundr).toFixed(rdec);
+	tlat = (Math.round(lat*roundr)/roundr).toFixed(rdec);
 	
 	title = " ("+tlon+"/"+tlat+")"
 	
