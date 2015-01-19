@@ -109,23 +109,15 @@ def start(poet, host='127.0.0.1', port=5000, debug=False):
         Starts app in debug mode if set True, defaults to False.
     """
 
-    global regions
-    global sources
+    global p
     global variables
     global dates
     global vmin, vmax, cmap
-    global shapefile
-    global nan_value
     global host_gl
     global port_gl
-    global tmp_res
 
-    regions = poet.regions
-    sources = poet.sources
+    p = poet
     variables = poet.get_variables()
-    shapefile = poet.shapefile
-    nan_value = poet.nan_value
-    tmp_res = poet.temporal_resolution
     host_gl = host
     port_gl = port
 
@@ -157,9 +149,9 @@ def index(**kwargs):
         if 'var' in kwargs:
             variable = kwargs['var']
 
-        for src in sources.keys():
+        for src in p.sources.keys():
             if src in variable:
-                source = sources[src]
+                source = p.sources[src]
 
         ndate = source._check_current_date()
         begindate = ndate[region][variable][0]
@@ -170,12 +162,12 @@ def index(**kwargs):
             error = 'No data available for this dataset.'
 
             return render_template('index.html',
-                                   regions=regions,
-                                   sources=sources.keys(),
+                                   regions=p.regions,
+                                   sources=p.sources.keys(),
                                    variables=variables,
                                    error=error)
 
-        d = get_dtindex(tmp_res, begindate, enddate)
+        d = get_dtindex(p.temporal_resolution, begindate, enddate)
         dates = d.to_pydatetime()
         idxdates = len(dates) - 1
 
@@ -186,7 +178,7 @@ def index(**kwargs):
             fdates.append(dat)
 
         lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = \
-            bounds(region, shapefile)
+            bounds(region, p.shapefile)
 
         return render_template('app.html',
                                max=idxdates,
@@ -197,15 +189,15 @@ def index(**kwargs):
                                region=region,
                                source=source.name,
                                variable=variable,
-                               regions=regions,
+                               regions=p.regions,
                                variables=variables,
                                dates=fdates,
                                host=host_gl,
                                port=port_gl)
     else:
         return render_template('index.html',
-                               regions=regions,
-                               sources=sources.keys(),
+                               regions=p.regions,
+                               sources=p.sources.keys(),
                                variables=variables)
 
 
@@ -227,7 +219,7 @@ def get_ts(**kwargs):
     if 'reg' in kwargs:
         region = kwargs['reg']
     if 'src' in kwargs:
-        source = sources[kwargs['src']]
+        source = p.sources[kwargs['src']]
     if 'var' in kwargs:
         variable = kwargs['var']
     if 'loc' in kwargs:
@@ -238,7 +230,7 @@ def get_ts(**kwargs):
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    df = source.read_ts(lonlat, region, variable, shapefile)
+    df = p.read_timeseries(source.name, lonlat, region, variable)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df, window_size=100)
@@ -270,7 +262,7 @@ def download_ts(**kwargs):
     if 'reg' in kwargs:
         region = kwargs['reg']
     if 'src' in kwargs:
-        source = sources[kwargs['src']]
+        source = p.sources[kwargs['src']]
     if 'var' in kwargs:
         variable = kwargs['var']
     if 'loc' in kwargs:
@@ -283,7 +275,7 @@ def download_ts(**kwargs):
 
     filename = region + '_' + variable + '_' + loc[0][:6] + '_' + loc[1][:6]
 
-    df = source.read_ts(lonlat, region, variable, shapefile)
+    df = p.read_timeseries(source.name, lonlat, region, variable)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df)
@@ -325,7 +317,7 @@ def request_image(**kwargs):
     if 'reg' in kwargs:
         region = kwargs['reg']
     if 'src' in kwargs:
-        source = sources[kwargs['src']]
+        source = p.sources[kwargs['src']]
     if 'var' in kwargs:
         variable = kwargs['var']
     if 'idx' in kwargs:
@@ -333,7 +325,7 @@ def request_image(**kwargs):
 
     pidx = (dates[int(idx)])
 
-    img, _, _, metadata = source.read_img(pidx, region, variable)
+    img, _, _, metadata = p.read_image(source.name, pidx, region, variable)
 
     if source.unit is not None:
         if metadata is not None and 'unit' not in metadata:
@@ -351,10 +343,10 @@ def request_image(**kwargs):
 
     cmap = source.colorbar
 
-    # Resale the image
+    # Rescale the image
     n = 10
     img = np.kron(img, np.ones((n, n)))
-    img[img == nan_value] = np.NAN
+    img[img == p.nan_value] = np.NAN
 
     buf = StringIO()
     plt.imsave(buf, img, vmin=vmin, vmax=vmax, cmap=cmap)

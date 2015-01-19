@@ -376,7 +376,8 @@ class Poet(object):
             Timeseries for the selected data.
         """
 
-        ts = self.sources[source].read_ts(location, region, variable)
+        ts = self.sources[source].read_ts(location, region, variable,
+                                          shapefile=self.shapefile)
 
         return ts
 
