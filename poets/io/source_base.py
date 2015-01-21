@@ -112,6 +112,9 @@ class BasicSource(object):
         ('day', 'week', 'dekad', 'month'), defaults to dekad.
     dest_start_date : datetime, optional
         Start date of the destination NetCDF file, defaults to 2000-01-01.
+    src_file : dict of str, optional
+        Path to file that contains source. Uses default NetCDF file if None.
+        Key of dict must be regions as set in regions attribute.
 
     Attributes
     ----------
@@ -170,6 +173,8 @@ class BasicSource(object):
         Temporal resolution of the destination NetCDF file.
     dest_start_date : datetime.datetime
         First date of the dataset in the destination NetCDF file.
+    src_file : str, list of str
+        Path to file that contains source.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
@@ -179,7 +184,7 @@ class BasicSource(object):
                  variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
                  dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
-                 data_range=None):
+                 data_range=None, src_file=None):
 
         self.name = name
         self.filename = filename
@@ -225,6 +230,16 @@ class BasicSource(object):
         if self.directory is not None and self.directory[-1] != '/':
             self.directory += '/'
 
+        if src_file is None:
+            self.src_file = {}
+            for reg in self.dest_regions:
+                self.src_file[reg] = os.path.join(self.data_path, reg + '_' +
+                                                  str(self.dest_sp_res) + '_'
+                                                  + str(self.dest_temp_res)
+                                                  + '.nc')
+        else:
+            self.src_file = src_file
+
     def _check_current_date(self, begin=True, end=True):
         """Helper method that checks the current date of individual variables
         in the netCDF data file.
@@ -244,9 +259,9 @@ class BasicSource(object):
         dates = {}
 
         for region in self.dest_regions:
-            nc_name = os.path.join(self.data_path, region + '_'
-                                   + str(self.dest_sp_res) + '_'
-                                   + str(self.dest_temp_res) + '.nc')
+
+            nc_name = self.src_file[region]
+
             if os.path.exists(nc_name):
                 dates[region] = {}
 
@@ -477,9 +492,13 @@ class BasicSource(object):
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)
 
-            filename = (region + '_' + str(self.dest_sp_res) + '_'
-                        + str(self.dest_temp_res) + '.nc')
-            dest_file = os.path.join(self.data_path, filename)
+            #==================================================================
+            # filename = (region + '_' + str(self.dest_sp_res) + '_'
+            #             + str(self.dest_temp_res) + '.nc')
+            # dest_file = os.path.join(self.data_path, filename)
+            #==================================================================
+
+            dest_file = self.src_file[region]
 
             nc.save_image(data, date, region, metadata, dest_file,
                           self.dest_start_date, self.dest_sp_res,
@@ -740,16 +759,12 @@ class BasicSource(object):
             gp = location
 
         if variable is None:
-            if self.variables is None:
-                variable = self.get_variables()
-            else:
-                variable = self.variables
+            variable = self.get_variables()
         else:
+            variable = self.check_variable(variable)
             variable = [variable]
 
-        source_file = os.path.join(self.data_path,
-                                   region + '_' + str(self.dest_sp_res) + '_'
-                                   + str(self.dest_temp_res) + '.nc')
+        source_file = self.src_file[region]
 
         var_dates = self._check_current_date()
 
@@ -762,11 +777,7 @@ class BasicSource(object):
             lon_pos = position[1][0]
             df = pd.DataFrame(index=pd.DatetimeIndex(dates))
 
-            for var in variable:
-                if self.name not in var:
-                    ncvar = self.name + '_' + var
-                else:
-                    ncvar = var
+            for ncvar in variable:
                 begin = np.where(dates == var_dates[region][ncvar][0])[0][0]
                 end = np.where(dates == var_dates[region][ncvar][1])[0][0]
                 df[ncvar] = np.NAN
@@ -819,18 +830,12 @@ class BasicSource(object):
             region = self.dest_regions[0]
 
         if variable is None:
-            if self.variables is None:
-                variable = self.get_variables()[0]
-            else:
-                variable = self.name + '_' + self.variables[0]
+            variable = self.get_variables()[0]
         else:
             # Renames variable name to SOURCE_variable
-            if self.name not in variable:
-                variable = self.name + '_' + variable
+            variable = self.check_variable(variable)
 
-        source_file = os.path.join(self.data_path,
-                                   region + '_' + str(self.dest_sp_res)
-                                   + '_' + str(self.dest_temp_res) + '.nc')
+        source_file = self.src_file[region]
 
         # get dekad of date:
         date = dt.check_period(self.dest_temp_res, date)
@@ -879,17 +884,66 @@ class BasicSource(object):
             Variables from given in the NetCDF file.
         """
 
-        nc_name = os.path.join(self.data_path, self.dest_regions[0] + '_'
-                               + str(self.dest_sp_res) + '_'
-                               + str(self.dest_temp_res) + '.nc')
+        nc_name = self.src_file[self.dest_regions[0]]
 
         nc_vars, _, _ = nc.get_properties(nc_name)
 
         variables = []
 
-        for var in nc_vars:
-            if self.name in var:
-                variables.append(var)
+        if self.variables is not None:
+            for var in self.variables:
+                if var in nc_vars:
+                    variables.append(var)
+                else:
+                    if self.name + '_' + var in nc_vars:
+                        variables.append(self.name + '_' + var)
+        else:
+            for var in nc_vars:
+                if self.name + '_dataset' in var:
+                    variables.append(var)
+                elif self.name in var:
+                    variables.append(var)
 
         return variables
 
+    def check_variable(self, variable):
+        """
+        Checks if a variable exists in a source and returns it's correct name.
+
+        Parameters
+        ----------
+        variable : str
+            Variable to check.
+
+        Returns
+        -------
+        varname : str
+            Name of the variable in the source.
+        """
+
+        varname = ''
+
+        if self.variables is not None:
+            for var in self.variables:
+                if variable in var:
+                    varname = variable
+                    break
+                elif self.name + '_' + variable in var:
+                    varname = self.name + '_' + variable
+                    break
+                else:
+                    if variable == self.name + '_' + var:
+                        varname = self.name + '_' + var
+                        break
+
+        else:
+            for var in self.get_variables():
+                if variable == var:
+                    varname = variable
+                    break
+                else:
+                    if self.name + '_' + variable in var:
+                        varname = self.name + '_' + variable
+                        break
+
+        return varname

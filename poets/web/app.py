@@ -150,7 +150,7 @@ def index(**kwargs):
             variable = kwargs['var']
 
         for src in p.sources.keys():
-            if src in variable:
+            if variable in p.sources[src].get_variables():
                 source = p.sources[src]
 
         ndate = source._check_current_date()
@@ -220,7 +220,7 @@ def get_ts(**kwargs):
     if 'reg' in kwargs:
         region = kwargs['reg']
     if 'src' in kwargs:
-        source = p.sources[kwargs['src']]
+        source = p.sources[kwargs['src']].name
     if 'var' in kwargs:
         variable = kwargs['var']
     if 'loc' in kwargs:
@@ -231,7 +231,7 @@ def get_ts(**kwargs):
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    df = p.read_timeseries(source.name, lonlat, region, variable)
+    df = p.read_timeseries(source, lonlat, region, variable)
 
     if anomaly:
         df = ts.anomaly.calc_anomaly(df, window_size=100)

@@ -62,7 +62,7 @@ class Poet(object):
     ----------
     rootpath : str
         path to the directory where data should be stored
-    regions : list of str, optional
+    regions : list of str, str, optional
         Identifier of the region in the shapefile. If the default shapefile is
         used, this would be the FIPS country code. Defaults to global.
     spatial_resolution : float, optional
@@ -115,7 +115,10 @@ class Poet(object):
                  shapefile=None, delete_rawdata=False):
 
         self.rootpath = rootpath
-        self.regions = regions
+        if isinstance(regions, str):
+            self.regions = [regions]
+        else:
+            self.regions = regions
         self.spatial_resolution = spatial_resolution
 
         if temporal_resolution not in valid_temp_res:
@@ -143,7 +146,8 @@ class Poet(object):
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=None,
                    variables=None, nan_value=None, valid_range=None,
-                   unit=None, ffilter=None, data_range=None, colorbar=None):
+                   unit=None, ffilter=None, data_range=None, colorbar=None,
+                   src_file=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -192,6 +196,9 @@ class Poet(object):
         unit : str, optional
             Unit of dataset for displaying in legend. Does not have to be set
             if unit is specified in input file metadata. Defaults to None.
+        src_file : dict of str, optional
+            Path to file that contains source. Uses default NetCDF file if 
+            None.
         """
 
         source = BasicSource(name, filename, filedate, temp_res, self.rootpath,
@@ -206,7 +213,8 @@ class Poet(object):
                              dest_regions=self.regions,
                              dest_sp_res=self.spatial_resolution,
                              dest_temp_res=self.temporal_resolution,
-                             dest_start_date=self.start_date)
+                             dest_start_date=self.start_date,
+                             src_file=src_file)
 
         self.sources[name] = source
 
@@ -382,12 +390,22 @@ class Poet(object):
         return ts
 
     def get_variables(self):
+        """
+        Returns all variables available.
 
-        src_file = (self.regions[0] + '_' + str(self.spatial_resolution) +
-                    '_' + str(self.temporal_resolution) + '.nc')
+        Returns
+        -------
+        variables : list of str
+            Sorted list of all variables.
+        """
 
-        variables, _, _ = get_properties(os.path.join(self.data_path,
-                                                      src_file))
+        variables = []
+
+        for src in self.sources.keys():
+            for var in self.sources[src].get_variables():
+                variables.append(var)
+
+        variables.sort()
 
         return variables
 

@@ -37,7 +37,7 @@ Provides download functions for FTP/SFTP, HTTP and local data sources.
 """
 import calendar
 from datetime import datetime
-from ftplib import FTP
+from ftplib import FTP, socket
 import os
 import shutil
 import paramiko
@@ -151,6 +151,9 @@ def download_ftp(download_path, host, directory, filedate, port=21,
                 files += year_filelist
     else:
         files = filesInDir_ftp(directory, ftp, filedate, begin, end, files)
+        if files is False:
+            print '[ERROR] Connection timed out, skipping source.'
+            return False
 
     ftp.cwd(directory)
     if len(files) > 0:
@@ -751,7 +754,11 @@ def filesInDir_ftp(path, ftp, filedate, begin, end, filelist):
 
     files = []
     ftp.cwd(path)
-    ftp.retrlines('NLST', files.append)
+    try:
+        ftp.retrlines('NLST', files.append)
+    except socket.error:
+        return False
+
     stats = []
     ftp.retrlines("LIST", stats.append)
 

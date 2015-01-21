@@ -123,7 +123,7 @@ class Test(unittest.TestCase):
                              variables=variables, colorbar=colorbar,
                              valid_range=valid_range)
 
-        assert len(self.poet.sources['CCI'].__dict__.keys()) == 27
+        assert len(self.poet.sources['CCI'].__dict__.keys()) == 28
 
         name = 'TEST'
         filename = "test_{YYYY}_{MM}_{TT}.png"
@@ -144,7 +144,7 @@ class Test(unittest.TestCase):
                              unit=unit, data_range=data_range,
                              colorbar=colorbar)
 
-        assert len(self.poet.sources['TEST'].__dict__.keys()) == 27
+        assert len(self.poet.sources['TEST'].__dict__.keys()) == 28
 
     def test_download(self):
         self.poet.download(begin=self.start_date, end=self.enddate)
@@ -188,8 +188,8 @@ class Test(unittest.TestCase):
         assert gridpoints[self.regions[0]].index.size == 12
 
     def test_get_variables(self):
-        vars = self.poet.get_variables()
-        assert vars == ['TEST_dataset', 'CCI_sm']
+        varsiables = self.poet.get_variables()
+        assert variables == ['CCI_sm', 'TEST_dataset']
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
