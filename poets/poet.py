@@ -44,7 +44,6 @@ from netCDF4 import Dataset
 import numpy as np
 import pandas as pd
 from poets.grid.grids import ShapeGrid
-from poets.image.netcdf import get_properties
 from poets.io.source_base import BasicSource
 import poets.web.app as app
 
