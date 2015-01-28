@@ -469,6 +469,7 @@ class BasicSource(object):
         dtindex = dt.get_dtindex(self.dest_temp_res, period[0], period[1])
 
         for date in dtindex:
+            # skip if data for period is not complete
             if date > period[1]:
                 continue
             print date
@@ -584,6 +585,11 @@ class BasicSource(object):
                 if '.nc' in fname:
                     os.remove(os.path.join(self.tmp_path, fname))
 
+        # clean rawdata folder from sudirectories
+        for item in os.listdir(self.rawdata_path):
+            if os.path.isdir(os.path.join(self.rawdata_path, item)):
+                os.rmdir(os.path.join(self.rawdata_path, item))
+
         if begin is None:
             if self.dest_start_date < self.begin_date:
                 begin = self.begin_date
@@ -592,6 +598,13 @@ class BasicSource(object):
 
             if begin < self._get_download_date():
                 begin = self._get_download_date()
+
+            # start one period earlier to close possible gaps
+            #==================================================================
+            # begin = begin - timedelta(days=1)
+            # if begin < self.begin_date:
+            #     begin = self.begin_date
+            #==================================================================
 
         if end is None:
             end = datetime.now()
@@ -689,6 +702,13 @@ class BasicSource(object):
             if begin < self._get_download_date():
                 begin = self._get_download_date()
 
+            # start one period earlier to close possible gaps
+            #==================================================================
+            # begin = begin - timedelta(days=1)
+            # if begin < self.begin_date:
+            #     begin = self.begin_date
+            #==================================================================
+
         if end is None:
             end = datetime.now()
 
@@ -697,8 +717,6 @@ class BasicSource(object):
             return '[INFO] everything up to date'
 
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
-
-        intervals = []
 
         for i, date in enumerate(drange):
             if date > end:
