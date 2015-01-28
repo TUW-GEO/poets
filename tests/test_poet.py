@@ -188,7 +188,7 @@ class Test(unittest.TestCase):
         assert gridpoints[self.regions[0]].index.size == 12
 
     def test_get_variables(self):
-        varsiables = self.poet.get_variables()
+        variables = self.poet.get_variables()
         assert variables == ['CCI_sm', 'TEST_dataset']
 
 if __name__ == "__main__":
