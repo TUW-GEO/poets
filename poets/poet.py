@@ -47,7 +47,7 @@ from poets.grid.grids import ShapeGrid
 from poets.io.source_base import BasicSource
 import poets.web.app as app
 
-valid_temp_res = ['dekad', 'dekadal', 'month', 'monthly', 'week', 'weekly',
+valid_temp_res = ['dekad', 'dekade', 'month', 'monthly', 'week', 'weekly',
                   'day', 'daily']
 
 

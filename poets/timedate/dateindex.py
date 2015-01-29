@@ -32,10 +32,11 @@
 # Author: Thomas Mistelbauer thomas.mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-05-27
 
-import pandas as pd
-import math
 import calendar
 from datetime import datetime, timedelta
+import math
+
+import pandas as pd
 from poets.timedate.dekad import dekad_index, check_dekad
 
 
@@ -68,6 +69,8 @@ def get_dtindex(interval, begin, end=None):
         begin2 = begin - timedelta(begin.weekday()) + timedelta(6)
         dtindex = pd.date_range(begin2, end, freq='7D')
     elif interval in ['monthly', 'month']:
+        lday = calendar.monthrange(end.year, end.month)[1]
+        end = datetime(end.year, end.month, lday)
         dtindex = pd.date_range(begin, end, freq='M')
 
     if type(interval) is int:
@@ -78,7 +81,7 @@ def get_dtindex(interval, begin, end=None):
 
 def check_period(interval, date):
     """
-    Checks the contining interval of a date and returns the date of the 
+    Checks the containing interval of a date and returns the date of the
     interval.
 
     Parameters
@@ -87,6 +90,11 @@ def check_period(interval, date):
         Interval to check, one of (dekad, week, month).
     date : datetime
         Date to check.
+
+    Returns
+    -------
+    date : datetime
+        Date of the interval.
     """
 
     if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
@@ -99,3 +107,41 @@ def check_period(interval, date):
 
     return date
 
+
+def check_period_boundaries(interval, date):
+    """
+    Checks and returns the start and end date of the containing interval of a
+    date.
+
+    Parameters
+    ----------
+    interval : str
+        Interval to check, one of (dekad, week, month).
+    date : datetime
+        Date to check.
+
+    Returns
+    -------
+    begin : datetime
+        Start of the interval.
+    end :datetime
+        End of the interval.
+    """
+
+    end = check_period(interval, date)
+
+    if interval in ['dekad', 'dekadal', 'decadal', 'decade']:
+        if end.day == calendar.monthrange(date.year, date.month)[1]:
+            diff = end.day - 21
+        else:
+            diff = 9
+        begin = end - timedelta(days=diff)
+    elif interval in ['weekly', 'week', '7']:
+        begin = end - timedelta(days=6)
+    elif interval in ['monthly', 'month']:
+        lday = calendar.monthrange(date.year, date.month)[1]
+        begin = end - timedelta(days=(lday - 1))
+    elif interval in ['day', 'daily']:
+        begin = end
+
+    return begin, end

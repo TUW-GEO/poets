@@ -32,21 +32,23 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-06-30
 
+from datetime import datetime, timedelta
 import os
 import shutil
-import pandas as pd
-import numpy as np
-import poets.image.netcdf as nc
-import poets.timedate.dateindex as dt
-import poets.grid.grids as gr
+
 from netCDF4 import Dataset, num2date, date2num
-from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from poets.grid.grids import ShapeGrid, RegularGrid
+import poets.grid.grids as gr
+import poets.image.netcdf as nc
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date, download_local
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
+import poets.timedate.dateindex as dt
 
 
 class BasicSource(object):
@@ -470,9 +472,8 @@ class BasicSource(object):
 
         for date in dtindex:
             # skip if data for period is not complete
-            if date > period[1]:
-                continue
-            print date
+            # if date > period[1]:
+            #    continue
             if self.dest_temp_res == 'dekad':
                 if date.day < 21:
                     begin = datetime(date.year, date.month, date.day - 10 + 1)
@@ -590,24 +591,7 @@ class BasicSource(object):
             if os.path.isdir(os.path.join(self.rawdata_path, item)):
                 os.rmdir(os.path.join(self.rawdata_path, item))
 
-        if begin is None:
-            if self.dest_start_date < self.begin_date:
-                begin = self.begin_date
-            else:
-                begin = self.dest_start_date
-
-            if begin < self._get_download_date():
-                begin = self._get_download_date()
-
-            # start one period earlier to close possible gaps
-            #==================================================================
-            # begin = begin - timedelta(days=1)
-            # if begin < self.begin_date:
-            #     begin = self.begin_date
-            #==================================================================
-
-        if end is None:
-            end = datetime.now()
+        begin, end = self._check_begin_end(begin, end)
 
         if begin > end:
             print '[INFO] everything up to date'
@@ -618,19 +602,18 @@ class BasicSource(object):
             drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
             for i, date in enumerate(drange):
-                if date > end:
-                    continue
                 if i == 0:
                     start = begin
                 else:
-                    if self.dest_temp_res in ['dekadal', 'weekly']:
+                    if self.dest_temp_res in ['dekad', 'dekadal', 'week',
+                                              'weekly', 'month', 'monthly']:
                         start = drange[i - 1] + timedelta(days=1)
                     else:
                         start = date
 
                 stop = date
 
-                print '[INFO] ' + str(start) + '-' + str(stop)
+                print '[INFO] Resampling ' + str(start) + ' to ' + str(stop)
 
                 for region in self.dest_regions:
 
@@ -693,24 +676,7 @@ class BasicSource(object):
             by default.
         """
 
-        if begin is None:
-            if self.dest_start_date < self.begin_date:
-                begin = self.begin_date
-            else:
-                begin = self.dest_start_date
-
-            if begin < self._get_download_date():
-                begin = self._get_download_date()
-
-            # start one period earlier to close possible gaps
-            #==================================================================
-            # begin = begin - timedelta(days=1)
-            # if begin < self.begin_date:
-            #     begin = self.begin_date
-            #==================================================================
-
-        if end is None:
-            end = datetime.now()
+        begin, end = self._check_begin_end(begin, end)
 
         if begin > end:
             print '[INFO] everything up to date'
@@ -719,13 +685,11 @@ class BasicSource(object):
         drange = dt.get_dtindex(self.dest_temp_res, begin, end)
 
         for i, date in enumerate(drange):
-            if date > end:
-                continue
             if i == 0:
                 start = begin
             else:
                 if self.dest_temp_res in ['dekad', 'dekadal', 'week',
-                                          'weekly']:
+                                          'weekly', 'month', 'monthly']:
                     start = drange[i - 1] + timedelta(days=1)
                 else:
                     start = date
@@ -965,3 +929,44 @@ class BasicSource(object):
                         break
 
         return varname
+
+    def _check_begin_end(self, begin, end):
+        """
+        Checks begin and end date and returns valid dates.
+
+        Parameters
+        ----------
+        begin : datetime
+            Begin date to check.
+        end : datetime
+            End date to check.
+
+        Returns
+        -------
+        begin : datetime
+            Begin date.
+        end : datetime
+            End date.
+        """
+
+        if begin is None:
+            if self.dest_start_date < self.begin_date:
+                begin = self.begin_date
+            else:
+                begin = self.dest_start_date
+
+            if begin < self._get_download_date():
+                begin = self._get_download_date()
+
+            # start one period earlier to close possible gaps
+            begin = begin - timedelta(days=1)
+            begin, _ = dt.check_period_boundaries(self.dest_temp_res, begin)
+            if begin < self.begin_date:
+                begin = self.begin_date
+            if begin < self.dest_start_date:
+                begin = self.dest_start_date
+
+        if end is None:
+            end = datetime.now()
+
+        return begin, end
