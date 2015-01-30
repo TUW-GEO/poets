@@ -37,14 +37,12 @@ This module includes the poets base class `Poet`.
 """
 
 from datetime import datetime
-import os
-
 from netCDF4 import Dataset
-
-import numpy as np
-import pandas as pd
 from poets.grid.grids import ShapeGrid
 from poets.io.source_base import BasicSource
+import numpy as np
+import os
+import pandas as pd
 import poets.web.app as app
 
 valid_temp_res = ['dekad', 'dekade', 'month', 'monthly', 'week', 'weekly',
