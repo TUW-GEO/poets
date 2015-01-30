@@ -51,6 +51,10 @@ You can use the parameters begin, end and delete_rawdata as described in `Downlo
 
 In[8]::
 
+   # for all sources:
+   p.download()
+   
+   # for an individual source:
    p.sources['MODIS_LST'].download()
    
 Resampling only
@@ -61,4 +65,24 @@ You can use the parameters begin, end and delete_rawdata as described in `Downlo
 
 In[9]::
 
+   # for all sources:
+   p.resample()
+   
+   # for an individual source:
    p.sources['MODIS_LST'].resample()
+   
+Finding and closing gaps in data
+--------------------------------
+
+Sometimes it can occur that data is temporarily not available at a data
+repository which can result in gaps in the data. poets can detect and attempt
+to fill these gaps with :class:`poets.poet.Poet.fill_gaps`, respectively
+:class:`poets.io.source_base.BasicSource.fill_gaps`.
+
+In[10]::
+
+   # for all sources:
+   p.fill_gaps()
+   
+   # for an individual source:
+   p.sources['MODIS_LST'].fill_gaps()

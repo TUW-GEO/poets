@@ -287,6 +287,17 @@ class Poet(object):
 
         print '[SUCCESS] Resampling complete!'
 
+    def fill_gaps(self):
+        """
+        Detects gaps in data and tries to fill them by downloading and
+        resampling the data within these periods.
+        """
+
+        for source in self.sources.keys():
+            src = self.sources[source]
+            print '[INFO] Scanning ' + source + ' for gaps'
+            src.fill_gaps()
+
     def get_gridpoints(self):
         """Returns gridpoints from NetCDF file.
 

@@ -4,14 +4,14 @@ Web Interface
 Once Poets is set up, data is downloaded and resampled it is time to check out
 the built in web interface. All you have to do is run the :class:`poets.poet.Poet.start_app` command.
 
-In[12]::
+In[13]::
 
    p.start_app()
 
 By default, the app will run on host `127.0.0.1` and port `5000`. However, other values
 can be set with the keywords `host` and `port`.
 
-In[13]::
+In[14]::
 
    p.start_app(host='111.222.3.44', port=1234)
   
@@ -26,7 +26,7 @@ the :class:`poets.poet.Poet.add_source` colorbar parameter. Further, if the phys
 of the dataset is not given in its metadata, you can set the unit manually with the `unit` parameter.
 In our example the unit would be `degree celsius`.
 
-In[14]::
+In[15]::
   
    # setting the colobar for a source:
    p.add_source(..., colorbar='Blues', unit='degree celsius')
@@ -40,7 +40,7 @@ between 0 and 255, where 255 represents the NaN value. In this case, we need to 
 `nan_value` and `data_range` when adding a source with :class:`poets.poet.Poet.add_source`. Further, we need to scale the 
 dataset to its actual value range between min -25°C and max 45°C.
 
-in[15]::
+in[16]::
 
    p.add_source(..., nan_value=255, data_range=(0, 254), valid_range=(-25, 45))
    
@@ -50,7 +50,7 @@ in[15]::
 Complete Example
 ================
 
-In[16]::
+In[17]::
 
    import os
    from datetime import datetime

@@ -35,9 +35,7 @@
 from datetime import datetime, timedelta
 import os
 import shutil
-
 from netCDF4 import Dataset, num2date, date2num
-
 import numpy as np
 import pandas as pd
 from poets.grid.grids import ShapeGrid, RegularGrid
@@ -970,3 +968,49 @@ class BasicSource(object):
             end = datetime.now()
 
         return begin, end
+
+    def fill_gaps(self, begin=None, end=None):
+        """
+        Detects gaps in data and tries to fill them by downloading and
+        resampling the data within these periods.
+        
+        Parameters
+        ----------
+        begin : datetime
+            Begin date of intervall to check, defaults to None.
+        end : datetime
+            End date of intervall to check, defaults to None.
+        """
+
+        gaps = []
+
+        for region in self.dest_regions:
+            _, _, period = nc.get_properties(self.src_file[region])
+            if begin is None:
+                begin = period[0]
+            if end is None:
+                end = period[1]
+            drange = dt.get_dtindex(self.dest_temp_res, begin, end)
+            for date in drange:
+                nonans = []
+                for var in self.get_variables():
+                    img, _, _, _ = self.read_img(date, region, var)
+                    if np.nanmean(img) is not np.ma.masked:
+                        nonans.append(1)
+                if len(nonans) == 0:
+                    if date not in gaps:
+                        gaps.append(date)
+
+        if len(gaps) == 0:
+            print '[INFO] No gaps found.'
+        else:
+            print '[INFO] Found ' + str(len(gaps)) + ' gap(s), attempt to fill..'
+            for date in gaps:
+                if self.dest_temp_res in ['day', 'daily']:
+                    begin = date
+                    end = date
+                else:
+                    begin, end = dt.check_period_boundaries(self.dest_temp_res,
+                                                            date)
+
+                self.download_and_resample(begin=begin, end=end)
