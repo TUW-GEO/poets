@@ -28,3 +28,4 @@ v0.3.3, 2015-XX-XX
 * Added timeout-handler in ftp-download.
 * Fixed bug that caused gaps in data.
 * Added function that attempts to fill gaps in data.
+* Improvements in web-app.

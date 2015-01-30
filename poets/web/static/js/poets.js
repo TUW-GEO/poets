@@ -2,7 +2,7 @@ function poetsViewer(div, host, port) {
 	this.host = 'http://'+host+':'+port.toString();
 }
 
-poetsViewer.prototype.loadTS = function(lon, lat, sp_res, anom) {
+poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 	
 	var reg = $("#region").val()
 	var src = $("#source").val()
@@ -22,6 +22,13 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, anom) {
 	tlat = (Math.round(lat*roundr)/roundr).toFixed(rdec);
 	
 	title = " ("+tlon+"/"+tlat+")"
+	
+	if((range[0] != -999) && range[1] != -999) {
+		vrange = range;
+	}
+	else {
+		vrange = false;
+	}
 	
 	if(anom == true) {
 		link += '&anom';
@@ -46,7 +53,8 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, anom) {
 		    title: data.labels[1] + title,
 		    legend: 'always',
 		    colors: [color],
-		    fillGraph: true
+		    fillGraph: true,
+		    valueRange: vrange
 		});
 		
 	});

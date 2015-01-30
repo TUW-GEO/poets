@@ -180,6 +180,13 @@ def index(**kwargs):
         lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = \
             bounds(region, p.shapefile)
 
+        if source.valid_range is None:
+            range = [-999, -999]
+        else:
+            range = source.valid_range
+
+        print range
+
         return render_template('app.html',
                                max=idxdates,
                                coord=[c_lon, c_lat],
@@ -194,7 +201,9 @@ def index(**kwargs):
                                dates=fdates,
                                host=host_gl,
                                port=port_gl,
-                               sp_res=p.spatial_resolution)
+                               sp_res=p.spatial_resolution,
+                               range=range
+                               )
     else:
         return render_template('index.html',
                                regions=p.regions,

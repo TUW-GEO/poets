@@ -56,7 +56,8 @@ $(document).ready(function () {
         expandDiv("ts");
     	expandDiv("graph");
     	foldDiv("graph_anom")
-        ts.loadTS(lonlat.lon, lonlat.lat, {{sp_res}});
+        ts.loadTS(lonlat.lon, lonlat.lat, {{sp_res}}, 
+        		[{{range[0]}}, {{range[1]}}]);
 	});
 	
 	initLink();
@@ -188,7 +189,7 @@ $(document).ready(function () {
         expandDiv('graph_anom');
         lon = $("#lon").val()
         lat = $("#lat").val()
-        ts.loadTS(lon, lat, {{sp_res}}, true);
+        ts.loadTS(lon, lat, {{sp_res}}, {{ range }}, true);
         initDownLink(true);
     });
     
