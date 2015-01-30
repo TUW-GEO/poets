@@ -33,20 +33,20 @@
 # Creation date: 2014-06-30
 
 from datetime import datetime, timedelta
-import os
-import shutil
 from netCDF4 import Dataset, num2date, date2num
-import numpy as np
-import pandas as pd
 from poets.grid.grids import ShapeGrid, RegularGrid
-import poets.grid.grids as gr
-import poets.image.netcdf as nc
 from poets.image.resampling import resample_to_shape, average_layers
 from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date, download_local
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
+import numpy as np
+import os
+import pandas as pd
+import poets.grid.grids as gr
+import poets.image.netcdf as nc
 import poets.timedate.dateindex as dt
+import shutil
 
 
 class BasicSource(object):
@@ -987,7 +987,7 @@ class BasicSource(object):
         for region in self.dest_regions:
             _, _, period = nc.get_properties(self.src_file[region])
             if begin is None:
-                begin = period[0]
+                begin = self.begin_date
             if end is None:
                 end = period[1]
             drange = dt.get_dtindex(self.dest_temp_res, begin, end)
