@@ -173,7 +173,7 @@ $(document).ready(function () {
 		// lcode is important for avoiding keeping image in cache, in order
 		// to refresh legend if dataset is changed.
         var lcode = $("#region").val()+'&'+$("#dataset").val(); 
-        $('#legend').attr('src', '/_rlegend/' +lcode);
+        $('#legend').attr('src', '/_rlegend/' +lcode+'&'+$('#slider').val());
     }
 	   
     $("#region").change(function() {
@@ -229,7 +229,7 @@ $(document).ready(function () {
 	            <label class="sr-only" for="region">Regions</label>
 	            <select class="form-control" id="region">
 	                <option value=''>REGION</option>
-	                    {% for reg in regions %}
+                        {% for reg in regions %}
 	                      {% set checked = '' %}
 	                      {% if reg == region %}
 	                        {% set checked = 'selected="selected"' %}
@@ -258,10 +258,10 @@ $(document).ready(function () {
 	    </form>
 	  </div>
 	  
-	  <div class="panel-body" style="position:relative">
+	  <div class="panel-body" style="position:relative; padding:0px;">
 	    <div id='map' style="height:640px; z-index:0"></div>
-	    <div style="position: absolute; bottom: 30px; left:30px; z-index:9999;">
-            <img id='legend' src='' style="width: auto; height: auto;"/>
+	    <div style="position: absolute; bottom: 0px; left:0px; right:0px; z-index:9999;">
+            <img id='legend' src='' style="width: 100%; max-width: 400px; height: auto;"/>
         </div>
 	  </div>
 	  

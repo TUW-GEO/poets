@@ -140,7 +140,6 @@ def index(**kwargs):
     global enddate
     global dates
     global ndate
-    global idxdates
 
     if len(kwargs) > 0:
 
@@ -169,7 +168,6 @@ def index(**kwargs):
 
         d = get_dtindex(p.temporal_resolution, begindate, enddate)
         dates = d.to_pydatetime()
-        idxdates = len(dates) - 1
 
         fdates = []
 
@@ -185,10 +183,8 @@ def index(**kwargs):
         else:
             range = source.valid_range
 
-        print range
-
         return render_template('app.html',
-                               max=idxdates,
+                               max=len(dates) - 1,
                                coord=[c_lon, c_lat],
                                zoom=zoom,
                                ex1=(lon_max, lat_min),
