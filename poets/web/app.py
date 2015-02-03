@@ -93,7 +93,8 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
-def start(poet, host='127.0.0.1', port=5000, debug=False):
+def start(poet, host='127.0.0.1', port=5000, r_host=None, r_port=None,
+          debug=False):
     """
     Starts application and sets global variables.
 
@@ -105,6 +106,10 @@ def start(poet, host='127.0.0.1', port=5000, debug=False):
         Host that is used by the app, defaults to 127.0.0.1.
     port : int, optional
         Port where app runs on, defaults to 50000.
+    r_host : str, optional
+        IP of router that is between host and internet.
+    r_port : int, optional
+        Port of router that is between host and internet.
     debug : bool, optional
         Starts app in debug mode if set True, defaults to False.
     """
@@ -118,8 +123,14 @@ def start(poet, host='127.0.0.1', port=5000, debug=False):
 
     p = poet
     variables = poet.get_variables()
-    host_gl = host
-    port_gl = port
+    if r_host is None:
+        host_gl = host
+    else:
+        host_gl = r_host
+    if r_port is None:
+        port_gl = port
+    else:
+        port_gl = r_port
 
     if debug:
         app.run(debug=True, use_debugger=True, use_reloader=True, host=host,
@@ -179,9 +190,9 @@ def index(**kwargs):
             bounds(region, p.shapefile)
 
         if source.valid_range is None:
-            range = [-999, -999]
+            vrange = [-999, -999]
         else:
-            range = source.valid_range
+            vrange = source.valid_range
 
         return render_template('app.html',
                                max=len(dates) - 1,
@@ -198,7 +209,7 @@ def index(**kwargs):
                                host=host_gl,
                                port=port_gl,
                                sp_res=p.spatial_resolution,
-                               range=range
+                               range=vrange
                                )
     else:
         return render_template('index.html',

@@ -417,7 +417,8 @@ class Poet(object):
 
         return variables
 
-    def start_app(self, host='127.0.0.1', port=5000, debug=False):
+    def start_app(self, host='127.0.0.1', port=5000, r_host=None, r_port=None,
+                  debug=False):
         """Starts web interface.
 
         Parameters
@@ -426,9 +427,13 @@ class Poet(object):
             Host that is used by the app, defaults to 127.0.0.1.
         port : int, optional
             Port where app runs on, defaults to 50000.
+        r_host : str, optional
+            IP of router that is between host and internet.
+        r_port : int, optional
+            Port of router that is between host and internet.
         debug : bool, optional
             Starts app in debug mode if set True, defaults to False.
         """
 
-        app.start(self, host, port, debug)
+        app.start(self, host, port, r_host, r_port, debug)
 
