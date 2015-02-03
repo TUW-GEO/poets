@@ -47,7 +47,7 @@ import poets.grid.grids as gr
 import poets.image.netcdf as nc
 import poets.timedate.dateindex as dt
 import shutil
-import math
+import math as ma
 
 
 class BasicSource(object):
@@ -273,8 +273,8 @@ class BasicSource(object):
                         dates[region][var] = []
                         if begin:
                             for i in range(0, nc.variables['time'].size - 1):
-                                mval = nc.variables[var][i].max()
-                                if mval is np.ma.masked or math.isnan(mval):
+                                if(nc.variables[var][i].mask.min() or
+                                   ma.isnan(np.nanmax(nc.variables[var][i]))):
                                     continue
                                 else:
                                     times = nc.variables['time']
@@ -289,8 +289,8 @@ class BasicSource(object):
                         if end:
                             for i in range(nc.variables['time'].size - 1,
                                            - 1, -1):
-                                mval = nc.variables[var][i].max()
-                                if mval is np.ma.masked or math.isnan(mval):
+                                if(nc.variables[var][i].mask.min() or
+                                   ma.isnan(np.nanmax(nc.variables[var][i]))):
                                     continue
                                 else:
                                     times = nc.variables['time']
@@ -494,12 +494,6 @@ class BasicSource(object):
 
                 metadata[var] = meta
                 data[var] = average_layers(img, self.dest_nan_value)
-
-            #==================================================================
-            # filename = (region + '_' + str(self.dest_sp_res) + '_'
-            #             + str(self.dest_temp_res) + '.nc')
-            # dest_file = os.path.join(self.data_path, filename)
-            #==================================================================
 
             dest_file = self.src_file[region]
 
