@@ -230,11 +230,11 @@ $(document).ready(function () {
 	            <select class="form-control" id="region">
 	                <option value=''>REGION</option>
                         {% for reg in regions %}
-	                      {% set checked = '' %}
-	                      {% if reg == region %}
-	                        {% set checked = 'selected="selected"' %}
-	                      {% endif %}
-	                      <option value="{{ reg }}" {{ checked }}>{{ reg }}</option>
+                            {% set checked = '' %}
+                            {% if reg['code'] == region %}
+                                {% set checked = 'selected="selected"' %}
+                            {% endif %}
+                            <option value="{{ reg['code'] }}" {{ checked }}>{{ reg['name'] }}</option>
 	                    {% endfor %}
 	            </select>
 	        </div>

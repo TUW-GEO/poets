@@ -62,11 +62,14 @@ class Poet(object):
     regions : list of str, str, optional
         Identifier of the region in the shapefile. If the default shapefile is
         used, this would be the FIPS country code. Defaults to global.
+    region_names : list of str, optional
+        Full name of the regions. If set, must have same size as regions
+        parameter. Defaults to regions parameter.
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
         temporal resolution of the data, possible values: day, week, month,
-        dekad; defaults to dekad
+        dekad; defaults to dekad.
     start_date : datetime.datetime, optional
         first date of the dataset, defaults to 2000-01-01
     nan_value : int
@@ -84,6 +87,8 @@ class Poet(object):
         path to the directory where data should be stored
     regions : list of str
         Identifier of the region in the shapefile.
+    region_names : list of str
+        Full name of the regions.
     spatial_resolution : float
         Spatial resolution in degree.
     temporal_resolution : str
@@ -109,13 +114,20 @@ class Poet(object):
     def __init__(self, rootpath, regions=['global'],
                  spatial_resolution=0.25, temporal_resolution='dekad',
                  start_date=datetime(2000, 1, 1), nan_value=-99,
-                 shapefile=None, delete_rawdata=False):
+                 shapefile=None, delete_rawdata=False, region_names=None):
 
         self.rootpath = rootpath
         if isinstance(regions, str):
             self.regions = [regions]
         else:
             self.regions = regions
+        if region_names is not None:
+            if isinstance(region_names, str):
+                self.region_names = [region_names]
+            else:
+                self.region_names = region_names
+        else:
+            self.region_names = self.regions
         self.spatial_resolution = spatial_resolution
 
         if temporal_resolution not in valid_temp_res:
@@ -194,7 +206,7 @@ class Poet(object):
             Unit of dataset for displaying in legend. Does not have to be set
             if unit is specified in input file metadata. Defaults to None.
         src_file : dict of str, optional
-            Path to file that contains source. Uses default NetCDF file if 
+            Path to file that contains source. Uses default NetCDF file if
             None.
         """
 

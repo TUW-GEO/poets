@@ -69,7 +69,7 @@ $(document).ready(function () {
 	        <select class="form-control" id="region">
 		        <option value=''>REGION</option>
 			        {% for region in regions %}
-			          <option value="{{ region }}" >{{ region }}</option>
+			          <option value="{{ region['code'] }}" >{{ region['name'] }}</option>
 			        {% endfor %}
 			</select>
 		</div>

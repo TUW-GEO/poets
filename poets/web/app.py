@@ -152,6 +152,10 @@ def index(**kwargs):
     global dates
     global ndate
 
+    regions = []
+    for i, reg in enumerate(p.regions):
+        regions.append({'code': reg, 'name': p.region_names[i]})
+
     if len(kwargs) > 0:
 
         if 'reg' in kwargs:
@@ -203,7 +207,7 @@ def index(**kwargs):
                                region=region,
                                source=source.name,
                                variable=variable,
-                               regions=p.regions,
+                               regions=regions,
                                variables=variables,
                                dates=fdates,
                                host=host_gl,
@@ -213,7 +217,7 @@ def index(**kwargs):
                                )
     else:
         return render_template('index.html',
-                               regions=p.regions,
+                               regions=regions,
                                sources=p.sources.keys(),
                                variables=variables)
 
