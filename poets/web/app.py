@@ -190,7 +190,7 @@ def index(**kwargs):
             dat = {'id': i, 'date': d.strftime('%Y-%m-%d')}
             fdates.append(dat)
 
-        lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = \
+        lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, _ = \
             bounds(region, p.shapefile)
 
         if source.valid_range is None:
@@ -201,7 +201,6 @@ def index(**kwargs):
         return render_template('app.html',
                                max=len(dates) - 1,
                                coord=[c_lon, c_lat],
-                               zoom=zoom,
                                ex1=(lon_max, lat_min),
                                ex2=(lon_min, lat_max),
                                region=region,
@@ -411,7 +410,7 @@ def request_legend(**kwargs):
                 cb1.set_label(metadata[unit], fontsize=10)
 
     buf = StringIO()
-
+    fig.patch.set_alpha(0.6)
     plt.savefig(buf)
     plt.close()
 

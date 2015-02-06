@@ -5,6 +5,21 @@
 <script>
 $(document).ready(function () {
 	
+	// set height of map div
+    $("#map").height($(document).height()*0.6);
+    $("#graph_body").height($("#ts").width()*0.22);
+    $("#graph_anom_body").height($("#ts").width()*0.22);
+    
+    
+    // set zoom step for map
+    var e_lon = {{ ex1[0] }} - {{ ex2[0] }};
+    var screen = $("#map").width();
+    var zoom = 0;
+    while (screen / 2 > e_lon) {
+        zoom += 1
+        screen = screen / 2
+    }
+    
 	ts = new poetsViewer('', '{{host}}', {{port}});
 	
 	var opacity = 0.75
@@ -18,11 +33,11 @@ $(document).ready(function () {
 	map = new OpenLayers.Map("map");
 	map.addControl(new OpenLayers.Control.LayerSwitcher());
 	map.addLayers([osm, gphy]);
-	map.setCenter(new OpenLayers.LonLat({{coord}}).transform(proj4326, map.getProjectionObject()), {{zoom}});
+	map.setCenter(new OpenLayers.LonLat({{coord}}).transform(proj4326, map.getProjectionObject()), zoom);
 
 	bounds = new OpenLayers.Bounds(); 				// bounding box for the overlay:
-	bounds.extend(new OpenLayers.LonLat{{ex1}}); 	// overlay image appears cutoff at the edges due to massive upscaling
-	bounds.extend(new OpenLayers.LonLat{{ex2}});	// referrencing image on it's center coord. possible
+	bounds.extend(new OpenLayers.LonLat{{ex1}});
+	bounds.extend(new OpenLayers.LonLat{{ex2}});
 	bounds.transform(proj4326, map.getProjectionObject());
 	
 	image = new OpenLayers.Layer.Image('IMAGE', "/_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
@@ -223,7 +238,7 @@ $(document).ready(function () {
 
 <div class="row">
 	<div class="panel panel-default">
-	  <div class="panel-heading">
+	  <div class="panel-heading"">
 	    <form class="form-inline" role="form">
 	        <div class="form-group">
 	            <label class="sr-only" for="region">Regions</label>
@@ -259,13 +274,13 @@ $(document).ready(function () {
 	  </div>
 	  
 	  <div class="panel-body" style="position:relative; padding:0px;">
-	    <div id='map' style="height:640px; z-index:0"></div>
-	    <div style="position: absolute; bottom: 0px; left:0px; right:0px; z-index:9999;">
+	    <div id='map' style="height:z-index:0;"></div>
+	    <div style="position: absolute; bottom: 17px; left:0px; right:0px; z-index:9999;">
             <img id='legend' src='' style="width: 100%; max-width: 400px; height: auto;"/>
         </div>
 	  </div>
 	  
-	  <div class="panel-footer" align="center">
+	  <div class="panel-footer" align="center"">
 	    <input type="text" style="width:100%;" id="slider">
 	    <form class="form-inline" role="form" style="margin-top:8px;">
 	        <button type="button" class="btn btn-default" id="btn-prev">
@@ -287,7 +302,7 @@ $(document).ready(function () {
 <div class="row" id="ts" style="visibility:hidden; height:0px; overflow: hidden;">
 	<div class="panel panel-default" id="graph" style="visibility:hidden; height:0px;">
 		<div class="panel-body">
-			<div id="graph_body" style="height:250px;"></div>
+			<div id="graph_body" style="height:250px; max-height:250px; min-height:100px;"></div>
 		</div>
 		<div class="panel-footer">
 		   <div class="row">
@@ -304,7 +319,7 @@ $(document).ready(function () {
 	
 	<div class="panel panel-default" id="graph_anom" style="visibility:hidden; height:0px;">
 	    <div class="panel-body">
-	        <div id="graph_anom_body" style="height:250px;"></div>
+	        <div id="graph_anom_body" style="height:250px; max-height:250px; min-height:100px;"></div>
 	    </div>
 	    <div class="panel-footer">
 	       <div class="row">
