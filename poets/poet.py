@@ -153,7 +153,7 @@ class Poet(object):
 
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
-                   dirstruct=None, begin_date=None,
+                   dirstruct=None, begin_date=None, regions=None,
                    variables=None, nan_value=None, valid_range=None,
                    unit=None, ffilter=None, data_range=None, colorbar=None,
                    src_file=None):
@@ -184,6 +184,9 @@ class Poet(object):
         dirstruct : list of strings
             Structure of source directory, each list item represents a
             subdirectory.
+        regions : list of str, optional
+            List of regions where data from source is available. Uses all
+            regions as given in Poet.regions attribute if None.
         begin_date : datetime.date, optional
             Date from which on data is available.
         variables : string or list of strings, optional
@@ -216,7 +219,7 @@ class Poet(object):
                              directory=directory, dirstruct=dirstruct,
                              begin_date=begin_date, variables=variables,
                              nan_value=nan_value, valid_range=valid_range,
-                             unit=unit,
+                             unit=unit, regions=regions,
                              data_range=data_range, colorbar=colorbar,
                              dest_nan_value=self.nan_value,
                              dest_regions=self.regions,

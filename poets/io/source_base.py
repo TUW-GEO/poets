@@ -40,6 +40,7 @@ from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date, download_local
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
+import math as ma
 import numpy as np
 import os
 import pandas as pd
@@ -47,7 +48,6 @@ import poets.grid.grids as gr
 import poets.image.netcdf as nc
 import poets.timedate.dateindex as dt
 import shutil
-import math as ma
 
 
 class BasicSource(object):
@@ -80,6 +80,9 @@ class BasicSource(object):
     dirstruct : list of strings, optional
         Structure of source directory, each list item represents a
         subdirectory.
+    regions : list of str, optional
+        List of regions where data from source is available. Uses all regions
+        specified in dest_regions if not set.
     begin_date : datetime, optional
         Date from which on data is available.
     variables : string or list of strings, optional
@@ -142,6 +145,8 @@ class BasicSource(object):
     dirstruct : list of strings
         Structure of source directory, each list item represents a
         subdirectory.
+    regions : list of str
+        List of regions where data from source is available.
     begin_date : datetime
         Date from which on data is available.
     ffilter : str
@@ -180,7 +185,7 @@ class BasicSource(object):
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
                  host, protocol, username=None, password=None, port=22,
-                 directory=None, dirstruct=None,
+                 directory=None, dirstruct=None, regions=None,
                  begin_date=None, ffilter=None, colorbar='jet',
                  variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
@@ -212,6 +217,7 @@ class BasicSource(object):
         self.valid_range = valid_range
         self.data_range = data_range
         self.colorbar = colorbar
+        self.regions = regions
         self.dest_nan_value = dest_nan_value
         self.dest_regions = dest_regions
         self.dest_sp_res = dest_sp_res
@@ -260,6 +266,10 @@ class BasicSource(object):
         dates = {}
 
         for region in self.dest_regions:
+
+            if self.regions is not None:
+                if region not in self.regions:
+                    continue
 
             nc_name = self.src_file[region]
 
@@ -324,6 +334,11 @@ class BasicSource(object):
         if dates is not None:
             begin = datetime.now()
             for region in self.dest_regions:
+
+                if self.regions is not None:
+                    if region not in self.regions:
+                        continue
+
                 variables = self.get_variables()
                 if variables == []:
                     begin = self.dest_start_date
@@ -612,6 +627,10 @@ class BasicSource(object):
 
                 for region in self.dest_regions:
 
+                    if self.regions is not None:
+                        if region not in self.regions:
+                            continue
+
                     print '[INFO] resampling to region ' + region
                     print '[INFO] performing spatial resampling ',
 
@@ -629,6 +648,10 @@ class BasicSource(object):
             print '[INFO] ' + str(begin) + '-' + str(end)
 
             for region in self.dest_regions:
+
+                if self.regions is not None:
+                    if region not in self.regions:
+                        continue
 
                 print '[INFO] resampling to region ' + region
                 print '[INFO] performing spatial resampling ',
@@ -982,9 +1005,17 @@ class BasicSource(object):
         gaps = []
 
         for region in self.dest_regions:
+
+            if self.regions is not None:
+                if region not in self.regions:
+                    continue
+
             _, _, period = nc.get_properties(self.src_file[region])
             if begin is None:
-                begin = self.begin_date
+                if self.begin_date < self.dest_start_date:
+                    begin = self.dest_start_date
+                else:
+                    begin = self.begin_date
             if end is None:
                 end = period[1]
             drange = dt.get_dtindex(self.dest_temp_res, begin, end)
