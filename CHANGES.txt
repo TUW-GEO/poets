@@ -22,10 +22,11 @@ v0.3.2, 2014-11-24
 * Hotfixes in previous version
 
 v0.3.3, 2015-XX-XX
-* Implemented option to provide separate NetCDF files for sources .
+* Implemented option to provide separate NetCDF files for sources.
 * Added method to get all variables from a source.
 * Added check if a variable exists in a source.
-* Added timeout-handler in ftp-download.
+* Added timeout-handler in ftp-download function.
 * Fixed bug that caused gaps in data.
 * Added function that attempts to fill gaps in data.
 * Improvements in web-app.
+* Added option to specify where data from specific source is available.

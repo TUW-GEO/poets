@@ -32,13 +32,13 @@
 # Author: Thomas Mistelbauer Thomas.Mistelbauer@geo.tuwien.ac.at
 # Creation date: 2014-08-14
 
-import unittest
-import os
-import shutil
-import numpy as np
 from datetime import datetime
 from poets.poet import Poet
 from poets.timedate.dateindex import get_dtindex
+import numpy as np
+import os
+import shutil
+import unittest
 
 
 def curpath():
@@ -94,8 +94,7 @@ class Test(unittest.TestCase):
             shutil.rmtree(self.pngdir)
 
     def test_init(self):
-        print 'test'
-        assert len(self.poet.__dict__.keys()) == 12
+        assert len(self.poet.__dict__.keys()) == 13
 
     def test_add_source(self):
         name = 'CCI'
@@ -123,7 +122,7 @@ class Test(unittest.TestCase):
                              variables=variables, colorbar=colorbar,
                              valid_range=valid_range)
 
-        assert len(self.poet.sources['CCI'].__dict__.keys()) == 28
+        assert len(self.poet.sources['CCI'].__dict__.keys()) == 29
 
         name = 'TEST'
         filename = "test_{YYYY}_{MM}_{TT}.png"
@@ -144,7 +143,7 @@ class Test(unittest.TestCase):
                              unit=unit, data_range=data_range,
                              colorbar=colorbar)
 
-        assert len(self.poet.sources['TEST'].__dict__.keys()) == 28
+        assert len(self.poet.sources['TEST'].__dict__.keys()) == 29
 
     def test_download(self):
         self.poet.download(begin=self.start_date, end=self.enddate)

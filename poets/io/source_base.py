@@ -884,9 +884,16 @@ class BasicSource(object):
             Variables from given in the NetCDF file.
         """
 
-        nc_name = self.src_file[self.dest_regions[0]]
+        # nc_name = self.src_file[self.dest_regions[0]]
 
-        nc_vars, _, _ = nc.get_properties(nc_name)
+        # nc_vars, _, _ = nc.get_properties(nc_name)
+
+        nc_vars = []
+        for reg in self.dest_regions:
+            vari, _, _ = nc.get_properties(self.src_file[reg])
+            for v in vari:
+                if v not in nc_vars:
+                    nc_vars.append(v)
 
         variables = []
 

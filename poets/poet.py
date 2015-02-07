@@ -412,9 +412,14 @@ class Poet(object):
 
         return ts
 
-    def get_variables(self):
+    def get_variables(self, region=None):
         """
         Returns all variables available.
+
+        Parameters
+        ----------
+        region : str, optional
+            Region to check for variables.
 
         Returns
         -------
@@ -425,8 +430,17 @@ class Poet(object):
         variables = []
 
         for src in self.sources.keys():
-            for var in self.sources[src].get_variables():
-                variables.append(var)
+            if region is None:
+                for var in self.sources[src].get_variables():
+                    variables.append(var)
+            else:
+                if self.sources[src].regions is not None:
+                    if region in self.sources[src].regions:
+                        for var in self.sources[src].get_variables():
+                            variables.append(var)
+                else:
+                    for var in self.sources[src].get_variables():
+                        variables.append(var)
 
         variables.sort()
 
