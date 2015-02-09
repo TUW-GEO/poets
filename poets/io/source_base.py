@@ -217,9 +217,15 @@ class BasicSource(object):
         self.valid_range = valid_range
         self.data_range = data_range
         self.colorbar = colorbar
-        self.regions = regions
+        if isinstance(regions, str):
+            self.regions = [regions]
+        else:
+            self.regions = regions
         self.dest_nan_value = dest_nan_value
-        self.dest_regions = dest_regions
+        if isinstance(dest_regions, str):
+            self.dest_regions = [dest_regions]
+        else:
+            self.dest_regions = dest_regions
         self.dest_sp_res = dest_sp_res
         self.dest_temp_res = dest_temp_res
         self.dest_start_date = dest_start_date
@@ -891,6 +897,8 @@ class BasicSource(object):
         nc_vars = []
         for reg in self.dest_regions:
             vari, _, _ = nc.get_properties(self.src_file[reg])
+            if vari is None:
+                continue
             for v in vari:
                 if v not in nc_vars:
                     nc_vars.append(v)

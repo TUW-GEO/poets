@@ -401,6 +401,9 @@ def get_properties(src_file):
         Date of first and last image in source file.
     """
 
+    if not os.path.exists(src_file):
+        return None, None, None
+
     with Dataset(src_file, 'r+', format='NETCDF4') as nc:
         variables = nc.variables.keys()
         dimensions = nc.dimensions.keys()

@@ -6,7 +6,7 @@
 $(document).ready(function () {
 	
 	// set height of map div
-    $("#map").height($(document).height()*0.6);
+    $("#map").height($(document).height()*0.45);
     $("#graph_body").height($("#ts").width()*0.22);
     $("#graph_anom_body").height($("#ts").width()*0.22);
     
@@ -75,8 +75,9 @@ $(document).ready(function () {
         		[{{range[0]}}, {{range[1]}}]);
 	});
 	
-	initLink();
-	enableGo();
+
+	ts.setVarSelect();
+	ts.enableGo();
 	enableButtons({{max}});
 	
 	// LOAD IMAGE =============================================================
@@ -158,13 +159,6 @@ $(document).ready(function () {
 		$("#slider").slider('setValue', date)
 	}
 	
-	function initLink() {
-		sel_reg = $("#region").val()
-		sel_var = $("#dataset").val()
-		link = "/"+sel_reg+"&"+sel_var
-		$("#go").attr('href', link);
-	}
-	
 	function initDownLink(anom) {
 		sel_reg = $("#region").val()
         sel_var = $("#dataset").val()
@@ -190,14 +184,14 @@ $(document).ready(function () {
         var lcode = $("#region").val()+'&'+$("#dataset").val(); 
         $('#legend').attr('src', '/_rlegend/' +lcode+'&'+$('#slider').val());
     }
-	   
     $("#region").change(function() {
-        initLink();
-        enableGo();
+    	ts.setVarSelect();
+        ts.initLink();
+        ts.enableGo();
     });
     $("#dataset").change(function() {
-        initLink();
-        enableGo();
+        ts.initLink();
+        ts.enableGo();
     });
     
     $("#anom").click(function() {
@@ -207,17 +201,6 @@ $(document).ready(function () {
         ts.loadTS(lon, lat, {{sp_res}}, {{ range }}, true);
         initDownLink(true);
     });
-    
-    function enableGo() {
-        if ($("#region").val() == '') {
-            $("#go").attr('disabled', 'disabled');
-        }
-        else if ($("#dataset").val() == '') {
-            $("#go").attr('disabled', 'disabled');
-        } else {
-            $("#go").removeAttr('disabled');
-        }
-    }
     
 	function expandDiv(div) {
 		var div = document.getElementById(div);
@@ -236,9 +219,10 @@ $(document).ready(function () {
 });
 </script>
 
+<input type="hidden" id="variable" value="{{variable}}" />
 <div class="row">
 	<div class="panel panel-default">
-	  <div class="panel-heading"">
+	  <div class="panel-heading">
 	    <form class="form-inline" role="form">
 	        <div class="form-group">
 	            <label class="sr-only" for="region">Regions</label>
@@ -257,13 +241,6 @@ $(document).ready(function () {
 	            <label class="sr-only" for="dataset">Datasets</label>
 	            <select class="form-control" id="dataset">
 	                <option value=''>DATASET</option>
-	                {% for var in variables %}
-	                  {% set checked = '' %}
-	                  {% if var == variable %}
-	                    {% set checked = 'selected="selected"' %}
-	                  {% endif %}
-	                  <option value="{{ var }}" {{ checked }}>{{ var }}</option>
-	                {% endfor %}
 	            </select>
 	        </div>
 	        <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
@@ -280,22 +257,32 @@ $(document).ready(function () {
         </div>
 	  </div>
 	  
-	  <div class="panel-footer" align="center"">
-	    <input type="text" style="width:100%;" id="slider">
-	    <form class="form-inline" role="form" style="margin-top:8px;">
-	        <button type="button" class="btn btn-default" id="btn-prev">
-	           <span class="glyphicon glyphicon-chevron-left"></span>
-	         </button>
-	         <select id="dateSelect" class="form-control">
-	              {% for dat in dates %}
-	                  <option value="{{ dat['id'] }}">{{ dat['date'] }}</option>
-	              {% endfor %}
-	         </select>
-	         <button type="button" class="btn btn-default" id="btn-next">
-	           <span class="glyphicon glyphicon-chevron-right"></span>
-	         </button>
-	      </form>
-	  </div>
+		<div class="panel-footer" align="center">
+			<div class="hidden-xs">
+			 	<input type="text" style="width:100%;" id="slider">
+			 </div>
+			 <div class="row"
+			    <form class="form-inline" style="margin-top:8px;">
+			    	<div class="col-xs-4 col-md-5" style="padding:0px" align='right'>
+				    	<button type="button" class="btn btn-default" id="btn-prev">
+				           <span class="glyphicon glyphicon-chevron-left"></span>
+				        </button>
+				    </div>
+				    <div class="col-xs-4 col-md-2" style="padding:0px 5px">
+				        <select id="dateSelect" class="form-control">
+				            {% for dat in dates %}
+				                <option value="{{ dat['id'] }}">{{ dat['date'] }}</option>
+				            {% endfor %}
+				        </select>
+				    </div>
+				    <div class="col-xs-4 col-md-5" style="padding:0px" align='left'>
+				        <button type="button" class="btn btn-default" id="btn-next">
+			          		<span class="glyphicon glyphicon-chevron-right"></span>
+			         	</button>
+			        </div>
+			    </form>
+			 </div>
+		</div>
 	</div>
 </div>
 

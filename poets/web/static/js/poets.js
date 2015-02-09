@@ -2,6 +2,49 @@ function poetsViewer(div, host, port) {
 	this.host = 'http://'+host+':'+port.toString();
 }
 
+poetsViewer.prototype.setVarSelect = function() {
+	var reg = $("#region").val()
+	link = '/_variables/'+reg;
+	// empty select list
+	var current = $("#variable").val()
+	$("#dataset").empty();
+	// fill select again
+	$.getJSON(this.host+link, function(data){
+		if(data.variables.indexOf(current) == -1) {
+			$('#dataset').append(new Option('DATASET', ''));
+			$("#dataset option[value='']").attr('selected', 'selected');
+		}
+		for(var i = 0; i < data.variables.length; i++) {
+			var d = data.variables[i];
+			$('#dataset').append(new Option(data.variables[i], data.variables[i]));
+			if(data.variables[i] == current) {
+				$("#dataset option[value="+current+"]").attr('selected', 'selected');
+			}
+		}
+	});
+}
+
+poetsViewer.prototype.initLink = function() {
+    sel_reg = $("#region").val();
+    sel_var = $("#dataset").val();
+    if(sel_var == null) {
+    	sel_var = $("#variable").val();
+    }
+    link = "/"+sel_reg+"&"+sel_var
+    $("#go").attr('href', link);
+}
+
+poetsViewer.prototype.enableGo = function() {
+    if ($("#region").val() == '') {
+        $("#go").attr('disabled', 'disabled');
+    }
+    else if ($("#dataset").val() == '') {
+    	$("#go").attr('disabled', 'disabled');
+    } else {
+        $("#go").removeAttr('disabled');
+    }
+}
+
 poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 	
 	var reg = $("#region").val()

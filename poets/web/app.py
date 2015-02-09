@@ -218,7 +218,9 @@ def index(**kwargs):
         return render_template('index.html',
                                regions=regions,
                                sources=p.sources.keys(),
-                               variables=variables)
+                               variables=variables,
+                               host=host_gl,
+                               port=port_gl)
 
 
 @app.route('/_ts/<reg>&<src>&<var>&<loc>', methods=['GET', 'OPTIONS'])
@@ -420,6 +422,21 @@ def request_legend(**kwargs):
     response.headers["Content-Type"] = ("image/png; filename=legend.png")
 
     return response
+
+
+@app.route('/_variables', methods=['GET', 'POST'])
+@app.route('/_variables/<reg>', methods=['GET', 'POST'])
+def request_variables(**kwargs):
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    else:
+        region = None
+
+    variables = {}
+    variables['variables'] = p.get_variables(region)
+
+    return jsonify(variables)
 
 
 @app.route('/about')

@@ -5,21 +5,16 @@
 <script>
 $(document).ready(function () {
 	
+	ts = new poetsViewer('', '{{host}}', {{port}});
 	enableGo();
-	
-    function initLink() {
-        sel_reg = $("#region").val();
-        sel_var = $("#dataset").val();
-        link = "/"+sel_reg+"&"+sel_var
-        $("#go").attr('href', link);
-    }
     
     $("#region").change(function() {
-        initLink();
+    	ts.setVarSelect();
+        ts.initLink();
         enableGo();
     });
     $("#dataset").change(function() {
-        initLink();
+        ts.initLink();
         enableGo();
     });
     
@@ -76,10 +71,7 @@ $(document).ready(function () {
 		<div class="form-group">
 			<label class="sr-only" for="dataset">Datasets</label>
 			<select class="form-control" id="dataset">
-			    <option value=''>DATASETS</option>
-			    {% for var in variables %}
-			      <option value="{{ var }}" >{{ var }}</option>
-			    {% endfor %}
+			    <option value=''>SELECT REGION FIRST</option>
 			</select>
 		</div>
 		<a href='' class='btn btn-primary btn-lg' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
