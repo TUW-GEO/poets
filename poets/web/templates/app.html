@@ -6,7 +6,7 @@
 $(document).ready(function () {
 	
 	// set height of map div
-    $("#map").height($(document).height()*0.45);
+    $("#map").height($(document).height()*0.5);
     $("#graph_body").height($("#ts").width()*0.22);
     $("#graph_anom_body").height($("#ts").width()*0.22);
     
@@ -14,11 +14,26 @@ $(document).ready(function () {
     // set zoom step for map
     var e_lon = {{ ex1[0] }} - {{ ex2[0] }};
     var screen = $("#map").width();
-    var zoom = 0;
+    var zoom_v = 0;
     while (screen / 2 > e_lon) {
-        zoom += 1
+        zoom_v += 1
         screen = screen / 2
     }
+    
+    var n_lon = {{ex2[1]}} - {{ex1[1]}};
+    var screen_h = $("#map").height();
+    var zoom_h = 0;
+    while (screen_h / 2 > n_lon) {
+        zoom_h += 1
+        screen_h = screen_h / 2
+    }
+    
+    var zoom = zoom_h;
+    
+    if(zoom_v < zoom_h) {
+    	zoom = zoom_v;
+    }
+    
     
 	ts = new poetsViewer('', '{{host}}', {{port}});
 	
