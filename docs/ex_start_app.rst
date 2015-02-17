@@ -16,7 +16,6 @@ In[14]::
    p.start_app(host='111.222.3.44', port=1234)
   
    
-
 Using colorbars and units
 -------------------------
 
@@ -45,6 +44,11 @@ in[16]::
    p.add_source(..., nan_value=255, data_range=(0, 254), valid_range=(-25, 45))
    
 
+Using custom region names
+-------------------------
+To display custom region names instead of the FIPS Code, the name of the region can be overwritten with the
+:class:`poets.poet.Poet` `region_names` parameter. This parameter must be given as list with the same size as 
+the `regions` parameter.
 
 
 Complete Example
@@ -59,6 +63,7 @@ In[17]::
    # poets attributes:
    rootpath = os.path.join('D:\\', 'Test') # Wherever the data should be stored
    regions = ['AU'] # clipping to Austria
+   region_names = ['Austria']
    spatial_resolution = 0.1
    temporal_resolution = 'dekad'
    start_date = datetime(2000, 1, 1)
@@ -66,7 +71,7 @@ In[17]::
    
    # initializing Poet class:
    p = Poet(rootpath, regions, spatial_resolution, temporal_resolution,
-            start_date, nan_value)
+            start_date, nan_value, region_names=region_names)
    
    # setting source attributes:             
    name = 'MODIS_LST'

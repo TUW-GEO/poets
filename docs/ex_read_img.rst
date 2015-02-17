@@ -12,7 +12,7 @@ In[11]::
 
    import matplotlib.pyplot as plt
    
-   image, lon, lat = p.read_image('MODIS_LST', datetime(2000, 5, 31))
+   image, lon, lat, metadata = p.read_image('MODIS_LST', datetime(2000, 5, 31))
    
    plt.figure()
    plt.imshow(image)
