@@ -234,6 +234,7 @@ tests/test_netcdf.py
 tests/test_poet.py
 tests/test_resampling.py
 tests/test_shapes.py
+tests/test_source_base.py
 tests/test_unpack.py
 tests/data/test.png
 tests/data/test.tif

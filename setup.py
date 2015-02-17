@@ -23,11 +23,11 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
 
 # Change these settings according to your needs
 MAIN_PACKAGE = "poets"
-DESCRIPTION = "None"
-LICENSE = "none"
-URL = "None"
-AUTHOR = "tmistelbauer"
-EMAIL = "t.mistelbauer@gmail.com"
+DESCRIPTION = "Python Open Earth Observation Tools"
+LICENSE = "BSD 3 Clause"
+URL = "http://rs.geo.tuwien.ac.at/poets"
+AUTHOR = "Thomas Mistelbauer"
+EMAIL = "thomas.mistelbauer@geo.tuwien.ac.at"
 
 COVERAGE_XML = False
 COVERAGE_HTML = False
