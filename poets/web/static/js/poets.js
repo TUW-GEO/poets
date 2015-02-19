@@ -34,6 +34,13 @@ poetsViewer.prototype.initLink = function() {
     $("#go").attr('href', link);
 }
 
+poetsViewer.prototype.trimSlash = function(str) {
+	if(str.substr(-1) == '/') {
+        return str.substr(0, str.length - 1);
+    }
+    return str;
+}
+
 poetsViewer.prototype.enableGo = function() {
     if ($("#region").val() == '') {
         $("#go").attr('disabled', 'disabled');

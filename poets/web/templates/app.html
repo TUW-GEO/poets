@@ -10,7 +10,6 @@ $(document).ready(function () {
     $("#graph_body").height($("#ts").width()*0.22);
     $("#graph_anom_body").height($("#ts").width()*0.22);
     
-    
     // set zoom step for map
     var e_lon = {{ ex1[0] }} - {{ ex2[0] }};
     var screen = $("#map").width();
@@ -36,6 +35,7 @@ $(document).ready(function () {
     
     
 	ts = new poetsViewer('', '{{host}}', {{port}});
+    path = ts.trimSlash(window.location.pathname)
 	
 	var opacity = 0.75
 	
@@ -202,10 +202,12 @@ $(document).ready(function () {
     $("#region").change(function() {
     	ts.setVarSelect();
         ts.initLink();
+        $("#go").attr('href', path+link);
         ts.enableGo();
     });
     $("#dataset").change(function() {
         ts.initLink();
+        $("#go").attr('href', path+link);
         ts.enableGo();
     });
     

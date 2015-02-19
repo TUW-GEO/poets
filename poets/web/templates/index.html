@@ -7,14 +7,18 @@ $(document).ready(function () {
 	
 	ts = new poetsViewer('', '{{host}}', {{port}});
 	enableGo();
+	
+	path = ts.trimSlash(window.location.pathname)
     
     $("#region").change(function() {
     	ts.setVarSelect();
         ts.initLink();
+        $("#go").attr('href', path+link);
         enableGo();
     });
     $("#dataset").change(function() {
         ts.initLink();
+        $("#go").attr('href', path+link);
         enableGo();
     });
     
@@ -43,7 +47,7 @@ $(document).ready(function () {
             </button>
             <a class="navbar-brand" rel="home" href="#" title="poets°">
                 <img style="max-width:100px; margin-top: -7px;"
-                     src="{{ url_for('static', filename='poets_logo_white_32.png') }}">
+                     src="static/poets_logo_white_32.png">
             </a>
           </div>
           <div class="collapse navbar-collapse">

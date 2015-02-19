@@ -348,7 +348,8 @@ class Poet(object):
             gridpoints['global'] = points
         else:
             for region in self.regions:
-                grid = ShapeGrid(region, self.spatial_resolution)
+                grid = ShapeGrid(region, self.spatial_resolution,
+                                 self.shapefile)
                 points = grid.get_gridpoints()
                 gridpoints[region] = points
 
@@ -446,8 +447,8 @@ class Poet(object):
 
         return variables
 
-    def start_app(self, host='127.0.0.1', port=5000, r_host=None, r_port=None,
-                  debug=False):
+    def start_app(self, host='127.0.0.1', port=None, r_host=None, r_port=None,
+                  subdir=None, debug=False):
         """Starts web interface.
 
         Parameters
@@ -455,7 +456,7 @@ class Poet(object):
         host : str, optional
             Host that is used by the app, defaults to 127.0.0.1.
         port : int, optional
-            Port where app runs on, defaults to 50000.
+            Port where app runs on, defaults to None.
         r_host : str, optional
             IP of router that is between host and internet.
         r_port : int, optional
