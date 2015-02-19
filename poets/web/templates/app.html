@@ -55,7 +55,7 @@ $(document).ready(function () {
 	bounds.extend(new OpenLayers.LonLat{{ex2}});
 	bounds.transform(proj4326, map.getProjectionObject());
 	
-	image = new OpenLayers.Layer.Image('IMAGE', "/_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
+	image = new OpenLayers.Layer.Image('IMAGE', "_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
 		'isBaseLayer': false,	// drawing overlay with the latest overlay image
 		'alwaysInRange': true,
 		'opacity' : opacity
@@ -98,7 +98,7 @@ $(document).ready(function () {
 	// LOAD IMAGE =============================================================
 	function loadImg(date) {
 		image.destroy();
-        image = new OpenLayers.Layer.Image('IMAGE', '/_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
+        image = new OpenLayers.Layer.Image('IMAGE', '_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
             'isBaseLayer': false,
             'alwaysInRange': true,
             'opacity' : opacity
@@ -182,7 +182,7 @@ $(document).ready(function () {
         sel_lat = $("#lat").val()
         
         div = "#download"
-        link = "/_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+        link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
         
         if(anom == true) {
         	link += '&anom';
@@ -197,17 +197,17 @@ $(document).ready(function () {
 		// lcode is important for avoiding keeping image in cache, in order
 		// to refresh legend if dataset is changed.
         var lcode = $("#region").val()+'&'+$("#dataset").val(); 
-        $('#legend').attr('src', '/_rlegend/' +lcode+'&'+$('#slider').val());
+        $('#legend').attr('src', '_rlegend/' +lcode+'&'+$('#slider').val());
     }
     $("#region").change(function() {
     	ts.setVarSelect();
         ts.initLink();
-        $("#go").attr('href', path+link);
+        $("#go").attr('href', link);
         ts.enableGo();
     });
     $("#dataset").change(function() {
         ts.initLink();
-        $("#go").attr('href', path+link);
+        $("#go").attr('href', link);
         ts.enableGo();
     });
     
