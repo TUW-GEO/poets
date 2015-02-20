@@ -34,16 +34,16 @@ $(document).ready(function () {
     }
     
     
-	ts = new poetsViewer('', '{{host}}', {{port}});
+    ts = new poetsViewer('', '{{host}}', {{port}});
     path = ts.trimSlash(window.location.pathname)
 	
-	var opacity = 0.75
+    var opacity = 0.75
 	
-	proj4326 = new OpenLayers.Projection("EPSG:4326");
+    proj4326 = new OpenLayers.Projection("EPSG:4326");
 		
-	gphy = new OpenLayers.Layer.Google("Google Physical", {
+    gphy = new OpenLayers.Layer.Google("Google Physical", {
 		type: google.maps.MapTypeId.TERRAIN
-	});
+    });
 	osm = new OpenLayers.Layer.OSM("openstreetmap");
 	map = new OpenLayers.Map("map");
 	map.addControl(new OpenLayers.Control.LayerSwitcher());
@@ -92,7 +92,7 @@ $(document).ready(function () {
 	
 
 	ts.setVarSelect();
-	ts.enableGo();
+	//ts.enableGo();
 	enableButtons({{max}});
 	
 	// LOAD IMAGE =============================================================
@@ -202,12 +202,12 @@ $(document).ready(function () {
     $("#region").change(function() {
     	ts.setVarSelect();
         ts.initLink();
-        $("#go").attr('href', link);
+        $("#go").attr('href', path); //+link);
         ts.enableGo();
     });
     $("#dataset").change(function() {
         ts.initLink();
-        $("#go").attr('href', link);
+        $("#go").attr('href', path);
         ts.enableGo();
     });
     

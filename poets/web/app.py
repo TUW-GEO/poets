@@ -124,7 +124,7 @@ class ReverseProxied(object):
 app = Flask(__name__, static_folder='static', static_url_path='/static',
             template_folder="templates")
 app.config['CORS_HEADERS'] = 'Content-Type'
-app.wsgi_app = ReverseProxied(app.wsgi_app)
+#app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
