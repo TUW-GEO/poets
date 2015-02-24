@@ -1,5 +1,13 @@
 {% extends "layout_ol.html" %}
 
+{% block url %}
+    {% if url == None %}
+        #
+    {% else %}
+        {{ url }}
+    {% endif %}
+{% endblock %}
+
 {% block body %}
 
 <script>
@@ -34,7 +42,7 @@ $(document).ready(function () {
     }
     
     
-    ts = new poetsViewer('', '{{host}}', {{port}});
+    ts = new poetsViewer('', '{{host}}', {{port}}, '{{url}}');
     path = ts.trimSlash(window.location.pathname)
 	
     var opacity = 0.75

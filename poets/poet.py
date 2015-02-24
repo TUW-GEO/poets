@@ -113,7 +113,7 @@ class Poet(object):
 
     def __init__(self, rootpath, regions=['global'],
                  spatial_resolution=0.25, temporal_resolution='dekad',
-                 start_date=datetime(2000, 1, 1), nan_value=-99,
+                 start_date=datetime(2000, 1, 1), nan_value=-99, url=None,
                  shapefile=None, delete_rawdata=False, region_names=None):
 
         self.rootpath = rootpath
@@ -143,6 +143,7 @@ class Poet(object):
         self.shapefile = shapefile
         self.delete_rawdata = delete_rawdata
         self.sources = {}
+        self.url = url
 
         if not os.path.exists(self.rawdata_path):
             os.mkdir(self.rawdata_path)
@@ -448,7 +449,7 @@ class Poet(object):
         return variables
 
     def start_app(self, host='127.0.0.1', port=None, r_host=None, r_port=None,
-                  subdir=None, debug=False):
+                  url=None, debug=False):
         """Starts web interface.
 
         Parameters
@@ -461,9 +462,12 @@ class Poet(object):
             IP of router that is between host and internet.
         r_port : int, optional
             Port of router that is between host and internet.
+        url : str, optional
+            URL where poets web interface is hosted. If not set, poets will run
+            on the IP of the hosting machine.
         debug : bool, optional
             Starts app in debug mode if set True, defaults to False.
         """
 
-        app.start(self, host, port, r_host, r_port, debug)
+        app.start(self, host, port, r_host, r_port, url, debug)
 

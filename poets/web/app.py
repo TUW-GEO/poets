@@ -44,6 +44,7 @@ import pandas as pd
 from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import bounds
 import pytesmo.time_series as ts
+import urlparse
 
 
 def curpath():
@@ -124,13 +125,13 @@ class ReverseProxied(object):
 app = Flask(__name__, static_folder='static', static_url_path='/static',
             template_folder="templates")
 app.config['CORS_HEADERS'] = 'Content-Type'
-app.wsgi_app = ReverseProxied(app.wsgi_app)
+# app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 def start(poet, host='127.0.0.1', port=None, r_host=None, r_port=None,
-          debug=False):
+          url=None, debug=False):
     """
     Starts application and sets global variables.
 
@@ -156,6 +157,7 @@ def start(poet, host='127.0.0.1', port=None, r_host=None, r_port=None,
     global vmin, vmax, cmap
     global host_gl
     global port_gl
+    global url_gl
 
     p = poet
     variables = poet.get_variables()
@@ -172,6 +174,12 @@ def start(poet, host='127.0.0.1', port=None, r_host=None, r_port=None,
         port_gl = port
     else:
         port_gl = r_port
+
+    if url is not None:
+        pa = urlparse.urlparse(url, 'http')
+        url_gl = pa.geturl()
+    else:
+        url_gl = url
 
     if debug:
         app.run(debug=True, use_debugger=True, use_reloader=True, host=host,
@@ -253,15 +261,16 @@ def index(**kwargs):
                                host=host_gl,
                                port=port_gl,
                                sp_res=p.spatial_resolution,
-                               range=vrange
-                               )
+                               range=vrange,
+                               url=url_gl)
     else:
         return render_template('index.html',
                                regions=regions,
                                sources=p.sources.keys(),
                                variables=variables,
                                host=host_gl,
-                               port=port_gl)
+                               port=port_gl,
+                               url=url_gl)
 
 
 @app.route('/_ts/<reg>&<src>&<var>&<loc>', methods=['GET', 'OPTIONS'])
@@ -486,4 +495,4 @@ def about():
     """
     Creates the `about` page.
     """
-    return render_template('about.html')
+    return render_template('about.html', url=url_gl)

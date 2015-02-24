@@ -1,11 +1,19 @@
 {% extends "layout.html" %}
 
+{% block url %}
+	{% if url == None %}
+	    #
+	{% else %}
+	    {{ url }}
+	{% endif %}
+{% endblock %}
+
 {% block body %}
 
 <script>
 $(document).ready(function () {
 	
-	ts = new poetsViewer('', '{{host}}', {{port}});
+	ts = new poetsViewer('', '{{host}}', {{port}}, '{{url}}');
 	enableGo();
 	
 	path = ts.trimSlash(window.location.pathname)
@@ -36,29 +44,6 @@ $(document).ready(function () {
 });
 </script>
 
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" rel="home" href="#" title="poets°">
-                <img style="max-width:100px; margin-top: -7px;"
-                     src="static/poets_logo_white_32.png">
-            </a>
-          </div>
-          <div class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="about">About</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-      </div>
-    </div>
-
 <div class="jumbotron" align="center">
     <h2>Welcome to the poets° data viewer!</h2>
     <p>Select a Region and Datataset to start...</p>
@@ -88,7 +73,7 @@ $(document).ready(function () {
 	  		<span class="sr-only">Error:</span>
 	  		<strong>Error:</strong> {{ error }}
 	  	</p>
-	</div>
+    </div>
   	{% endif %}
 </div>
 

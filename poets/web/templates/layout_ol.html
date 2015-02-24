@@ -47,7 +47,7 @@
 	          <span class="icon-bar"></span>
 	          <span class="icon-bar"></span>
 	        </button>
-	        <a class="navbar-brand" rel="home" href="/" title="poets°">
+	        <a class="navbar-brand" rel="home" href="" title="poets°">
 <!-- 		        <img style="max-width:100px; margin-top: -7px;" -->
 <!-- 		             src="{{ url_for('static', filename='poets_logo_white_32.png') }}"> -->
 					<img style="max-width:100px; margin-top: -7px;"
@@ -56,7 +56,7 @@
 	      </div>
 	      <div class="collapse navbar-collapse">
 	        <ul class="nav navbar-nav">
-              <li class="active"><a href="..">Home</a></li>
+              <li class="active"><a href="{% block url %}{% endblock %}">Home</a></li>
               <li><a href="about">About</a></li>
             </ul>
 	      </div><!--/.nav-collapse -->

@@ -1,10 +1,14 @@
-function poetsViewer(div, host, port) {
-	this.host = 'http://'+host+':'+port.toString();
+function poetsViewer(div, host, port, url) {
+	if(url != 'None') {
+		this.host = url;
+	} else {
+		this.host = 'http://'+host+':'+port.toString();
+	}
 }
 
 poetsViewer.prototype.setVarSelect = function() {
 	var reg = $("#region").val()
-	link = '/_variables/'+reg; 
+	link = '/_variables/'+reg;
 	// empty select list
 	var current = $("#variable").val()
 	$("#dataset").empty();
@@ -31,7 +35,6 @@ poetsViewer.prototype.initLink = function() {
     	sel_var = $("#variable").val();
     }
     link = "/"+sel_reg+"&"+sel_var
-    //link = sel_reg+"&"+sel_var;
     $("#go").attr('href', link);
 }
 
@@ -60,7 +63,6 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 	var dataset = $("#dataset").val()
 	
 	link = '/_ts/'+reg+'&'+src+'&'+dataset+'&'+lon+','+lat;
-        //link = '_ts/'+reg+'&'+src+'&'+dataset+'&'+lon+','+lat;	
 
 	var div = 'graph_';
 	
