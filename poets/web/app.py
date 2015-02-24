@@ -177,7 +177,7 @@ def start(poet, host='127.0.0.1', port=None, r_host=None, r_port=None,
 
     if url is not None:
         pa = urlparse.urlparse(url, 'http')
-        url_gl = pa.geturl()
+        url_gl = os.path.join(pa.geturl(), '')
     else:
         url_gl = url
 
