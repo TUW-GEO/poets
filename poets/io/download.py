@@ -96,21 +96,18 @@ def download_ftp(download_path, host, directory, filedate, port=21,
     try:
         ftp = FTP(host)
     except:
-        print ''
         print '[ERROR] Cannot connect to source. Please contact data provider.'
         return False
 
     try:
         ftp.login(username, password)
     except:
-        print ''
         print '[ERROR] Cannot login at source - wrong login credentials.'
         return False
 
     try:
         ftp.cwd(directory)
     except:
-        print ''
         print '[ERROR] Directory not found on host!'
         return False
 
@@ -122,7 +119,7 @@ def download_ftp(download_path, host, directory, filedate, port=21,
         os.makedirs(download_path)
 
     os.chdir(download_path)
-    print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end),
+    print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end)
 
     files = []
 
@@ -166,9 +163,7 @@ def download_ftp(download_path, host, directory, filedate, port=21,
                         ftp.cwd(loc)
                         ftp.retrbinary("RETR " + fname2,
                                        open(fname2, "wb").write)
-                        print '.',
                     except:
-                        print ''
                         print '[WARNING] Connection timed out, retrying...'
                         try:
                             ftp.close()
@@ -178,16 +173,13 @@ def download_ftp(download_path, host, directory, filedate, port=21,
                             ftp.cwd(loc)
                             ftp.retrbinary("RETR " + fname2,
                                            open(fname2, "wb").write)
-                            print '.',
                         except:
                             '[ERROR] Retry not successful, skipping download.'
                             return False
         ftp.close()
-        print ''
         return True
     else:
         ftp.close()
-        print ''
         return False
 
     return True
@@ -240,7 +232,7 @@ def download_sftp(download_path, host, directory, port, username, password,
         print('[INFO] output path does not exist... creating path')
         os.makedirs(download_path)
 
-    print '[INFO] downloading data from ' + str(begin) + ' - ' + str(end),
+    print '[INFO] downloading data from ' + str(begin) + ' - ' + str(end)
 
     if not os.path.exists(download_path):
         os.makedirs(download_path)
@@ -254,7 +246,6 @@ def download_sftp(download_path, host, directory, port, username, password,
     try:
         transport = paramiko.Transport((host, port))
     except paramiko.ssh_exception.SSHException:
-        print ''
         print '[ERROR] Cannot connect to source. Please contact data provider.'
         return False
 
@@ -262,14 +253,12 @@ def download_sftp(download_path, host, directory, port, username, password,
         transport.connect(username=username, password=password)
         sftp = paramiko.SFTPClient.from_transport(transport)
     except:
-        print ''
         print '[ERROR] Cannot login at source.'
         return False
 
     try:
         subdirs = sftp.listdir(directory)
     except:
-        print ''
         print '[ERROR] Directory not found on host!'
         return False
 
@@ -327,12 +316,10 @@ def download_sftp(download_path, host, directory, port, username, password,
             if fdate >= begin and fdate <= end:
                 if ffilter is not None and ffilter not in f:
                     continue
-                print '.',
                 if os.path.isfile(os.path.join(localpath, filename)) is False:
                     try:
                         sftp.get(f, os.path.join(localpath, filename))
                     except:
-                        print ''
                         print '[WARNING] Connection timed out, retrying...'
                         try:
                             sftp.close
@@ -346,11 +333,9 @@ def download_sftp(download_path, host, directory, port, username, password,
                             '[ERROR] Retry not successful, skipping download.'
                             return False
         sftp.close
-        print ''
         return True
     else:
         sftp.close
-        print ''
         return False
 
 
@@ -393,8 +378,7 @@ def download_http(download_path, host, directory, filename, filedate,
     if end is None:
         end = datetime.now()
 
-    print('[INFO] downloading data from ' + str(begin) + ' - '
-          + str(end)),
+    print('[INFO] downloading data from ' + str(begin) + ' - ' + str(end))
 
     # create daterange on monthly basis
     mon_from = datetime(begin.year, begin.month, 1)
@@ -511,11 +495,9 @@ def download_http(download_path, host, directory, filename, filedate,
             try:
                 r = requests.get(fp, timeout=20.)
             except ConnectionError:
-                print ''
-                print '[WARNING] File not available at resource, skipping...'
+                print '[ERROR] Could not connect to resource, skipping...'
                 continue
             except Timeout:
-                print ''
                 print '[WARNING] File not available at resource, skipping...'
                 continue
 
@@ -533,13 +515,10 @@ def download_http(download_path, host, directory, filename, filedate,
                     r = requests.get(fp, stream=True)
                     with open(newfile, 'wb') as f:
                         f.write(r.content)
-                        print '.',
 
     if len(files) > 0:
-        print ''
         return True
     else:
-        print ''
         return False
 
 
@@ -577,7 +556,7 @@ def download_local(download_path, directory, filedate, dirstruct=None,
 
     files = []
 
-    print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end),
+    print '[INFO] downloading data from ' + str(begin) + ' to ' + str(end)
 
     # directory/folder (len(dirstruct) == 1)
     if dirstruct is not None and len(dirstruct) == 1:
@@ -624,10 +603,8 @@ def download_local(download_path, directory, filedate, dirstruct=None,
                                         os.path.join(download_path, fname))
 
     if len(files) > 0:
-        print ''
         return True
     else:
-        print ''
         return False
 
 

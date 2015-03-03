@@ -546,7 +546,15 @@ class BasicSource(object):
             start date of download, default to None
         end : datetime, optional
             start date of download, default to None
+
+        Returns
+        -------
+        check : bool, string
+            True if download was complete, False if no data were available,
+            Error Message if connection to resource failed.
         """
+
+        errormsg = '[ERROR] Could not connect to source'
 
         if begin is None:
             if self.dest_start_date < self.begin_date:
@@ -555,25 +563,40 @@ class BasicSource(object):
                 begin = self.dest_start_date
 
         if self.protocol in ['HTTP', 'http']:
-            check = download_http(self.rawdata_path, self.host,
-                                  self.directory, self.filename, self.filedate,
-                                  self.dirstruct, begin=begin, end=end,
-                                  ffilter=self.ffilter)
+            try:
+                check = download_http(self.rawdata_path, self.host,
+                                      self.directory, self.filename,
+                                      self.filedate, self.dirstruct,
+                                      begin=begin, end=end,
+                                      ffilter=self.ffilter)
+            except:
+                check = False
         elif self.protocol in ['FTP', 'ftp']:
-            check = download_ftp(self.rawdata_path, self.host, self.directory,
-                                 self.filedate, self.port, self.username,
-                                 self.password, self.dirstruct, begin=begin,
-                                 end=end, ffilter=self.ffilter)
+            try:
+                check = download_ftp(self.rawdata_path, self.host,
+                                     self.directory, self.filedate, self.port,
+                                     self.username, self.password,
+                                     self.dirstruct, begin=begin, end=end,
+                                     ffilter=self.ffilter)
+            except:
+                check = errormsg
         elif self.protocol in ['SFTP', 'sftp']:
-            check = download_sftp(self.rawdata_path, self.host,
-                                  self.directory, self.port, self.username,
-                                  self.password, self.filedate, self.dirstruct,
-                                  begin=begin, end=end, ffilter=self.ffilter)
+            try:
+                check = download_sftp(self.rawdata_path, self.host,
+                                      self.directory, self.port, self.username,
+                                      self.password, self.filedate,
+                                      self.dirstruct, begin=begin, end=end,
+                                      ffilter=self.ffilter)
+            except:
+                check = errormsg
         elif self.protocol in ['local', 'LOCAL']:
-            check = download_local(self.rawdata_path, directory=self.host,
-                                   filedate=self.filedate,
-                                   dirstruct=self.dirstruct, begin=begin,
-                                   end=end, ffilter=self.ffilter)
+            try:
+                check = download_local(self.rawdata_path, directory=self.host,
+                                       filedate=self.filedate,
+                                       dirstruct=self.dirstruct, begin=begin,
+                                       end=end, ffilter=self.ffilter)
+            except:
+                check = errormsg
 
         return check
 
@@ -724,7 +747,10 @@ class BasicSource(object):
             if filecheck is True:
                 self.resample(start, stop, delete_rawdata, shapefile, False)
             else:
-                print '[WARNING] no data available for this date'
+                if filecheck is False:
+                    print '[WARNING] no data available for this date'
+                else:
+                    print filecheck
 
     def read_ts(self, location, region=None, variable=None, shapefile=None,
                 scaled=True):
@@ -1008,7 +1034,7 @@ class BasicSource(object):
         """
         Detects gaps in data and tries to fill them by downloading and
         resampling the data within these periods.
-        
+
         Parameters
         ----------
         begin : datetime
