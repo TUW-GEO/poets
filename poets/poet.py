@@ -231,7 +231,8 @@ class Poet(object):
 
         self.sources[name] = source
 
-    def fetch_data(self, begin=None, end=None, delete_rawdata=None):
+    def fetch_data(self, begin=None, end=None, delete_rawdata=None,
+                   source=None):
         """Starts download and resampling of input data for sources as added
         to `Poets.sources`.
 
@@ -245,21 +246,27 @@ class Poet(object):
         delete_rawdata : bool, optional
             Original files will be deleted from rawdata_path if set True.
             Defaults to value of delete_rawdata attribute as set in Poet class.
+        source = str, optional
+            Name of the source to fetch_data. If None, all sources will be
+            fetched.
         """
 
         if delete_rawdata is None:
             delete_rawdata = self.delete_rawdata
 
-        for source in self.sources.keys():
-            src = self.sources[source]
-            print '[INFO] Download data for source ' + source
-            src.download_and_resample(begin=begin, end=end,
-                                      shapefile=self.shapefile,
-                                      delete_rawdata=delete_rawdata)
+        for src in self.sources.keys():
+            if source is not None:
+                if source != src:
+                    continue
+            s = self.sources[src]
+            print '[INFO] Download data for source ' + src
+            s.download_and_resample(begin=begin, end=end,
+                                    shapefile=self.shapefile,
+                                    delete_rawdata=delete_rawdata)
 
         print '[SUCCESS] Download and resampling complete!'
 
-    def download(self, begin=None, end=None):
+    def download(self, begin=None, end=None, source=None):
         """Starts download of input data for sources as added
         to `Poets.sources`.
 
@@ -270,16 +277,22 @@ class Poet(object):
             in poets class.
         end : datetime, optional
             End date of data to download, defaults to current datetime.
+        source = str, optional
+            Name of the source download. If None, all sources will be
+            downloaded.
         """
 
-        for source in self.sources.keys():
-            src = self.sources[source]
-            print '[INFO] Download data for source ' + source
-            src.download(begin=begin, end=end)
+        for src in self.sources.keys():
+            if source is not None:
+                if source != src:
+                    continue
+            s = self.sources[src]
+            print '[INFO] Download data for source ' + src
+            s.download(begin=begin, end=end)
 
         print '[SUCCESS] Download complete!'
 
-    def resample(self, begin=None, end=None, delete_rawdata=None):
+    def resample(self, begin=None, end=None, delete_rawdata=None, source=None):
         """Starts download of input data for sources as added
         to `Poets.sources`.
 
@@ -290,27 +303,39 @@ class Poet(object):
             in poets class.
         end : datetime, optional
             End date of data to download, defaults to current datetime.
+        source = str, optional
+            Name of the source to resample. If None, all sources will be
+            resampled.
         """
 
-        for source in self.sources.keys():
-            src = self.sources[source]
-            print '[INFO] Resampling data for source ' + source
-            src.resample(begin=begin, end=end,
-                         shapefile=self.shapefile,
-                         delete_rawdata=delete_rawdata)
+        for src in self.sources.keys():
+            if source is not None:
+                if source is not src:
+                    continue
+            s = self.sources[src]
+            print '[INFO] Resampling data for source ' + src
+            s.resample(begin=begin, end=end,
+                       shapefile=self.shapefile,
+                       delete_rawdata=delete_rawdata)
 
         print '[SUCCESS] Resampling complete!'
 
-    def fill_gaps(self):
+    def fill_gaps(self, source=None):
         """
         Detects gaps in data and tries to fill them by downloading and
         resampling the data within these periods.
+        source = str, optional
+            Name of the source to fill gaps. If None, all sources will be
+            fixed.
         """
 
-        for source in self.sources.keys():
-            src = self.sources[source]
-            print '[INFO] Scanning ' + source + ' for gaps'
-            src.fill_gaps()
+        for src in self.sources.keys():
+            if source is not None:
+                if source is not src:
+                    continue
+            s = self.sources[src]
+            print '[INFO] Scanning ' + src + ' for gaps'
+            s.fill_gaps()
 
     def get_gridpoints(self):
         """Returns gridpoints from NetCDF file.
