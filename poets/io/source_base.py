@@ -40,7 +40,7 @@ from poets.io.download import download_http, download_ftp, download_sftp, \
     get_file_date, download_local
 from poets.io.fileformats import select_file
 from poets.io.unpack import unpack, check_compressed
-import math as ma
+import math
 import numpy as np
 import os
 import pandas as pd
@@ -289,32 +289,38 @@ class BasicSource(object):
                         dates[region][var] = []
                         if begin:
                             for i in range(0, nc.variables['time'].size - 1):
-                                if(nc.variables[var][i].mask.min() or
-                                   ma.isnan(np.nanmax(nc.variables[var][i]))):
+                                data = nc.variables[var][i]
+                                if isinstance(data, np.ma.MaskedArray):
+                                    if data.mask.min():
+                                        continue
+                                elif(math.isnan(np.nanmax(data))):
                                     continue
-                                else:
-                                    times = nc.variables['time']
-                                    dat = num2date(nc.variables['time'][i],
-                                                   units=times.units,
-                                                   calendar=times.calendar)
-                                    dates[region][var].append(dat)
-                                    break
+
+                                times = nc.variables['time']
+                                dat = num2date(nc.variables['time'][i],
+                                               units=times.units,
+                                               calendar=times.calendar)
+                                dates[region][var].append(dat)
+                                break
                         else:
                             dates[region][var].append(None)
 
                         if end:
                             for i in range(nc.variables['time'].size - 1,
                                            - 1, -1):
-                                if(nc.variables[var][i].mask.min() or
-                                   ma.isnan(np.nanmax(nc.variables[var][i]))):
+                                data = nc.variables[var][i]
+                                if isinstance(data, np.ma.MaskedArray):
+                                    if data.mask.min():
+                                        continue
+                                elif(math.isnan(np.nanmax(data))):
                                     continue
-                                else:
-                                    times = nc.variables['time']
-                                    dat = num2date(nc.variables['time'][i],
-                                                   units=times.units,
-                                                   calendar=times.calendar)
-                                    dates[region][var].append(dat)
-                                    break
+
+                                times = nc.variables['time']
+                                dat = num2date(nc.variables['time'][i],
+                                               units=times.units,
+                                               calendar=times.calendar)
+                                dates[region][var].append(dat)
+                                break
                         else:
                             dates[region][var].append(None)
 

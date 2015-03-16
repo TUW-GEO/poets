@@ -94,7 +94,7 @@ class Test(unittest.TestCase):
             shutil.rmtree(self.pngdir)
 
     def test_init(self):
-        assert len(self.poet.__dict__.keys()) == 13
+        assert len(self.poet.__dict__.keys()) == 14
 
     def test_add_source(self):
         name = 'CCI'
