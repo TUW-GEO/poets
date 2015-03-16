@@ -20,13 +20,11 @@ $(document).ready(function () {
     
     $("#region").change(function() {
     	ts.setVarSelect();
-        ts.initLink();
-        $("#go").attr('href', path+link);
+        ts.initLink(path);
         enableGo();
     });
     $("#dataset").change(function() {
-        ts.initLink();
-        $("#go").attr('href', path+link);
+        ts.initLink(path);
         enableGo();
     });
     

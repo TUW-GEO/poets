@@ -28,14 +28,28 @@ poetsViewer.prototype.setVarSelect = function() {
 	});
 }
 
-poetsViewer.prototype.initLink = function() {
+poetsViewer.prototype.initLink = function(path) {
     sel_reg = $("#region").val();
     sel_var = $("#dataset").val();
     if(sel_var == null) {
     	sel_var = $("#variable").val();
     }
-    link = "/"+sel_reg+"&"+sel_var
-    $("#go").attr('href', link);
+    link = sel_reg+"&"+sel_var
+
+    segments = path.split("/");
+    
+    var url = ''
+
+    for(var i=0; i < segments.length; i++) {
+    	if(i == segments.length-1) {
+    		if(segments[i].indexOf("\&") > -1) {
+    			break
+    		}
+    	}
+    	url += segments[i]+"/"
+    }
+    $("#go").attr('href', url+link);
+    
 }
 
 poetsViewer.prototype.trimSlash = function(str) {
@@ -112,4 +126,61 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 		});
 		
 	});
+}
+
+poetsViewer.prototype.expandDiv = function(div) {
+	var div = document.getElementById(div);
+	div.style.visibility='visible';
+	div.style.overflow = "visible";
+	div.style.height = "auto";
+}
+
+poetsViewer.prototype.foldDiv = function(div) {
+	var div = document.getElementById(div);
+	div.style.visibility='hidden';
+	div.style.overflow = "hidden";
+	div.style.height = "0";
+}
+
+poetsViewer.prototype.enableButtons = function(date, max) {
+	if (date == max) {
+        $("#btn-next").attr('disabled', 'disabled');
+    } else {
+        $("#btn-next").removeAttr('disabled');
+    }
+    if (date==0) {
+        $("#btn-prev").attr('disabled', 'disabled');
+    } else {
+        $("#btn-prev").removeAttr('disabled');
+    }
+}
+
+poetsViewer.prototype.sliderPos = function(date) {
+	$("#slider").slider('setValue', date)
+}
+
+poetsViewer.prototype.initDownLink = function(anom) {
+	sel_reg = $("#region").val()
+    sel_var = $("#dataset").val()
+    sel_src = $("#source").val()
+    sel_lon = $("#lon").val()
+    sel_lat = $("#lat").val()
+    
+    div = "#download"
+    link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+    
+    if(anom == true) {
+    	link += '&anom';
+    	div += "_anom"
+    }
+      
+    $(div).attr('href', link);
+}
+
+
+poetsViewer.prototype.initLegend = function() {
+	// lcode is important for avoiding keeping image in cache, in order
+	// to refresh legend if dataset is changed.
+    var lcode = $("#region").val()+'&'+$("#dataset").val(); 
+    $('#legend').attr('src', '_rlegend/' +lcode+'&'+$('#slider').val());
 }

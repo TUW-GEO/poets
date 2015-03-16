@@ -70,7 +70,7 @@ $(document).ready(function () {
 	});
 	map.addLayer(image);
 	
-	initLegend();
+	ts.initLegend();
 	
 	var mlayer = new OpenLayers.Layer()
 	markers = new OpenLayers.Layer.Markers("Markers");
@@ -89,11 +89,11 @@ $(document).ready(function () {
         $("#lon").val(lonlat.lon)
         $("#lat").val(lonlat.lat)
         
-        initDownLink();
+        ts.initDownLink();
         
-        expandDiv("ts");
-    	expandDiv("graph");
-    	foldDiv("graph_anom")
+        ts.expandDiv("ts");
+    	ts.expandDiv("graph");
+    	ts.foldDiv("graph_anom")
         ts.loadTS(lonlat.lon, lonlat.lat, {{sp_res}}, 
         		[{{range[0]}}, {{range[1]}}]);
 	});
@@ -101,7 +101,7 @@ $(document).ready(function () {
 
 	ts.setVarSelect();
 	//ts.enableGo();
-	enableButtons({{max}});
+	ts.enableButtons({{max}}, {{max}});
 	
 	// LOAD IMAGE =============================================================
 	function loadImg(date) {
@@ -114,7 +114,7 @@ $(document).ready(function () {
         map.addLayer(image);
         markers.setZIndex(1001);
         image.setZIndex(1000);
-        initLegend();
+        ts.initLegend();
 	}
 	
 	// SLIDER =================================================================
@@ -131,7 +131,7 @@ $(document).ready(function () {
 		  function(ev){
 		      val = $('#slider').val();
 		      loadImg(val);
-		      enableButtons(val);
+		      ts.enableButtons(val, {{max}});
 		  }
 	);
 	
@@ -142,8 +142,8 @@ $(document).ready(function () {
 		$('#slider').slider({value:val});
 		$("#dateSelect").prop("selectedIndex", val); 
 		loadImg($('#slider').val());
-		enableButtons(val);
-        sliderPos(val);
+		ts.enableButtons(val, {{max}});
+        ts.sliderPos(val);
 	});
 	
 	$("#btn-next").click(function(){
@@ -152,8 +152,8 @@ $(document).ready(function () {
         $('#slider').slider({value:val});
         $("#dateSelect").prop("selectedIndex", val);
         loadImg($('#slider').val());
-        enableButtons(val);
-        sliderPos(val);
+        ts.enableButtons(val, {{max}});
+        ts.sliderPos(val);
     });
 	
 	$("#dateSelect").change(function() {
@@ -161,85 +161,28 @@ $(document).ready(function () {
 		$('#slider').val(val);
         $('#slider').slider({value:val});
         loadImg($('#slider').val());
-		enableButtons(val);
-		sliderPos(val);
+		ts.enableButtons(val, {{max}});
+		ts.sliderPos(val);
 	});
 	
-	function enableButtons(date) {
-		if (date == {{max}}) {
-            $("#btn-next").attr('disabled', 'disabled');
-        } else {
-            $("#btn-next").removeAttr('disabled');
-        }
-        if (date==0) {
-            $("#btn-prev").attr('disabled', 'disabled');
-        } else {
-            $("#btn-prev").removeAttr('disabled');
-        }
-	}
-	
-	function sliderPos(date) {
-		$("#slider").slider('setValue', date)
-	}
-	
-	function initDownLink(anom) {
-		sel_reg = $("#region").val()
-        sel_var = $("#dataset").val()
-        sel_src = $("#source").val()
-        sel_lon = $("#lon").val()
-        sel_lat = $("#lat").val()
-        
-        div = "#download"
-        link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
-        
-        if(anom == true) {
-        	link += '&anom';
-        	div += "_anom"
-        }
-          
-        $(div).attr('href', link);
-	}
-	
-	// LEGEND =================================================================
-    function initLegend() {
-		// lcode is important for avoiding keeping image in cache, in order
-		// to refresh legend if dataset is changed.
-        var lcode = $("#region").val()+'&'+$("#dataset").val(); 
-        $('#legend').attr('src', '_rlegend/' +lcode+'&'+$('#slider').val());
-    }
     $("#region").change(function() {
     	ts.setVarSelect();
-        ts.initLink();
-        $("#go").attr('href', path); //+link);
+        ts.initLink(path);
         ts.enableGo();
     });
+    
     $("#dataset").change(function() {
-        ts.initLink();
-        $("#go").attr('href', path);
+        ts.initLink(path);
         ts.enableGo();
     });
     
     $("#anom").click(function() {
-        expandDiv('graph_anom');
+        ts.expandDiv('graph_anom');
         lon = $("#lon").val()
         lat = $("#lat").val()
         ts.loadTS(lon, lat, {{sp_res}}, {{ range }}, true);
-        initDownLink(true);
+        ts.initDownLink(true);
     });
-    
-	function expandDiv(div) {
-		var div = document.getElementById(div);
-		div.style.visibility='visible';
-		div.style.overflow = "visible";
-		div.style.height = "auto";
-	}
-
-	function foldDiv(div) {
-		var div = document.getElementById(div);
-		div.style.visibility='hidden';
-		div.style.overflow = "hidden";
-		div.style.height = "0";
-	}
 	
 });
 </script>
@@ -268,7 +211,9 @@ $(document).ready(function () {
 	                <option value=''>DATASET</option>
 	            </select>
 	        </div>
-	        <a href='' class='btn btn-primary' id="go"><span class="glyphicon glyphicon-chevron-right"></span> GO</a>
+	        <a href='' class='btn btn-primary' id="go">
+	           <span class="glyphicon glyphicon-chevron-right"></span> GO
+	        </a>
 	        <input id="source" type="hidden" value="{{ source }}" />
 	        <input id="lon" type="hidden" />
 	        <input id="lat" type="hidden" />
