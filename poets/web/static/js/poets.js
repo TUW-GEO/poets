@@ -100,8 +100,9 @@ poetsViewer.prototype.initDownLink = function(anom) {
 poetsViewer.prototype.initLegend = function() {
 	// lcode is important for avoiding keeping image in cache, in order
 	// to refresh legend if dataset is changed.
-    var lcode = $("#region").val()+'&'+$("#dataset").val(); 
-    $('#legend').attr('src', '_rlegend/' +lcode+'&'+$('#slider').val());
+    var lcode = $("#region").val()+'&'+$("#dataset").val();
+    var number = Math.floor(Math.random()*10000);
+    $('#legend').attr('src', '_rlegend/'+lcode+'&'+$('#slider').val()+'&'+number);
 }
 
 poetsViewer.prototype.setVarSelect = function() {

@@ -70,8 +70,6 @@ $(document).ready(function () {
 	});
 	map.addLayer(image);
 	
-	ts.initLegend();
-	
 	var mlayer = new OpenLayers.Layer()
 	markers = new OpenLayers.Layer.Markers("Markers");
 	map.addLayer(markers);
@@ -98,10 +96,9 @@ $(document).ready(function () {
         		[{{range[0]}}, {{range[1]}}]);
 	});
 	
-
 	ts.setVarSelect();
-	//ts.enableGo();
 	ts.enableButtons({{max}}, {{max}});
+	ts.initLegend();
 	
 	// LOAD IMAGE =============================================================
 	function loadImg(date) {
