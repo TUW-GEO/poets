@@ -407,6 +407,8 @@ def request_image(**kwargs):
             metadata['unit'] = source.unit
 
     if source.labels is not None and source.xticks is not None:
+        if metadata is None:
+            metadata = {}
         metadata['labels'] = source.labels
         metadata['xticks'] = source.xticks
 
@@ -465,12 +467,11 @@ def request_legend(**kwargs):
         for unit in units:
             if unit in metadata:
                 cb1.set_label(metadata[unit], fontsize=10)
+        if 'labels' in metadata.keys() and 'xticks' in metadata.keys():
+            cb1.set_ticks(metadata['xticks'])
+            cb1.set_ticklabels(metadata['labels'])
 
     fig.patch.set_alpha(0.6)
-
-    if 'labels' in metadata.keys() and 'xticks' in metadata.keys():
-        cb1.set_ticks(metadata['xticks'])
-        cb1.set_ticklabels(metadata['labels'])
 
     buf = StringIO()
     plt.savefig(buf)
