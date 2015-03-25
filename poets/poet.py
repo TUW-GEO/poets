@@ -155,9 +155,9 @@ class Poet(object):
     def add_source(self, name, filename, filedate, temp_res, host, protocol,
                    username=None, password=None, port=22, directory=None,
                    dirstruct=None, begin_date=None, regions=None,
-                   variables=None, nan_value=None, valid_range=None,
-                   unit=None, ffilter=None, data_range=None, colorbar=None,
-                   src_file=None):
+                   variables=None, nan_value=None,
+                   valid_range=None, unit=None, ffilter=None, data_range=None,
+                   colorbar=None, src_file=None, labels=None, xticks=None):
         """Creates BasicSource class and adds it to `Poet.sources`.
 
         Parameters
@@ -206,6 +206,14 @@ class Poet(object):
             Colorbar to use, use one from
             http://matplotlib.org/examples/color/colormaps_reference.html;
             defaults to jet.
+        labels : list, optional
+            Custom tick-labels for the legend in the web-app; must have same
+            dimension as xticks and only works if xticks is set; Defaults
+            to None.
+        xticks : list of int or float, optional
+            Custom tick locations for the legend in the web-app; must have same
+            dimension as labels and only works if labels is set; Defaults
+            to None.
         unit : str, optional
             Unit of dataset for displaying in legend. Does not have to be set
             if unit is specified in input file metadata. Defaults to None.
@@ -227,7 +235,7 @@ class Poet(object):
                              dest_sp_res=self.spatial_resolution,
                              dest_temp_res=self.temporal_resolution,
                              dest_start_date=self.start_date,
-                             src_file=src_file)
+                             src_file=src_file, labels=labels, xticks=xticks)
 
         self.sources[name] = source
 

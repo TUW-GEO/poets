@@ -6,28 +6,6 @@ function poetsViewer(div, host, port, url) {
 	}
 }
 
-poetsViewer.prototype.setVarSelect = function() {
-	var reg = $("#region").val()
-	link = '/_variables/'+reg;
-	// empty select list
-	var current = $("#variable").val()
-	$("#dataset").empty();
-	// fill select again
-	$.getJSON(this.host+link, function(data){
-		if(data.variables.indexOf(current) == -1) {
-			$('#dataset').append(new Option('DATASET', ''));
-			$("#dataset option[value='']").attr('selected', 'selected');
-		}
-		for(var i = 0; i < data.variables.length; i++) {
-			var d = data.variables[i];
-			$('#dataset').append(new Option(data.variables[i], data.variables[i]));
-			if(data.variables[i] == current) {
-				$("#dataset option[value="+current+"]").attr('selected', 'selected');
-			}
-		}
-	});
-}
-
 poetsViewer.prototype.initLink = function(path) {
     sel_reg = $("#region").val();
     sel_var = $("#dataset").val();
@@ -68,6 +46,84 @@ poetsViewer.prototype.enableGo = function() {
     } else {
         $("#go").removeAttr('disabled');
     }
+}
+
+poetsViewer.prototype.expandDiv = function(div) {
+	var div = document.getElementById(div);
+	div.style.visibility='visible';
+	div.style.overflow = "visible";
+	div.style.height = "auto";
+}
+
+poetsViewer.prototype.foldDiv = function(div) {
+	var div = document.getElementById(div);
+	div.style.visibility='hidden';
+	div.style.overflow = "hidden";
+	div.style.height = "0";
+}
+
+poetsViewer.prototype.enableButtons = function(date, max) {
+	if (date == max) {
+        $("#btn-next").attr('disabled', 'disabled');
+    } else {
+        $("#btn-next").removeAttr('disabled');
+    }
+    if (date==0) {
+        $("#btn-prev").attr('disabled', 'disabled');
+    } else {
+        $("#btn-prev").removeAttr('disabled');
+    }
+}
+
+poetsViewer.prototype.sliderPos = function(date) {
+	$("#slider").slider('setValue', date)
+}
+
+poetsViewer.prototype.initDownLink = function(anom) {
+	sel_reg = $("#region").val()
+    sel_var = $("#dataset").val()
+    sel_src = $("#source").val()
+    sel_lon = $("#lon").val()
+    sel_lat = $("#lat").val()
+    
+    div = "#download"
+    link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+    
+    if(anom == true) {
+    	link += '&anom';
+    	div += "_anom"
+    }
+      
+    $(div).attr('href', link);
+}
+
+poetsViewer.prototype.initLegend = function() {
+	// lcode is important for avoiding keeping image in cache, in order
+	// to refresh legend if dataset is changed.
+    var lcode = $("#region").val()+'&'+$("#dataset").val(); 
+    $('#legend').attr('src', '_rlegend/' +lcode+'&'+$('#slider').val());
+}
+
+poetsViewer.prototype.setVarSelect = function() {
+	var reg = $("#region").val()
+	link = '/_variables/'+reg;
+	// empty select list
+	var current = $("#variable").val()
+	$("#dataset").empty();
+	// fill select again
+	$.getJSON(this.host+link, function(data){
+		if(data.variables.indexOf(current) == -1) {
+			$('#dataset').append(new Option('DATASET', ''));
+			$("#dataset option[value='']").attr('selected', 'selected');
+		}
+		for(var i = 0; i < data.variables.length; i++) {
+			var d = data.variables[i];
+			$('#dataset').append(new Option(data.variables[i], data.variables[i]));
+			if(data.variables[i] == current) {
+				$("#dataset option[value="+current+"]").attr('selected', 'selected');
+			}
+		}
+	});
 }
 
 poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
@@ -126,61 +182,4 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 		});
 		
 	});
-}
-
-poetsViewer.prototype.expandDiv = function(div) {
-	var div = document.getElementById(div);
-	div.style.visibility='visible';
-	div.style.overflow = "visible";
-	div.style.height = "auto";
-}
-
-poetsViewer.prototype.foldDiv = function(div) {
-	var div = document.getElementById(div);
-	div.style.visibility='hidden';
-	div.style.overflow = "hidden";
-	div.style.height = "0";
-}
-
-poetsViewer.prototype.enableButtons = function(date, max) {
-	if (date == max) {
-        $("#btn-next").attr('disabled', 'disabled');
-    } else {
-        $("#btn-next").removeAttr('disabled');
-    }
-    if (date==0) {
-        $("#btn-prev").attr('disabled', 'disabled');
-    } else {
-        $("#btn-prev").removeAttr('disabled');
-    }
-}
-
-poetsViewer.prototype.sliderPos = function(date) {
-	$("#slider").slider('setValue', date)
-}
-
-poetsViewer.prototype.initDownLink = function(anom) {
-	sel_reg = $("#region").val()
-    sel_var = $("#dataset").val()
-    sel_src = $("#source").val()
-    sel_lon = $("#lon").val()
-    sel_lat = $("#lat").val()
-    
-    div = "#download"
-    link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
-    
-    if(anom == true) {
-    	link += '&anom';
-    	div += "_anom"
-    }
-      
-    $(div).attr('href', link);
-}
-
-
-poetsViewer.prototype.initLegend = function() {
-	// lcode is important for avoiding keeping image in cache, in order
-	// to refresh legend if dataset is changed.
-    var lcode = $("#region").val()+'&'+$("#dataset").val(); 
-    $('#legend').attr('src', '_rlegend/' +lcode+'&'+$('#slider').val());
 }

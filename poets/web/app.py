@@ -406,6 +406,10 @@ def request_image(**kwargs):
             metadata = {}
             metadata['unit'] = source.unit
 
+    if source.labels is not None and source.xticks is not None:
+        metadata['labels'] = source.labels
+        metadata['xticks'] = source.xticks
+
     if source.valid_range is not None:
         vmin = source.valid_range[0]
         vmax = source.valid_range[1]
@@ -451,6 +455,7 @@ def request_legend(**kwargs):
     fig = plt.figure(figsize=(4, 0.7))
     ax1 = fig.add_axes([0.05, 0.7, 0.9, 0.10])
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+
     cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm,
                                     orientation='horizontal')
     plt.xticks(fontsize=9)
@@ -461,8 +466,13 @@ def request_legend(**kwargs):
             if unit in metadata:
                 cb1.set_label(metadata[unit], fontsize=10)
 
-    buf = StringIO()
     fig.patch.set_alpha(0.6)
+
+    if 'labels' in metadata.keys() and 'xticks' in metadata.keys():
+        cb1.set_ticks(metadata['xticks'])
+        cb1.set_ticklabels(metadata['labels'])
+
+    buf = StringIO()
     plt.savefig(buf)
     plt.close()
 

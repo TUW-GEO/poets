@@ -101,6 +101,14 @@ class BasicSource(object):
         Colorbar to use, use one from
         http://matplotlib.org/examples/color/colormaps_reference.html,
         defaults to jet.
+    labels : list, optional
+        Custom tick-labels for the legend in the web-app; must have same
+        dimension as xticks and only works if xticks is set; Defaults
+        to None.
+    xticks : list of int or float, optional
+        Custom tick locations for the legend in the web-app; must have same
+        dimension as labels and only works if labels is set; Defaults
+        to None.
     unit : str, optional
         Unit of dataset for displaying in legend. Does not have to be set
         if unit is specified in input file metadata. Defaults to None.
@@ -153,6 +161,10 @@ class BasicSource(object):
         Pattern that apperas in filename.
     colorbar : str, optional
         Colorbar to used.
+    labels : list
+        Custom tick-labels for the legend in the web-app.
+    xticks : list of int or float
+        Custom tick locations for the legend in the web-app.
     unit : str
         Unit of dataset for displaying in legend.
     variables : list of strings
@@ -190,7 +202,7 @@ class BasicSource(object):
                  variables=None, nan_value=None, valid_range=None, unit=None,
                  dest_nan_value=-99, dest_regions=None, dest_sp_res=0.25,
                  dest_temp_res='dekad', dest_start_date=datetime(2000, 1, 1),
-                 data_range=None, src_file=None):
+                 data_range=None, src_file=None, labels=None, xticks=None):
 
         self.name = name
         self.filename = filename
@@ -217,6 +229,9 @@ class BasicSource(object):
         self.valid_range = valid_range
         self.data_range = data_range
         self.colorbar = colorbar
+        self.labels = labels
+        self.xticks = xticks
+
         if isinstance(regions, str):
             self.regions = [regions]
         else:
@@ -229,6 +244,7 @@ class BasicSource(object):
         self.dest_sp_res = dest_sp_res
         self.dest_temp_res = dest_temp_res
         self.dest_start_date = dest_start_date
+
         self.rawdata_path = os.path.join(rootpath, 'RAWDATA', name)
         self.tmp_path = os.path.join(rootpath, 'TMP')
         if not os.path.exists(self.tmp_path):
