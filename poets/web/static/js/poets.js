@@ -173,6 +173,7 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 		    labels: data.labels,
 		    labelsDiv: div+'footer',
 		    drawPoints: true,
+		    digitsAfterDecimal: 5,
 		    labelsSeparateLines: false,
 		    connectSeparatedPoints:true,
 		    title: data.labels[1] + title,

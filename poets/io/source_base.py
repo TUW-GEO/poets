@@ -49,7 +49,6 @@ import poets.image.netcdf as nc
 import poets.timedate.dateindex as dt
 import shutil
 
-
 class BasicSource(object):
     """Base Class for data sources.
 
@@ -1095,7 +1094,8 @@ class BasicSource(object):
         if len(gaps) == 0:
             print '[INFO] No gaps found.'
         else:
-            print '[INFO] Found ' + str(len(gaps)) + ' gap(s), attempt to fill..'
+            print('[INFO] Found ' + str(len(gaps)) +
+                  ' gap(s), attempt to fill..')
             for date in gaps:
                 if self.dest_temp_res in ['day', 'daily']:
                     begin = date
