@@ -33,7 +33,8 @@
 # Creation date: 2014-06-03
 
 
-import pytesmo.grid.grids as grids
+# import pytesmo.grid.grids as grids
+import pygeogrids.grids as grids
 import numpy as np
 import pandas as pd
 import math

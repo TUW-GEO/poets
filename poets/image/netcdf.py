@@ -39,7 +39,7 @@ This module provides functions for loading from and writing to NetCDF4 files.
 import os.path
 import numpy as np
 from netCDF4 import Dataset, date2num, num2date
-from pytesmo.grid.netcdf import save_grid
+from pygeogrids.netcdf import save_grid
 from poets.grid import grids
 from poets.timedate.dateindex import get_dtindex
 

@@ -30,3 +30,6 @@ v0.3.3, 2015-02-17
 * Added function that attempts to fill gaps in data.
 * Improvements in web-app.
 * Added option to specify where data from specific source is available.
+
+v0.3.4, XXX
+* Now using grids from pygeogrids instead of pytesmo.

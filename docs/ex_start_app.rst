@@ -95,7 +95,7 @@ In[17]::
    
    
    # get the data (in this example from beginning of 2014)   
-   p.fetch_data(begin=datetime(2014,1,1)
+   p.fetch_data(begin=datetime(2014,1,1))
    
    
    # start the web interface
