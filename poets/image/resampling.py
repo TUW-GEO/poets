@@ -131,7 +131,7 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
 
     src_lon, src_lat = np.meshgrid(src_lon, src_lat)
 
-    lons = grid.arrlon[0:grid.shape[1]]
+    lons = grid.arrlon[0:grid.shape[0]]
     dest_lon, dest_lat = np.meshgrid(lons, np.unique(grid.arrlat)[::-1])
 
     gpis = grid.get_bbox_grid_points(grid.arrlat.min(), grid.arrlat.max(),

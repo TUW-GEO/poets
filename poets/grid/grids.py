@@ -276,8 +276,13 @@ class ShapeGrid(grids.BasicGrid):
 
         lon, lat = np.meshgrid(lon_new, lat_new)
 
+        shape = (lon.shape[1], lon.shape[0])
+        # shape = lon.shape
+
+        print 'shape: ' + str(shape)
+
         super(ShapeGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                        shape=lon.shape)
+                                        shape=shape)
 
     def get_gridpoints(self):
         """Gets all points within a country shape.
