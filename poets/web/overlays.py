@@ -37,7 +37,7 @@ This modules provides functions used while creating image overlays.
 """
 
 from poets.shape.shapes import Shape
-from poets.grid.grids import minmaxcoord
+from poets.grid.grids import ShapeGrid, minmaxcoord
 
 
 def bounds(country, shapefile=None):
@@ -120,17 +120,23 @@ def image_bounds(country, sp_res, shapefile=None):
     zoom : int
         Zoom level for openlayers.
     """
+    shp = ShapeGrid(country, sp_res, shapefile=shapefile)
 
-    lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(country,
-                                                                    shapefile)
+    lon_min = shp.arrlon.min()-(sp_res/2)
+    lon_max = shp.arrlon.max()+(sp_res/2)
+    lat_min = shp.arrlat.min()-(sp_res/2)
+    lat_max = shp.arrlat.max()+(sp_res/2)
 
-    lon_min, lon_max = minmaxcoord(lon_min, lon_max, sp_res)
-    lat_min, lat_max = minmaxcoord(lat_min, lat_max, sp_res)
+    e_lon = lon_max - lon_min
+    e_lat = lat_max - lat_min
+    c_lon = lon_min + e_lon / 2
+    c_lat = lat_min + e_lat / 2
 
-    lon_min = lon_min-(sp_res/2)
-    lon_max = lon_max+(sp_res/2)
-    lat_min = lat_min-(sp_res/2)
-    lat_max = lat_max+(sp_res/2)
+    zoom = 0
+    i = 1024  # To be replaced with the width of the map container!
+    while i / 2 > e_lon:
+        zoom += 1
+        i = i / 2
 
     return lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom
 

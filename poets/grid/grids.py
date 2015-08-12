@@ -258,10 +258,10 @@ class ShapeGrid(grids.BasicGrid):
         if region in ['NZ', 'RS', 'US']:
             lonmin, lonmax = dateline_country(region)
         else:
-            lonmin, lonmax = minmaxcoord(self.shp.bbox[0], self.shp.bbox[2],
+            lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2],
                                          sp_res)
 
-        latmin, latmax = minmaxcoord(self.shp.bbox[1], self.shp.bbox[3],
+        latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3],
                                      sp_res)
 
         if region in ['NZ', 'US', 'RS']:
@@ -406,7 +406,7 @@ def _remove_blank_frame(region, lons, lats, shapefile=None):
     return lon_new, lat_new
 
 
-def minmaxcoord(min_threshold, max_threshold, sp_res):
+def _minmaxcoord(min_threshold, max_threshold, sp_res):
     """Gets min and max coordinates of a specific grid.
 
     Based on the frame of a global grid.
