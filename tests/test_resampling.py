@@ -136,14 +136,11 @@ class Test(unittest.TestCase):
     def test_resample_to_shape(self):
 
         # Test global with png
-        datamean = 15.875
         data, dest_lon, dest_lat, gpis, _, _ = \
             resample_to_shape(self.pngfile, 'global', self.sp_res,
                               self.globalgrid, nan_value=self.fill_value,
                               dest_nan_value=self.fill_value, prefix='prefix')
 
-        # nptest.assert_array_equal(data, resimg)
-        assert datamean == data['prefix_dataset'].mean()
         assert dest_lon.shape == self.data.shape
         assert dest_lat.shape == self.data.shape
         assert (gpis[0], gpis[-1]) == (0, 17)

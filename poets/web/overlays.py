@@ -37,17 +37,20 @@ This modules provides functions used while creating image overlays.
 """
 
 from poets.shape.shapes import Shape
+from poets.grid.grids import minmaxcoord
 
 
 def bounds(country, shapefile=None):
     """
     Returns the bounding box, center coordinates and zoom level
-    for web overlay purposes.
+    of a shape for web overlay purposes.
 
     Parameters
     ----------
-    Country : str
+    country : str
         FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    shapefile : str, optional
+        Paht to a custom shapefile.
 
     Returns
     -------
@@ -82,6 +85,52 @@ def bounds(country, shapefile=None):
     while i / 2 > e_lon:
         zoom += 1
         i = i / 2
+
+    return lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom
+
+
+def image_bounds(country, sp_res, shapefile=None):
+    """
+    Calculates bounding box, center coordinates and zoom level of an image
+    for web overlay purposes.
+
+    Parameters
+    ----------
+    country : str
+        FIPS country code (https://en.wikipedia.org/wiki/FIPS_country_code)
+    sp_res : numeric
+        Spatial resolution of the image
+    shapefile : str, optional
+        Paht to a custom shapefile.
+
+    Returns
+    -------
+    lon_min : int
+        Minimum longitude.
+    lon_max : int
+        Maximum longitude.
+    lat_min : int
+        Minimum latitude.
+    lat_max : int
+        Maximum latitude.
+    c_lat : int
+        Center latidute of image.
+    c_lon : int
+        Center longitude of image.
+    zoom : int
+        Zoom level for openlayers.
+    """
+
+    lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom = bounds(country,
+                                                                    shapefile)
+
+    lon_min, lon_max = minmaxcoord(lon_min, lon_max, sp_res)
+    lat_min, lat_max = minmaxcoord(lat_min, lat_max, sp_res)
+
+    lon_min = lon_min-(sp_res/2)
+    lon_max = lon_max+(sp_res/2)
+    lat_min = lat_min-(sp_res/2)
+    lat_max = lat_max+(sp_res/2)
 
     return lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, zoom
 

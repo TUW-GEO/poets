@@ -269,6 +269,8 @@ def read_image(source_file, variables=None):
             ncvars.remove('lon')
         if 'time' in ncvars:
             ncvars.remove('time')
+        if 'subset_flag' in ncvars:
+            ncvars.remove('subset_flag')
 
         data = {}
         metadata = {}
@@ -372,6 +374,7 @@ def read_variable(source_file, variable, date, date_to=None):
                 metadata[attr] = var.getncattr(attr)
 
         numdate = date2num(date, units=times.units, calendar=times.calendar)
+
         if date_to is None:
             image = var[np.where(times[:] == numdate)[0][0]]
         else:
@@ -418,6 +421,8 @@ def get_properties(src_file):
 
     if 'gpi' in variables:
         variables.remove('gpi')
+    if 'subset_flag' in variables:
+        variables.remove('subset_flag')
 
     return variables, dimensions, period
 

@@ -32,5 +32,5 @@ v0.3.3, 2015-02-17
 * Added option to specify where data from specific source is available.
 
 v0.3.4, XXX
-* Now using grids from pygeogrids instead of pytesmo.
-* Bugfixes
+* Now using grids from pygeogrids.
+* Removes image offset in web-viewer.

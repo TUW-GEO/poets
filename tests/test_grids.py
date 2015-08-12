@@ -61,14 +61,14 @@ class Test(unittest.TestCase):
         bbox = (cgrid.arrlat[0], cgrid.arrlat[-1],
                 cgrid.arrlon[0], cgrid.arrlon[-1])
 
-        assert cgrid.shape == (24, 34)
+        assert cgrid.shape == (34, 24)
         assert cgrid.get_gridpoints().shape == (116, 2)
         assert bbox == (-46.75, -35.25, 167.37, -176.5)
 
     def test_RegularGrid(self):
         points_number = 259200
         bbox = (-89.75, 89.75, -179.75, 179.75)
-        grid_shape = (360, 720)
+        grid_shape = (720, 360)
 
         grid = RegularGrid(sp_res=self.sp_res1)
 

@@ -36,15 +36,15 @@ from cStringIO import StringIO
 import os
 from flask import Flask, render_template, jsonify, make_response
 from flask.ext.cors import CORS
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from poets.timedate.dateindex import get_dtindex
-from poets.web.overlays import bounds
+from poets.web.overlays import image_bounds
 import pytesmo.time_series as ts
 import urlparse
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.use('Agg')
 
 
 def curpath():
@@ -90,9 +90,9 @@ pd.DataFrame.to_dygraph_format = to_dygraph_format
 
 
 class ReverseProxied(object):
-    '''Wrap the application in this middleware and configure the 
-    front-end server to add these headers, to let you quietly bind 
-    this to a URL other than / and to an HTTP scheme that is 
+    '''Wrap the application in this middleware and configure the
+    front-end server to add these headers, to let you quietly bind
+    this to a URL other than / and to an HTTP scheme that is
     different than what is used locally.
 
     In nginx:
@@ -240,18 +240,21 @@ def index(**kwargs):
             fdates.append(dat)
 
         lon_min, lon_max, lat_min, lat_max, c_lat, c_lon, _ = \
-            bounds(region, p.shapefile)
+            image_bounds(region, p.spatial_resolution, p.shapefile)
 
         if source.valid_range is None:
             vrange = [-999, -999]
         else:
             vrange = source.valid_range
 
+        ex1 = (lon_max, lat_min)
+        ex2 = (lon_min, lat_max)
+
         return render_template('app.html',
                                max=len(dates) - 1,
                                coord=[c_lon, c_lat],
-                               ex1=(lon_max, lat_min),
-                               ex2=(lon_min, lat_max),
+                               ex1=ex1,
+                               ex2=ex2,
                                region=region,
                                source=source.name,
                                variable=variable,

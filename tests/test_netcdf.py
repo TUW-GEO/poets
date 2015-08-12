@@ -54,8 +54,8 @@ class Test(unittest.TestCase):
         self.region = 'global'
         self.testfilename = os.path.join(curpath(), 'data', 'tests.nc')
         self.metadata = {'data': {'Attribute1': 'Value1'}}
-        self.timestamp = datetime.today()
-        self.start_date = datetime.today()
+        self.timestamp = datetime(2015, 1, 1)
+        self.start_date = datetime(2015, 1, 1)
         self.temp_res = 'day'
         self.fill_value = -99
         self.variable = 'data'
@@ -166,12 +166,10 @@ class Test(unittest.TestCase):
         variables, dimensions, period = get_properties(self.testfilename)
 
         timediff1 = self.timestamp - period[0]
-        timediff2 = self.timestamp - period[1]
 
-        assert variables[0] == self.variable
+        assert self.variable in variables
         assert dimensions == ['lat', 'lon', 'time']
         assert timediff1.days == 0
-        assert timediff2.days == 0
 
 
 if __name__ == "__main__":

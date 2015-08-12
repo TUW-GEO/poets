@@ -139,8 +139,11 @@ class RegularGrid(grids.BasicGrid):
         londim = np.arange(lonmin, 180, sp_res)
         latdim = np.arange(latmin, 90, sp_res)
         lon, lat = np.meshgrid(londim, latdim)
+
+        shape = (lon.shape[1], lon.shape[0])
+
         super(RegularGrid, self).__init__(lon.flatten(), lat.flatten(),
-                                          shape=lon.shape, **kwargs)
+                                          shape=shape, **kwargs)
 
 
 class ShapeGrid(grids.BasicGrid):
@@ -255,11 +258,11 @@ class ShapeGrid(grids.BasicGrid):
         if region in ['NZ', 'RS', 'US']:
             lonmin, lonmax = dateline_country(region)
         else:
-            lonmin, lonmax = _minmaxcoord(self.shp.bbox[0], self.shp.bbox[2],
-                                          sp_res)
+            lonmin, lonmax = minmaxcoord(self.shp.bbox[0], self.shp.bbox[2],
+                                         sp_res)
 
-        latmin, latmax = _minmaxcoord(self.shp.bbox[1], self.shp.bbox[3],
-                                      sp_res)
+        latmin, latmax = minmaxcoord(self.shp.bbox[1], self.shp.bbox[3],
+                                     sp_res)
 
         if region in ['NZ', 'US', 'RS']:
             lons1 = np.arange(lonmin, 180, sp_res)
@@ -277,9 +280,6 @@ class ShapeGrid(grids.BasicGrid):
         lon, lat = np.meshgrid(lon_new, lat_new)
 
         shape = (lon.shape[1], lon.shape[0])
-        # shape = lon.shape
-
-        print 'shape: ' + str(shape)
 
         super(ShapeGrid, self).__init__(lon.flatten(), lat.flatten(),
                                         shape=shape)
@@ -406,7 +406,7 @@ def _remove_blank_frame(region, lons, lats, shapefile=None):
     return lon_new, lat_new
 
 
-def _minmaxcoord(min_threshold, max_threshold, sp_res):
+def minmaxcoord(min_threshold, max_threshold, sp_res):
     """Gets min and max coordinates of a specific grid.
 
     Based on the frame of a global grid.

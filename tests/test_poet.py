@@ -97,33 +97,6 @@ class Test(unittest.TestCase):
         assert len(self.poet.__dict__.keys()) == 14
 
     def test_add_source(self):
-        name = 'CCI'
-        filename = ("ESACCI-SOILMOISTURE-L3S-SSMV-COMBINED-{YYYY}{MM}{TT}{hh}"
-                    "{mm}{ss}-fv02.0.nc")
-        filedate = {'YYYY': (38, 42), 'MM': (42, 44), 'DD': (44, 46),
-                    'hh': (46, 48), 'mm': (48, 50), 'ss': (50, 52)}
-        temp_res = 'daily'
-        host = "ftp.ipf.tuwien.ac.at/"
-        directory = "_down/daily_files/COMBINED/"
-        protocol = 'SFTP'
-        username = 'ecv_sm_v2'
-        password = 'Gn03KGNyWmQp'
-        port = 22
-        dirstruct = ['YYYY']
-        begin_date = datetime(1978, 11, 01)
-        variables = ['sm']
-        valid_range = (0, 0.6)
-        colorbar = 'jet_r'
-
-        self.poet.add_source(name, filename, filedate, temp_res, host,
-                             protocol, username=username, password=password,
-                             port=port, directory=directory,
-                             dirstruct=dirstruct, begin_date=begin_date,
-                             variables=variables, colorbar=colorbar,
-                             valid_range=valid_range)
-
-        assert len(self.poet.sources['CCI'].__dict__.keys()) == 29
-
         name = 'TEST'
         filename = "test_{YYYY}_{MM}_{TT}.png"
         filedate = {'YYYY': (5, 9), 'MM': (10, 12), 'DD': (13, 15)}
@@ -143,11 +116,9 @@ class Test(unittest.TestCase):
                              unit=unit, data_range=data_range,
                              colorbar=colorbar)
 
-        assert len(self.poet.sources['TEST'].__dict__.keys()) == 29
-
     def test_download(self):
         self.poet.download(begin=self.start_date, end=self.enddate)
-        assert len(os.listdir(os.path.join(self.rootpath, 'RAWDATA'))) == 2
+        assert len(os.listdir(os.path.join(self.rootpath, 'RAWDATA'))) == 1
 
     def test_resample(self):
         self.poet.resample(begin=self.start_date, end=self.enddate)
@@ -155,16 +126,9 @@ class Test(unittest.TestCase):
     def test_fetch_data(self):
         self.poet.fetch_data(end=self.enddate)
         assert len(os.listdir(os.path.join(self.rootpath, 'DATA'))) == 1
-        assert len(os.listdir(os.path.join(self.rootpath, 'RAWDATA'))) == 2
+        assert len(os.listdir(os.path.join(self.rootpath, 'RAWDATA'))) == 1
 
     def test_read_image(self):
-        img, lon, lat, metadata = self.poet.read_image('CCI', self.testdate)
-        assert img.shape == (3, 7)
-        assert img[2, 4] == 0.21312499791383743
-        assert metadata['units'] == 'm3 m-3'
-        assert lat.shape == (3,)
-        assert lon.shape == (7,)
-
         img, _, _, metadata = self.poet.read_image('TEST', self.testdate,
                                                    variable='TEST_dataset')
         assert img.shape == (3, 7)
@@ -174,8 +138,6 @@ class Test(unittest.TestCase):
 
     def test_read_timeseries(self):
         location = (14.5, 46.5)
-        ts = self.poet.read_timeseries('CCI', location, region=self.regions[0])
-        assert ts['CCI_sm'][0] == 0.21312499791383743
 
         ts = self.poet.read_timeseries('TEST', location,
                                        region=self.regions[0],
@@ -188,7 +150,7 @@ class Test(unittest.TestCase):
 
     def test_get_variables(self):
         variables = self.poet.get_variables()
-        assert variables == ['CCI_sm', 'TEST_dataset']
+        assert variables == ['TEST_dataset']
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
