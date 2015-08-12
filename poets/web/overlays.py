@@ -37,7 +37,7 @@ This modules provides functions used while creating image overlays.
 """
 
 from poets.shape.shapes import Shape
-from poets.grid.grids import ShapeGrid, minmaxcoord
+from poets.grid.grids import ShapeGrid
 
 
 def bounds(country, shapefile=None):
