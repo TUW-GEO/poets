@@ -159,7 +159,7 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
 		link += '&anom';
 		div += 'anom_';
 		color = '#006699';
-		title += ' moving average (window size 100 days)'
+		title += ' with climatology (35 days)'
 	}
 	
 	$.getJSON(this.host+link, function(data){
