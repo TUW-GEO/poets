@@ -40,7 +40,7 @@ import numpy as np
 import pandas as pd
 from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import image_bounds
-import pytesmo.time_series as ts
+from pytesmo.time_series.anomaly import calc_anomaly, calc_climatology
 import urlparse
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -308,7 +308,9 @@ def get_ts(**kwargs):
     df = p.read_timeseries(source, lonlat, region, variable)
 
     if anomaly:
-        df = ts.anomaly.calc_anomaly(df, window_size=100)
+        climatology = calc_climatology(df)
+        anom = calc_anomaly(df[variable], climatology=climatology)
+        df[variable] = anom
         columns = []
         for cols in df.columns:
             columns.append(cols + '_anomaly')
@@ -353,7 +355,7 @@ def download_ts(**kwargs):
     df = p.read_timeseries(source.name, lonlat, region, variable)
 
     if anomaly:
-        df = ts.anomaly.calc_anomaly(df)
+        df = calc_anomaly(df)
         columns = []
         for cols in df.columns:
             columns.append(cols + '_anomaly')
