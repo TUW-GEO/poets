@@ -65,6 +65,8 @@ class Poet(object):
     region_names : list of str, optional
         Full name of the regions. If set, must have same size as regions
         parameter. Defaults to regions parameter.
+    sub_regions : list of str, optional
+        Areas or administrative units within the region.
     spatial_resolution : float, optional
         spatial resolution in degree, defaults to 0.25
     temporal_resolution : str, optional
@@ -89,6 +91,8 @@ class Poet(object):
         Identifier of the region in the shapefile.
     region_names : list of str
         Full name of the regions.
+    sub_regions : list of str
+        Areas or administrative units within the region.
     spatial_resolution : float
         Spatial resolution in degree.
     temporal_resolution : str
@@ -114,7 +118,8 @@ class Poet(object):
     def __init__(self, rootpath, regions=['global'],
                  spatial_resolution=0.25, temporal_resolution='dekad',
                  start_date=datetime(2000, 1, 1), nan_value=-99, url=None,
-                 shapefile=None, delete_rawdata=False, region_names=None):
+                 shapefile=None, delete_rawdata=False, region_names=None,
+                 sub_regions=None):
 
         self.rootpath = rootpath
         if isinstance(regions, str):
@@ -128,6 +133,8 @@ class Poet(object):
                 self.region_names = region_names
         else:
             self.region_names = self.regions
+
+        self.sub_regions = sub_regions
         self.spatial_resolution = spatial_resolution
 
         if temporal_resolution not in valid_temp_res:
@@ -446,6 +453,46 @@ class Poet(object):
                                           shapefile=self.shapefile)
 
         return ts
+
+    def average_timeseries(self, source, region, variable=None):
+        """
+        Calculates mean of all time series in a region.
+
+        Parameters
+        ----------
+        source : str
+            Data source from which time series should be read.
+        region : str, optional
+            Region of interest, set to first defined region if None.
+        variable : str, optional
+            Variable to display, set to first variable of source if None.
+
+        Returns
+        -------
+        ts : pd.DataFrame
+            Timeseries for the selected data.
+        """
+
+        shape = ShapeGrid(region, self.spatial_resolution, self.shapefile)
+        points = shape.get_gridpoints()
+
+        lat = points['lat'].tolist()
+        lon = points['lon'].tolist()
+
+        df = pd.DataFrame()
+
+        if len(points) < 1:
+            return 'ERROR: No points available in the selected region.'
+
+        for i in range(0, points.shape[0]):
+            point = (lon[i], lat[i])
+            if i == 0:
+                df = self.read_timeseries(source, point)
+            else:
+                df[str(i)] = self.read_timeseries(source, point,
+                                                  variable=variable)
+
+        return df.mean(axis=1)
 
     def get_variables(self, region=None):
         """

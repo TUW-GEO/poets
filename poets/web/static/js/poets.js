@@ -127,26 +127,32 @@ poetsViewer.prototype.setVarSelect = function() {
 	});
 }
 
-poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom) {
+poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom, avg) {
 	
 	var reg = $("#region").val()
 	var src = $("#source").val()
 	var dataset = $("#dataset").val()
 	
-	link = '/_ts/'+reg+'&'+src+'&'+dataset+'&'+lon+','+lat;
+	var title = '';
+	
+	if(avg == true) {
+		var reg = $("#subregion").val()
+		link = '/_ts_avg/'+reg+'&'+src+'&'+dataset;
+		title = ' average for ' + $("#subregion").val();
+	} else {
+		link = '/_ts/'+reg+'&'+src+'&'+dataset+'&'+lon+','+lat;
+		var roundr = 1/sp_res;
+		var rdec = sp_res.toString()
+		rdec = (rdec.split('.')[1].length)
+		tlon = (Math.round(lon*roundr)/roundr).toFixed(rdec);
+		tlat = (Math.round(lat*roundr)/roundr).toFixed(rdec);
+		title = " ("+tlon+"/"+tlat+")"
+	}
 
 	var div = 'graph_';
 	
 	color = '#DF7401';
 	
-	var roundr = 1/sp_res;
-	var rdec = sp_res.toString()
-	rdec = (rdec.split('.')[1].length)
-	
-	tlon = (Math.round(lon*roundr)/roundr).toFixed(rdec);
-	tlat = (Math.round(lat*roundr)/roundr).toFixed(rdec);
-	
-	title = " ("+tlon+"/"+tlat+")"
 	
 	if((range[0] != -999) && range[1] != -999) {
 		vrange = range;

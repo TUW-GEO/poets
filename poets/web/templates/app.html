@@ -180,6 +180,14 @@ $(document).ready(function () {
         ts.loadTS(lon, lat, {{sp_res}}, {{ range }}, true);
         ts.initDownLink(true);
     });
+    
+    $("#subregion").change(function() {
+    	ts.expandDiv("ts");
+        ts.expandDiv("graph");
+        ts.expandDiv('graph_anom');
+    	ts.loadTS(false, false, {{sp_res}}, {{ range }}, false, true );
+    	ts.loadTS(false, false, {{sp_res}}, {{ range }}, true, true)
+    });
 	
 });
 </script>
@@ -202,6 +210,7 @@ $(document).ready(function () {
 	                    {% endfor %}
 	            </select>
 	        </div>
+	        
 	        <div class="form-group">
 	            <label class="sr-only" for="dataset">Datasets</label>
 	            <select class="form-control" id="dataset">
@@ -214,6 +223,15 @@ $(document).ready(function () {
 	        <input id="source" type="hidden" value="{{ source }}" />
 	        <input id="lon" type="hidden" />
 	        <input id="lat" type="hidden" />
+	        <div class="form-group" style="float:right;">
+                <label for="subregion">average timeseries for region</label>
+                <select class="form-control" id="subregion">
+                   {% for sreg in subregions %}
+                       <option value="{{ sreg }}">{{ sreg }}</option>
+                   {% endfor %}
+                </select>
+            </div>
+            
 	    </form>
 	  </div>
 	  

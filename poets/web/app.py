@@ -265,7 +265,9 @@ def index(**kwargs):
                                port=port_gl,
                                sp_res=p.spatial_resolution,
                                range=vrange,
-                               url=url_gl)
+                               url=url_gl,
+                               subregions=get_subregions(region)
+                               )
     else:
         return render_template('index.html',
                                regions=regions,
@@ -308,18 +310,67 @@ def get_ts(**kwargs):
     df = p.read_timeseries(source, lonlat, region, variable)
 
     if anomaly:
-        climatology = calc_climatology(df)
-        anom = calc_anomaly(df[variable], climatology=climatology)
-        df[variable] = anom
-        columns = []
-        for cols in df.columns:
-            columns.append(cols + '_anomaly')
-        df.columns = columns
+        df = calc_anom(df, variable)
 
     labels, values = df.to_dygraph_format()
     data = {'labels': labels, 'data': values}
 
     return jsonify(data)
+
+
+@app.route('/_ts_avg/<reg>&<src>&<var>', methods=['GET', 'OPTIONS'])
+@app.route('/_ts_avg/<reg>&<src>&<var>&<anom>', methods=['GET', 'OPTIONS'])
+def get_ts_average(**kwargs):
+
+    anomaly = False
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = p.sources[kwargs['src']].name
+    if 'var' in kwargs:
+        variable = kwargs['var']
+    if 'anom' in kwargs:
+        anomaly = True
+
+    df = p.average_timeseries(source, region, variable)
+    df = pd.DataFrame(df)
+    df.columns = [variable]
+
+    if anomaly:
+        df = calc_anom(df, variable)
+
+    labels, values = df.to_dygraph_format()
+    data = {'labels': labels, 'data': values}
+
+    return jsonify(data)
+
+
+def calc_anom(df, variable):
+    """
+    Calculates anomaly based on climatology for time series.
+    """
+
+    df = pd.DataFrame(df)
+
+    climatology = calc_climatology(df)
+    anom = calc_anomaly(df[variable], climatology=climatology)
+
+    df[variable] = anom
+    columns = []
+    for cols in df.columns:
+        columns.append(cols + '_anomaly')
+    df.columns = columns
+
+    return df
+
+
+def get_subregions(region):
+
+    idx = p.regions.index(region)
+    subregions = p.sub_regions[idx]
+
+    return subregions
 
 
 @app.route('/_tsdown/<reg>&<src>&<var>&<loc>')
