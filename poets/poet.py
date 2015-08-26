@@ -494,13 +494,12 @@ class Poet(object):
             return 'ERROR: No points available in the selected region.'
 
         for i in range(0, points.shape[0]):
+            point = (lon[i], lat[i])
             if i == 0:
                 df = self.read_timeseries(source, point, region)
             else:
                 df[str(i)] = self.read_timeseries(source, point, region,
                                                   variable=variable)
-
-            print point
 
         return df.mean(axis=1)
 
