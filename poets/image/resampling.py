@@ -112,11 +112,17 @@ def resample_to_shape(source_file, region, sp_res, grid, prefix=None,
     if fileExtension in ['.nc', '.nc3', '.nc4']:
         data_src, lon, lat, timestamp, metadata = nc.read_image(source_file,
                                                                 variables)
+        if (lon_min >= lon.max() or lon_max <= lon.min() or
+            lat_max <= lat.min() or lat_min >= lat.max()):
+            return "No data"
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
     elif fileExtension in ['.h5']:
         data_src, lon, lat, timestamp, metadata = h5.read_image(source_file,
                                                                 variables)
+        if (lon_min >= lon.max() or lon_max <= lon.min() or
+            lat_max <= lat.min() or lat_min >= lat.max()):
+            return "No data"
         data, src_lon, src_lat = nc.clip_bbox(data_src, lon, lat, lon_min,
                                               lat_min, lon_max, lat_max)
     elif fileExtension in imgfiletypes:

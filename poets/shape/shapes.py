@@ -34,7 +34,7 @@
 
 import os
 import shapefile
-from shapely.geometry import MultiPolygon
+from shapely.geometry import MultiPolygon, mapping
 
 
 class FipsError(Exception):
@@ -134,4 +134,3 @@ class Shape(object):
         multipoly = MultiPolygon(multipoly)
 
         return sh.record, sh.shape.bbox, multipoly
-

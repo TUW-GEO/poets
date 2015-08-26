@@ -63,7 +63,7 @@ $(document).ready(function () {
 	bounds.extend(new OpenLayers.LonLat{{ex2}});
 	bounds.transform(proj4326, map.getProjectionObject());
 	
-	image = new OpenLayers.Layer.Image('IMAGE', "_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
+	image = new OpenLayers.Layer.Image('Image', "_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
 		'isBaseLayer': false,	// drawing overlay with the latest overlay image
 		'alwaysInRange': true,
 		'opacity' : opacity
@@ -91,9 +91,11 @@ $(document).ready(function () {
         
         ts.expandDiv("ts");
     	ts.expandDiv("graph");
-    	ts.foldDiv("graph_anom")
+    	ts.expandDiv('graph_anom');
         ts.loadTS(lonlat.lon, lonlat.lat, {{sp_res}}, 
-        		[{{range[0]}}, {{range[1]}}]);
+        		  [{{range[0]}}, {{range[1]}}]);
+        ts.loadTS(lonlat.lon, lonlat.lat, {{sp_res}}, {{ range }}, true);
+        ts.initDownLink(true);
 	});
 	
 	ts.setVarSelect();
@@ -103,7 +105,7 @@ $(document).ready(function () {
 	// LOAD IMAGE =============================================================
 	function loadImg(date) {
 		image.destroy();
-        image = new OpenLayers.Layer.Image('IMAGE', '_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
+        image = new OpenLayers.Layer.Image('Image', '_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
             'isBaseLayer': false,
             'alwaysInRange': true,
             'opacity' : opacity
@@ -112,6 +114,23 @@ $(document).ready(function () {
         markers.setZIndex(1001);
         image.setZIndex(1000);
         ts.initLegend();
+	}
+	
+	// LOAD POLYGON
+	function loadPolygon(region) {
+		if(typeof geojson_layer !== 'undefined') {
+			geojson_layer.destroy();
+		}
+ 		geojson_layer = new OpenLayers.Layer.Vector("Shape "+region, {
+            strategies: [new OpenLayers.Strategy.Fixed()],
+            protocol: new OpenLayers.Protocol.HTTP({
+                url: "/_get_geojson/"+region,
+                format: new OpenLayers.Format.GeoJSON()
+            }),
+            style: { 'strokeWidth': 3, 'strokeColor': '#ff0000', 'fillColor': 'transparent' }
+        });
+ 		map.addLayer(geojson_layer);
+ 		geojson_layer.setZIndex(1002);
 	}
 	
 	// SLIDER =================================================================
@@ -172,22 +191,17 @@ $(document).ready(function () {
         ts.initLink(path);
         ts.enableGo();
     });
-    
-    $("#anom").click(function() {
-        ts.expandDiv('graph_anom');
-        lon = $("#lon").val()
-        lat = $("#lat").val()
-        ts.loadTS(lon, lat, {{sp_res}}, {{ range }}, true);
-        ts.initDownLink(true);
-    });
-    
-    $("#subregion").change(function() {
-    	ts.expandDiv("ts");
+
+    $("#go_sregion").click(function() {
+        loadPolygon($("#subregion").val());
+        ts.expandDiv("ts");
         ts.expandDiv("graph");
         ts.expandDiv('graph_anom');
-    	ts.loadTS(false, false, {{sp_res}}, {{ range }}, false, true );
-    	ts.loadTS(false, false, {{sp_res}}, {{ range }}, true, true)
-    });
+        ts.loadTS(false, false, {{sp_res}}, {{ range }}, false, true );
+        ts.loadTS(false, false, {{sp_res}}, {{ range }}, true, true);
+        ts.initDownLink(false, true);
+        ts.initDownLink(true);
+    })
 	
 });
 </script>
@@ -223,15 +237,19 @@ $(document).ready(function () {
 	        <input id="source" type="hidden" value="{{ source }}" />
 	        <input id="lon" type="hidden" />
 	        <input id="lat" type="hidden" />
-	        <div class="form-group" style="float:right;">
-                <label for="subregion">average timeseries for region</label>
-                <select class="form-control" id="subregion">
-                   {% for sreg in subregions %}
-                       <option value="{{ sreg }}">{{ sreg }}</option>
-                   {% endfor %}
-                </select>
-            </div>
-            
+	        {% if subregions != None %}
+		        <div class="form-group" style="float:right;">
+	                <label for="subregion">average timeseries for region</label>
+	                <select class="form-control" id="subregion">
+	                   {% for sreg in subregions %}
+	                       <option value="{{ sreg }}">{{ sreg }}</option>
+	                   {% endfor %}
+	                </select>
+	                <button type="button" id="go_sregion" class='btn btn-info'>
+	                   <span class="glyphicon glyphicon-chevron-right"></span> GO
+	                </button>
+	            </div>
+            {% endif %}
 	    </form>
 	  </div>
 	  
@@ -280,7 +298,6 @@ $(document).ready(function () {
 		   <div class="row">
 		       <div class="col-md-6" id="graph_footer"></div>
 		       <div class="col-md-6" align="right">
-		           <button class='btn btn-default' id="anom">calc anomalies</button>
 		           <a href='' class='btn btn-default' id="download">
 		               <span class="glyphicon glyphicon-download-alt"></span> download
 		           </a>

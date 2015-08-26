@@ -304,7 +304,10 @@ class BasicSource(object):
                         dates[region][var] = []
                         if begin:
                             for i in range(0, nc.variables['time'].size - 1):
-                                data = nc.variables[var][i]
+                                try:
+                                    data = nc.variables[var][i]
+                                except KeyError:
+                                    continue
                                 if isinstance(data, np.ma.MaskedArray):
                                     if data.mask.min():
                                         continue
@@ -323,7 +326,10 @@ class BasicSource(object):
                         if end:
                             for i in range(nc.variables['time'].size - 1,
                                            - 1, -1):
-                                data = nc.variables[var][i]
+                                try:
+                                    data = nc.variables[var][i]
+                                except KeyError:
+                                    continue
                                 if isinstance(data, np.ma.MaskedArray):
                                     if data.mask.min():
                                         continue
@@ -459,11 +465,15 @@ class BasicSource(object):
 
             print '.',
 
-            image, _, _, _, timestamp, metadata = \
-                resample_to_shape(src_file, region, self.dest_sp_res, grid,
-                                  self.name, self.nan_value,
-                                  self.dest_nan_value, self.variables,
-                                  shapefile)
+            try:
+                image, _, _, _, timestamp, metadata = \
+                    resample_to_shape(src_file, region, self.dest_sp_res, grid,
+                                      self.name, self.nan_value,
+                                      self.dest_nan_value, self.variables,
+                                      shapefile)
+            except ValueError:
+                print "[INFO] no data available for that region."
+                return "[INFO] no data available for that region."
 
             if timestamp is None:
                 timestamp = get_file_date(item, self.filedate)
@@ -834,8 +844,17 @@ class BasicSource(object):
                 begin = np.where(dates == var_dates[region][ncvar][0])[0][0]
                 end = np.where(dates == var_dates[region][ncvar][1])[0][0]
                 df[ncvar] = np.NAN
-                for i in range(begin, end + 1):
-                    df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
+#==============================================================================
+#                 df[ncvar] = np.NAN
+#                 import datetime
+#                 print datetime.datetime.now()
+#                 for i in range(begin, end + 1):
+#                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
+#
+#                 print datetime.datetime.now()
+#==============================================================================
+                ts = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
+                df[ncvar][begin:end + 1] = ts
 
                 if 'scaling_factor' in nc.variables[ncvar].ncattrs():
                     vvar = nc.variables[ncvar]

@@ -79,15 +79,25 @@ poetsViewer.prototype.sliderPos = function(date) {
 	$("#slider").slider('setValue', date)
 }
 
-poetsViewer.prototype.initDownLink = function(anom) {
-	sel_reg = $("#region").val()
-    sel_var = $("#dataset").val()
-    sel_src = $("#source").val()
-    sel_lon = $("#lon").val()
-    sel_lat = $("#lat").val()
+poetsViewer.prototype.initDownLink = function(anom, avg) {
+
+    var sel_var = $("#dataset").val()
+    var sel_src = $("#source").val()
+    var sel_lon = $("#lon").val()
+    var sel_lat = $("#lat").val()
     
-    div = "#download"
-    link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+    var link = "";
+    
+    if(avg == true) {
+		var sel_reg = $("#subregion").val()
+		link = '/_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+dataset;
+	} else {
+		var sel_reg = $("#region").val()
+		link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
+	}
+    
+    var div = "#download"
+    
     
     if(anom == true) {
     	link += '&anom';

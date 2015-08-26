@@ -481,16 +481,26 @@ class Poet(object):
 
         df = pd.DataFrame()
 
+        if region in self.regions:
+            region = region
+        else:
+            for i, sr in enumerate(self.sub_regions):
+                if region in sr:
+                    idx = i
+                    break
+            region = self.regions[idx]
+
         if len(points) < 1:
             return 'ERROR: No points available in the selected region.'
 
         for i in range(0, points.shape[0]):
-            point = (lon[i], lat[i])
             if i == 0:
-                df = self.read_timeseries(source, point)
+                df = self.read_timeseries(source, point, region)
             else:
-                df[str(i)] = self.read_timeseries(source, point,
+                df[str(i)] = self.read_timeseries(source, point, region,
                                                   variable=variable)
+
+            print point
 
         return df.mean(axis=1)
 

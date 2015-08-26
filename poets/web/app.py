@@ -34,16 +34,19 @@
 
 from cStringIO import StringIO
 import os
+import json
 from flask import Flask, render_template, jsonify, make_response
 from flask.ext.cors import CORS
 import numpy as np
 import pandas as pd
 from poets.timedate.dateindex import get_dtindex
 from poets.web.overlays import image_bounds
+from poets.shape.shapes import Shape
 from pytesmo.time_series.anomaly import calc_anomaly, calc_climatology
 import urlparse
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from shapely.geometry.geo import mapping
 mpl.use('Agg')
 
 
@@ -349,6 +352,18 @@ def get_ts_average(**kwargs):
 def calc_anom(df, variable):
     """
     Calculates anomaly based on climatology for time series.
+
+    Parameters
+    ----------
+    df : pandas DataFrame
+        Dataframe containing time series.
+    variable : str
+        Variable to select from DataFrame
+
+    Returns
+    -------
+    df : pandas DataFrame
+        Anomaly of time series.
     """
 
     df = pd.DataFrame(df)
@@ -363,14 +378,6 @@ def calc_anom(df, variable):
     df.columns = columns
 
     return df
-
-
-def get_subregions(region):
-
-    idx = p.regions.index(region)
-    subregions = p.sub_regions[idx]
-
-    return subregions
 
 
 @app.route('/_tsdown/<reg>&<src>&<var>&<loc>')
@@ -406,18 +413,48 @@ def download_ts(**kwargs):
     df = p.read_timeseries(source.name, lonlat, region, variable)
 
     if anomaly:
-        df = calc_anomaly(df)
-        columns = []
-        for cols in df.columns:
-            columns.append(cols + '_anomaly')
-        df.columns = columns
-
-        filename += '_anomaly'
+        df = calc_anom(df, variable)
 
     output = StringIO()
 
     df.to_csv(output)
     csv = output.getvalue()
+
+    response = make_response(csv)
+    response.headers["Content-Disposition"] = ("attachment; filename=" +
+                                               filename + ".csv")
+
+    return response
+
+
+@app.route('/_tsdown_avg/<reg>&<src>&<var>', methods=['GET', 'OPTIONS'])
+@app.route('/_tsdown_avg/<reg>&<src>&<var>&<anom>', methods=['GET', 'OPTIONS'])
+def download_ts_avg(**kwargs):
+
+    anomaly = False
+
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    if 'src' in kwargs:
+        source = p.sources[kwargs['src']].name
+    if 'var' in kwargs:
+        variable = kwargs['var']
+    if 'anom' in kwargs:
+        anomaly = True
+
+    df = p.average_timeseries(source, region, variable)
+    df = pd.DataFrame(df)
+    df.columns = [variable]
+
+    if anomaly:
+        df = calc_anom(df, variable)
+
+    output = StringIO()
+
+    df.to_csv(output)
+    csv = output.getvalue()
+
+    filename = region + '_' + variable
 
     response = make_response(csv)
     response.headers["Content-Disposition"] = ("attachment; filename=" +
@@ -555,6 +592,47 @@ def request_variables(**kwargs):
     variables['variables'] = p.get_variables(region)
 
     return jsonify(variables)
+
+
+def get_subregions(region):
+    """
+    Gets all sub-regions of a region.
+
+    Parameters
+    ----------
+    region : str
+        Region to select subregions from.
+
+    Returns
+    -------
+    subregions : list of str
+        List of all subregions
+    """
+    idx = p.regions.index(region)
+    if p.sub_regions is not None:
+        return p.sub_regions[idx]
+    else:
+        return None
+
+
+@app.route('/_get_geojson/<region>', methods=['GET', 'POST'])
+def get_geojson(region):
+    """
+    Gets list of coordinates from polygon of region.
+
+    Parameters
+    ----------
+    region : str
+        Region to get coordinates from.
+
+    Returns
+    -------
+    coordinates : list
+    """
+
+    shape = Shape(region, p.shapefile).polygon
+
+    return jsonify(mapping(shape))
 
 
 @app.route('/about')

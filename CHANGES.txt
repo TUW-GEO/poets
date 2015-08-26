@@ -37,3 +37,6 @@ v0.3.4, 2015-08-12
 
 v0.3.5, 2015-08-13
 * Now uses climatology for calculation of time series anomaly in the web-viewer.
+
+v0.3.x, 
+* Added option to calculate average values for sub-regions.
