@@ -454,6 +454,35 @@ class Poet(object):
 
         return ts
 
+    def bulkread_timeseries(self, source, locations, region=None,
+                            variable=None, grid=None):
+        """
+        Gets timeseries from netCDF file for a gridpoint.
+
+        Parameters
+        ----------
+        source : str
+            Data source from which time series should be read.
+        location : int or tuple of floats
+            Either Grid point index as integer value or Longitude/Latitude
+            given as tuple.
+        region : str, optional
+            Region of interest, set to first defined region if None.
+        variable : str, optional
+            Variable to display, set to first variable of source if None.
+
+        Returns
+        -------
+        ts : pd.DataFrame
+            Timeseries for the selected data.
+        """
+
+        ts = self.sources[source].bulkread_ts(locations, region, variable,
+                                              shapefile=self.shapefile,
+                                              grid=grid)
+
+        return ts
+
     def average_timeseries(self, source, region, variable=None):
         """
         Calculates mean of all time series in a region.
@@ -473,35 +502,42 @@ class Poet(object):
             Timeseries for the selected data.
         """
 
-        shape = ShapeGrid(region, self.spatial_resolution, self.shapefile)
-        points = shape.get_gridpoints()
-
-        lat = points['lat'].tolist()
-        lon = points['lon'].tolist()
+        grid = ShapeGrid(region, self.spatial_resolution, self.shapefile)
+        points = grid.get_gridpoints()
 
         df = pd.DataFrame()
 
+        locations = []
+
         if region in self.regions:
             region = region
+            locations = list(points.index)
         else:
             for i, sr in enumerate(self.sub_regions):
                 if region in sr:
                     idx = i
                     break
             region = self.regions[idx]
+            lat = points['lat'].tolist()
+            lon = points['lon'].tolist()
+            for i in range(0, points.shape[0]):
+                locations.append((lon[i], lat[i]))
 
         if len(points) < 1:
             return 'ERROR: No points available in the selected region.'
 
-        for i in range(0, points.shape[0]):
-            point = (lon[i], lat[i])
-            if i == 0:
-                df = self.read_timeseries(source, point, region)
-            else:
-                df[str(i)] = self.read_timeseries(source, point, region,
-                                                  variable=variable)
+        df, gpis = self.bulkread_timeseries(source, locations, region,
+                                      variable=variable)
 
-        return df.mean(axis=1)
+        df_mean = pd.DataFrame()
+
+        for var in df[0].keys():
+            data = pd.DataFrame()
+            for i, ts in enumerate(df):
+                data[str(i)] = ts[var]
+            df_mean[var + '_mean'] = data.mean(axis=1)
+
+        return df_mean
 
     def get_variables(self, region=None):
         """
@@ -559,4 +595,3 @@ class Poet(object):
         """
 
         app.start(self, host, port, r_host, r_port, url, debug)
-
