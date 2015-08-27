@@ -785,7 +785,7 @@ class BasicSource(object):
 
     def read_ts(self, location, region=None, variable=None, shapefile=None,
                 scaled=True):
-        """Gets timeseries from netCDF file for a gridpoint.
+        """Gets timeseries from netCDF file for one gridpoint.
 
         Parameters
         ----------
@@ -821,11 +821,7 @@ class BasicSource(object):
         else:
             gp = location
 
-        if variable is None:
-            variable = self.get_variables()
-        else:
-            variable = self.check_variable(variable)
-            variable = [variable]
+        variable = self._set_variable(variable)
 
         source_file = self.src_file[region]
 
@@ -844,17 +840,11 @@ class BasicSource(object):
                 begin = np.where(dates == var_dates[region][ncvar][0])[0][0]
                 end = np.where(dates == var_dates[region][ncvar][1])[0][0]
                 df[ncvar] = np.NAN
-#==============================================================================
-#                 df[ncvar] = np.NAN
-#                 import datetime
-#                 print datetime.datetime.now()
-#                 for i in range(begin, end + 1):
-#                     df[ncvar][i] = nc.variables[ncvar][i, lat_pos, lon_pos]
-#
-#                 print datetime.datetime.now()
-#==============================================================================
+
                 ts = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
                 df[ncvar][begin:end + 1] = ts
+                if self.nan_value is not None:
+                    df = df.replace(self.nan_value, np.NAN)
 
                 if 'scaling_factor' in nc.variables[ncvar].ncattrs():
                     vvar = nc.variables[ncvar]
@@ -870,6 +860,99 @@ class BasicSource(object):
                             df[ncvar] = self._scale_values(df[ncvar])
 
         return df
+
+    def bulkread_ts(self, locations, region=None, variable=None,
+                    shapefile=None, scaled=True, grid=None):
+        """Gets timeseries from netCDF file for a number of gridpoints.
+
+        Parameters
+        ----------
+        location : list of int or list of tuples
+            Either a list of Grid point indices given as integer value [0,1,2]
+            or a list of Longitude/Latitude tuples [(0.0, 0.0),(45.0, 45.0)].
+        region : str, optional
+            Region of interest, set to first defined region if not set.
+        variable : str, optional
+            Variable to display, selects all available variables if None.
+        shapefile : str, optional
+            Path to custom shapefile.
+        scaled : bool, optional
+            If true, data will be scaled to a predefined range; if false, data
+            will be shown as given in rawdata file; defaults to True
+        grid : poets.grid.grids RegularGrid or ShapeGrid, optional
+            Grid with point and lon/lat information; defaults to None.
+
+        Returns
+        -------
+        df_list : list of pd.DataFrames
+            List with timeseries for selected variables.
+        gpis : list of int
+            List of gpi values.
+        """
+
+        if region is None:
+            region = self.dest_regions[0]
+
+        if type(locations[0]) is tuple:
+            if grid is None:
+                if region == 'global':
+                    grid = RegularGrid(self.dest_sp_res)
+                else:
+                    grid = ShapeGrid(region, self.dest_sp_res, shapefile)
+
+            gpis = []
+            for loc in locations:
+                gp, _ = grid.find_nearest_gpi(loc[0], loc[1])
+                gpis.append(gp)
+        else:
+            gpis = locations
+
+        variable = self._set_variable(variable)
+
+        source_file = self.src_file[region]
+
+        var_dates = self._check_current_date()
+
+        df_list = []
+
+        with Dataset(source_file, 'r', format='NETCDF4') as nc:
+
+            time = nc.variables['time']
+            dates = num2date(time[:], units=time.units, calendar=time.calendar)
+
+            for gp in gpis:
+                position = np.where(nc.variables['gpi'][:] == gp)
+                lat_pos = position[0][0]
+                lon_pos = position[1][0]
+                df = pd.DataFrame(index=pd.DatetimeIndex(dates))
+
+                for ncvar in variable:
+                    begin = np.where(dates == var_dates[region][ncvar][0])[0][0]
+                    end = np.where(dates == var_dates[region][ncvar][1])[0][0]
+                    df[ncvar] = np.NAN
+
+                    ts = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
+                    df[ncvar][begin:end + 1] = ts
+
+                    if self.nan_value is not None:
+                        df = df.replace(self.nan_value, np.NAN)
+
+                    if 'scaling_factor' in nc.variables[ncvar].ncattrs():
+                        vvar = nc.variables[ncvar]
+                        if vvar.getncattr('scaling_factor') < 0:
+                            df[ncvar] = (df[ncvar] *
+                                         float(vvar.getncattr('scaling_factor')))
+                        else:
+                            df[ncvar] = (df[ncvar] /
+                                         float(vvar.getncattr('scaling_factor')))
+                    if scaled:
+                        if self.valid_range is not None:
+                            if self.data_range is not None:
+                                df[ncvar] = self._scale_values(df[ncvar])
+
+                df_list.append(df)
+
+        return df_list, gpis
 
     def read_img(self, date, region=None, variable=None, scaled=True):
         """Gets images from netCDF file for certain date
@@ -945,6 +1028,14 @@ class BasicSource(object):
                     img = self._scale_values(img)
 
         return img, lon, lat, metadata
+
+    def _set_variable(self, variable):
+        if variable is None:
+            variable = self.get_variables()
+        else:
+            variable = self.check_variable(variable)
+            variable = [variable]
+        return variable
 
     def get_variables(self):
         """
