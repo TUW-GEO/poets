@@ -49,6 +49,7 @@ import poets.image.netcdf as nc
 import poets.timedate.dateindex as dt
 import shutil
 
+
 class BasicSource(object):
     """Base Class for data sources.
 
@@ -262,9 +263,9 @@ class BasicSource(object):
             self.src_file = {}
             for reg in self.dest_regions:
                 self.src_file[reg] = os.path.join(self.data_path, reg + '_' +
-                                                  str(self.dest_sp_res) + '_'
-                                                  + str(self.dest_temp_res)
-                                                  + '.nc')
+                                                  str(self.dest_sp_res) + '_' +
+                                                  str(self.dest_temp_res) +
+                                                  '.nc')
         else:
             self.src_file = src_file
 
@@ -399,8 +400,8 @@ class BasicSource(object):
         str
             Path to the temporary direcotry
         """
-        filename = ('_' + prefix + '_' + region + '_' + str(self.dest_sp_res)
-                    + '_' + str(self.dest_temp_res) + '.nc')
+        filename = ('_' + prefix + '_' + region + '_' + str(self.dest_sp_res) +
+                    '_' + str(self.dest_temp_res) + '.nc')
         return os.path.join(self.tmp_path, filename)
 
     def _resample_spatial(self, region, begin, end, delete_rawdata,
@@ -479,8 +480,8 @@ class BasicSource(object):
                 timestamp = get_file_date(item, self.filedate)
 
             if self.temp_res == self.dest_temp_res:
-                filename = (region + '_' + str(self.dest_sp_res) + '_'
-                            + str(self.dest_temp_res) + '.nc')
+                filename = (region + '_' + str(self.dest_sp_res) + '_' +
+                            str(self.dest_temp_res) + '.nc')
                 dfile = os.path.join(self.data_path, filename)
                 nc.save_image(image, timestamp, region, metadata, dfile,
                               self.dest_start_date, self.dest_sp_res,
@@ -592,6 +593,11 @@ class BasicSource(object):
                 begin = self.begin_date
             else:
                 begin = self.dest_start_date
+
+        # check if rawdata files are available local
+        check = self.check_rawdata(begin, end)
+        if check is True:
+            return check
 
         if self.protocol in ['HTTP', 'http']:
             try:
@@ -926,29 +932,29 @@ class BasicSource(object):
                 lon_pos = position[1][0]
                 df = pd.DataFrame(index=pd.DatetimeIndex(dates))
 
-                for ncvar in variable:
-                    begin = np.where(dates == var_dates[region][ncvar][0])[0][0]
-                    end = np.where(dates == var_dates[region][ncvar][1])[0][0]
-                    df[ncvar] = np.NAN
+                for ncv in variable:
+                    begin = np.where(dates == var_dates[region][ncv][0])[0][0]
+                    end = np.where(dates == var_dates[region][ncv][1])[0][0]
+                    df[ncv] = np.NAN
 
-                    ts = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
-                    df[ncvar][begin:end + 1] = ts
+                    ts = nc.variables[ncv][begin:end + 1, lat_pos, lon_pos]
+                    df[ncv][begin:end + 1] = ts
 
                     if self.nan_value is not None:
                         df = df.replace(self.nan_value, np.NAN)
 
-                    if 'scaling_factor' in nc.variables[ncvar].ncattrs():
-                        vvar = nc.variables[ncvar]
-                        if vvar.getncattr('scaling_factor') < 0:
-                            df[ncvar] = (df[ncvar] *
-                                         float(vvar.getncattr('scaling_factor')))
+                    if 'scaling_factor' in nc.variables[ncv].ncattrs():
+                        nv = nc.variables[ncv]
+                        if nv.getncattr('scaling_factor') < 0:
+                            df[ncv] = (df[ncv] *
+                                       float(nv.getncattr('scaling_factor')))
                         else:
-                            df[ncvar] = (df[ncvar] /
-                                         float(vvar.getncattr('scaling_factor')))
+                            df[ncv] = (df[ncv] /
+                                       float(nv.getncattr('scaling_factor')))
                     if scaled:
                         if self.valid_range is not None:
                             if self.data_range is not None:
-                                df[ncvar] = self._scale_values(df[ncvar])
+                                df[ncv] = self._scale_values(df[ncv])
 
                 df_list.append(df)
 
@@ -1215,3 +1221,33 @@ class BasicSource(object):
                                                             date)
 
                 self.download_and_resample(begin=begin, end=end)
+
+    def check_rawdata(self, begin=None, end=None):
+        """
+        Checks if files are already downloaded.
+
+        Parameters
+        ----------
+        begin : datetime
+            Check files beginning from this date.
+        end : datetime
+            Check files until this date.
+        Returns
+        -------
+        boolean
+            True if all files are already downloaded, False if files are
+            missing.
+        """
+        drange = dt.get_dtindex(self.temp_res, begin, end)
+        rawfiles = os.listdir(self.rawdata_path)
+
+        rf_dates = []
+
+        for rf in rawfiles:
+            rf_dates.append(get_file_date(rf, self.filedate))
+
+        for d in drange:
+            if d not in rf_dates:
+                return False
+
+        return True
