@@ -178,8 +178,10 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom, avg) {
 		title += ' with climatology (35 days)'
 	}
 	
+	$("#"+div+'body').addClass("loading");
+	
 	$.getJSON(this.host+link, function(data){
-		
+
 		for(var i=0;i<data.data.length;i++) {
 	        data.data[i][0] = new Date(data.data[i][0]);
 	        data.data[i][1] = parseFloat(data.data[i][1]);
@@ -199,5 +201,8 @@ poetsViewer.prototype.loadTS = function(lon, lat, sp_res, range, anom, avg) {
 		    valueRange: vrange
 		});
 		
+		$("#"+div+'body').removeClass("loading");
+		
 	});
+	
 }
