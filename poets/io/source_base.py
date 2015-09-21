@@ -193,6 +193,8 @@ class BasicSource(object):
         First date of the dataset in the destination NetCDF file.
     src_file : str, list of str
         Path to file that contains source.
+    valid_regions : list of str
+        Regions where variable is available.
     """
 
     def __init__(self, name, filename, filedate, temp_res, rootpath,
@@ -236,11 +238,19 @@ class BasicSource(object):
             self.regions = [regions]
         else:
             self.regions = regions
+
         self.dest_nan_value = dest_nan_value
+
         if isinstance(dest_regions, str):
             self.dest_regions = [dest_regions]
         else:
             self.dest_regions = dest_regions
+
+        if self.regions is not None:
+            self.valid_regions = self.regions
+        else:
+            self.valid_regions = self.dest_regions
+
         self.dest_sp_res = dest_sp_res
         self.dest_temp_res = dest_temp_res
         self.dest_start_date = dest_start_date
@@ -261,7 +271,7 @@ class BasicSource(object):
 
         if src_file is None:
             self.src_file = {}
-            for reg in self.dest_regions:
+            for reg in self.valid_regions:
                 self.src_file[reg] = os.path.join(self.data_path, reg + '_' +
                                                   str(self.dest_sp_res) + '_' +
                                                   str(self.dest_temp_res) +
@@ -287,11 +297,7 @@ class BasicSource(object):
 
         dates = {}
 
-        for region in self.dest_regions:
-
-            if self.regions is not None:
-                if region not in self.regions:
-                    continue
+        for region in self.valid_regions:
 
             nc_name = self.src_file[region]
 
@@ -367,11 +373,7 @@ class BasicSource(object):
 
         if dates is not None:
             begin = datetime.now()
-            for region in self.dest_regions:
-
-                if self.regions is not None:
-                    if region not in self.regions:
-                        continue
+            for region in self.valid_regions:
 
                 variables = self.get_variables()
                 if variables == []:
@@ -691,11 +693,7 @@ class BasicSource(object):
 
                 print '[INFO] Resampling ' + str(start) + ' to ' + str(stop)
 
-                for region in self.dest_regions:
-
-                    if self.regions is not None:
-                        if region not in self.regions:
-                            continue
+                for region in self.valid_regions:
 
                     print '[INFO] resampling to region ' + region
                     print '[INFO] performing spatial resampling ',
@@ -713,11 +711,7 @@ class BasicSource(object):
 
             print '[INFO] ' + str(begin) + '-' + str(end)
 
-            for region in self.dest_regions:
-
-                if self.regions is not None:
-                    if region not in self.regions:
-                        continue
+            for region in self.valid_regions:
 
                 print '[INFO] resampling to region ' + region
                 print '[INFO] performing spatial resampling ',
@@ -815,7 +809,7 @@ class BasicSource(object):
         """
 
         if region is None:
-            region = self.dest_regions[0]
+            region = self.valid_regions[0]
 
         if type(location) is tuple:
             if region == 'global':
@@ -898,7 +892,7 @@ class BasicSource(object):
         """
 
         if region is None:
-            region = self.dest_regions[0]
+            region = self.valid_regions[0]
 
         if type(locations[0]) is tuple:
             if grid is None:
@@ -989,7 +983,7 @@ class BasicSource(object):
         """
 
         if region is None:
-            region = self.dest_regions[0]
+            region = self.valid_regions[0]
 
         if variable is None:
             variable = self.get_variables()[0]
@@ -1054,12 +1048,8 @@ class BasicSource(object):
             Variables from given in the NetCDF file.
         """
 
-        # nc_name = self.src_file[self.dest_regions[0]]
-
-        # nc_vars, _, _ = nc.get_properties(nc_name)
-
         nc_vars = []
-        for reg in self.dest_regions:
+        for reg in self.valid_regions:
             vari, _, _ = nc.get_properties(self.src_file[reg])
             if vari is None:
                 continue
@@ -1183,7 +1173,7 @@ class BasicSource(object):
 
         gaps = []
 
-        for region in self.dest_regions:
+        for region in self.valid_regions:
 
             if self.regions is not None:
                 if region not in self.regions:
