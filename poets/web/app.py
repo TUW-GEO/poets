@@ -44,10 +44,10 @@ from poets.web.overlays import image_bounds
 from poets.shape.shapes import Shape
 from pytesmo.time_series.anomaly import calc_anomaly, calc_climatology
 import urlparse
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-from shapely.geometry.geo import mapping
 mpl.use('Agg')
+from shapely.geometry.geo import mapping
+import matplotlib.pyplot as plt
 
 
 def curpath():
