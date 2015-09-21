@@ -849,8 +849,9 @@ class BasicSource(object):
 
                 ts = nc.variables[ncvar][begin:end + 1, lat_pos, lon_pos]
                 df[ncvar][begin:end + 1] = ts
-                if self.nan_value is not None:
-                    df = df.replace(self.nan_value, np.NAN)
+
+                if nc.variables[ncvar]._FillValue is not None:
+                    df = df.replace(nc.variables[ncvar]._FillValue, np.NAN)
 
                 if 'scaling_factor' in nc.variables[ncvar].ncattrs():
                     vvar = nc.variables[ncvar]
@@ -940,8 +941,8 @@ class BasicSource(object):
                     ts = nc.variables[ncv][begin:end + 1, lat_pos, lon_pos]
                     df[ncv][begin:end + 1] = ts
 
-                    if self.nan_value is not None:
-                        df = df.replace(self.nan_value, np.NAN)
+                    if nc.variables[ncv]._FillValue is not None:
+                        df = df.replace(nc.variables[ncv]._FillValue, np.NAN)
 
                     if 'scaling_factor' in nc.variables[ncv].ncattrs():
                         nv = nc.variables[ncv]
