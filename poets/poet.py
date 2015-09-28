@@ -527,17 +527,14 @@ class Poet(object):
             return 'ERROR: No points available in the selected region.'
 
         df, gpis = self.bulkread_timeseries(source, locations, region,
-                                      variable=variable)
+                                            variable=variable)
 
         df_mean = pd.DataFrame()
 
-        for var in df[0].keys():
-            data = pd.DataFrame()
-            for i, ts in enumerate(df):
-                data[str(i)] = ts[var]
-            df_mean[var + '_mean'] = data.mean(axis=1)
+        for var in df.keys():
+            df_mean[var + '_mean'] = df[var].mean(axis=1)
 
-        return df_mean
+        return df_mean, len(gpis)
 
     def get_variables(self, region=None):
         """

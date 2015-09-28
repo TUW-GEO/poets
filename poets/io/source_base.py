@@ -914,7 +914,9 @@ class BasicSource(object):
 
         var_dates = self._check_current_date()
 
-        df_list = []
+        df_list = {}
+        lat_pos = []
+        lon_pos = []
 
         with Dataset(source_file, 'r', format='NETCDF4') as nc:
 
@@ -923,35 +925,40 @@ class BasicSource(object):
 
             for gp in gpis:
                 position = np.where(nc.variables['gpi'][:] == gp)
-                lat_pos = position[0][0]
-                lon_pos = position[1][0]
-                df = pd.DataFrame(index=pd.DatetimeIndex(dates))
+                lat_pos = np.append(lat_pos, int(position[0][0]))
+                lon_pos = np.append(lon_pos, int(position[1][0]))
+            lat_pos = map(int, lat_pos)
+            lon_pos = map(int, lon_pos)
+            df = pd.DataFrame(index=pd.DatetimeIndex(dates))
 
-                for ncv in variable:
-                    begin = np.where(dates == var_dates[region][ncv][0])[0][0]
-                    end = np.where(dates == var_dates[region][ncv][1])[0][0]
-                    df[ncv] = np.NAN
+            for ncv in variable:
+                begin = np.where(dates == var_dates[region][ncv][0])[0][0]
+                end = np.where(dates == var_dates[region][ncv][1])[0][0]
 
-                    ts = nc.variables[ncv][begin:end + 1, lat_pos, lon_pos]
-                    df[ncv][begin:end + 1] = ts
+                ts = nc.variables[ncv][begin:end + 1, :, :]
+                ts = ts[:, lat_pos, lon_pos]
+                ts = np.swapaxes(ts, 1, 0)
 
-                    if nc.variables[ncv]._FillValue is not None:
-                        df = df.replace(nc.variables[ncv]._FillValue, np.NAN)
+                for idx, gp in enumerate(gpis):
+                    df['gpi_' + str(gp)] = ts[idx, :]
 
-                    if 'scaling_factor' in nc.variables[ncv].ncattrs():
-                        nv = nc.variables[ncv]
-                        if nv.getncattr('scaling_factor') < 0:
-                            df[ncv] = (df[ncv] *
-                                       float(nv.getncattr('scaling_factor')))
-                        else:
-                            df[ncv] = (df[ncv] /
-                                       float(nv.getncattr('scaling_factor')))
-                    if scaled:
-                        if self.valid_range is not None:
-                            if self.data_range is not None:
-                                df[ncv] = self._scale_values(df[ncv])
+                if nc.variables[ncv]._FillValue is not None:
+                    df = df.replace(nc.variables[ncv]._FillValue, np.NAN)
 
-                df_list.append(df)
+                if 'scaling_factor' in nc.variables[ncv].ncattrs():
+                    nv = nc.variables[ncv]
+                    if nv.getncattr('scaling_factor') < 0:
+                        df[ncv] = (df[ncv] *
+                                   float(nv.getncattr('scaling_factor')))
+                    else:
+                        df[ncv] = (df[ncv] /
+                                   float(nv.getncattr('scaling_factor')))
+                if scaled:
+                    if self.valid_range is not None:
+                        if self.data_range is not None:
+                            df[ncv] = self._scale_values(df[ncv])
+
+                df_list[ncv] = df
 
         return df_list, gpis
 
@@ -1034,8 +1041,15 @@ class BasicSource(object):
         if variable is None:
             variable = self.get_variables()
         else:
-            variable = self.check_variable(variable)
-            variable = [variable]
+            if type(variable) is list:
+                checked_vars = []
+                for var in variable:
+                    checked_var = self.check_variable(var)
+                    checked_vars.append(checked_var)
+                variable = checked_vars
+            else:
+                variable = self.check_variable(variable)
+                variable = [variable]
         return variable
 
     def get_variables(self):
