@@ -56,3 +56,5 @@ docs/_build/
 # Eclipse stuff
 .settings
 
+# Condrac
+.condrac.swp
