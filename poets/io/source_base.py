@@ -256,6 +256,8 @@ class BasicSource(object):
         self.dest_start_date = dest_start_date
 
         self.rawdata_path = os.path.join(rootpath, 'RAWDATA', name)
+        if not os.path.exists(self.rawdata_path):
+            os.mkdir(self.rawdata_path)
         self.tmp_path = os.path.join(rootpath, 'TMP')
         if not os.path.exists(self.tmp_path):
             os.mkdir(self.tmp_path)

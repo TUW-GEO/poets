@@ -71,6 +71,7 @@ class Test(unittest.TestCase):
             shutil.rmtree(self.rootpath)
 
         os.mkdir(self.rootpath)
+        os.mkdir(os.path.join(self.rootpath, 'RAWDATA'))
         os.mkdir(os.path.join(self.rootpath, 'DATA'))
         os.mkdir(os.path.join(self.rootpath, 'TMP'))
 

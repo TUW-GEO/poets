@@ -90,7 +90,7 @@ poetsViewer.prototype.initDownLink = function(anom, avg) {
     
     if(avg == true) {
 		var sel_reg = $("#subregion").val()
-		link = '/_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+dataset;
+		link = '/_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+sel_var;
 	} else {
 		var sel_reg = $("#region").val()
 		link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
@@ -131,7 +131,7 @@ poetsViewer.prototype.setVarSelect = function() {
 			var d = data.variables[i];
 			$('#dataset').append(new Option(data.variables[i], data.variables[i]));
 			if(data.variables[i] == current) {
-				$("#dataset option[value="+current+"]").attr('selected', 'selected');
+				$("#dataset option[value='"+current+"']").attr('selected', 'selected');
 			}
 		}
 	});

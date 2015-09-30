@@ -62,17 +62,14 @@ $(document).ready(function () {
 	bounds.extend(new OpenLayers.LonLat{{ex1}});
 	bounds.extend(new OpenLayers.LonLat{{ex2}});
 	bounds.transform(proj4326, map.getProjectionObject());
-	
-	image = new OpenLayers.Layer.Image('Image', "_rimg/{{region}}&{{source}}&{{variable}}&{{max}}", bounds, new OpenLayers.Size(3400, 1600), { 
-		'isBaseLayer': false,	// drawing overlay with the latest overlay image
-		'alwaysInRange': true,
-		'opacity' : opacity
-	});
-	map.addLayer(image);
-	
+	$('#slider').val("{{max}}");
+    
 	var mlayer = new OpenLayers.Layer()
 	markers = new OpenLayers.Layer.Markers("Markers");
 	map.addLayer(markers);
+	
+	loadImg();
+    map.addLayer(image);
 	
 	map.events.register("click", map, function(e) {
 		
@@ -100,11 +97,12 @@ $(document).ready(function () {
 	
 	ts.setVarSelect();
 	ts.enableButtons({{max}}, {{max}});
-	ts.initLegend();
 	
 	// LOAD IMAGE =============================================================
-	function loadImg(date) {
-		image.destroy();
+	function loadImg() {
+		if(typeof image != 'undefined') {
+			image.destroy();
+		}
         image = new OpenLayers.Layer.Image('Image', '_rimg/{{region}}&{{source}}&{{variable}}&'+$('#slider').val(), bounds, new OpenLayers.Size(3400, 1600), {
             'isBaseLayer': false,
             'alwaysInRange': true,
@@ -145,8 +143,7 @@ $(document).ready(function () {
 		value: values[1]
 	}).on('slideStop',
 		  function(ev){
-		      val = $('#slider').val();
-		      loadImg(val);
+		      loadImg();
 		      ts.enableButtons(val, {{max}});
 		  }
 	);
@@ -157,7 +154,7 @@ $(document).ready(function () {
 		$('#slider').val(val);
 		$('#slider').slider({value:val});
 		$("#dateSelect").prop("selectedIndex", val); 
-		loadImg($('#slider').val());
+		loadImg();
 		ts.enableButtons(val, {{max}});
         ts.sliderPos(val);
 	});
@@ -167,7 +164,7 @@ $(document).ready(function () {
         $('#slider').val(val);
         $('#slider').slider({value:val});
         $("#dateSelect").prop("selectedIndex", val);
-        loadImg($('#slider').val());
+        loadImg();
         ts.enableButtons(val, {{max}});
         ts.sliderPos(val);
     });
@@ -176,7 +173,7 @@ $(document).ready(function () {
 		val = $("#dateSelect").val();
 		$('#slider').val(val);
         $('#slider').slider({value:val});
-        loadImg($('#slider').val());
+        loadImg();
 		ts.enableButtons(val, {{max}});
 		ts.sliderPos(val);
 	});
@@ -200,7 +197,7 @@ $(document).ready(function () {
         ts.loadTS(false, false, {{sp_res}}, {{ range }}, false, true );
         ts.loadTS(false, false, {{sp_res}}, {{ range }}, true, true);
         ts.initDownLink(false, true);
-        ts.initDownLink(true);
+        ts.initDownLink(true, true);
     })
 	
 });

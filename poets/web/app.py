@@ -337,11 +337,10 @@ def get_ts_average(**kwargs):
         anomaly = True
 
     df = p.average_timeseries(source, region, variable)
-    df = pd.DataFrame(df)
-    df.columns = [variable]
+    df = df[0]
 
     if anomaly:
-        df = calc_anom(df, variable)
+        df = calc_anom(df)
 
     labels, values = df.to_dygraph_format()
     data = {'labels': labels, 'data': values}
@@ -349,7 +348,7 @@ def get_ts_average(**kwargs):
     return jsonify(data)
 
 
-def calc_anom(df, variable):
+def calc_anom(df, variable=None):
     """
     Calculates anomaly based on climatology for time series.
 
@@ -366,9 +365,9 @@ def calc_anom(df, variable):
         Anomaly of time series.
     """
 
-    df = pd.DataFrame(df)
-
     climatology = calc_climatology(df)
+    if variable is None:
+        variable = df.keys()[0]
     anom = calc_anomaly(df[variable], climatology=climatology)
 
     df[variable] = anom
@@ -443,11 +442,10 @@ def download_ts_avg(**kwargs):
         anomaly = True
 
     df = p.average_timeseries(source, region, variable)
-    df = pd.DataFrame(df)
-    df.columns = [variable]
+    df = df[0]
 
     if anomaly:
-        df = calc_anom(df, variable)
+        df = calc_anom(df)
 
     output = StringIO()
 
