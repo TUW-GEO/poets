@@ -5,6 +5,7 @@ statsmodels>=0.4.3,
 netcdf4>=1.1.0,
 GDAL>=1.10.0,
 pytesmo>=0.3.2,
+pyresample
 pygeogrids>=0.1.3
 Shapely>=1.3.2,
 pyshp>=1.2.1,

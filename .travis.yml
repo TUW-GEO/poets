@@ -1,4 +1,5 @@
 language: python
+sudo: false
 python:
   - "2.7"
 # command to install dependencies
@@ -20,7 +21,7 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy pandas netCDF4 pytest pip gdal paramiko
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy pandas netCDF4 pytest pip gdal paramiko matplotlib pillow shapely statsmodels h5py
   - source activate test-environment
   - pip install patool
   - pip install coverage
