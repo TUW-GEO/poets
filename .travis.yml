@@ -26,6 +26,7 @@ install:
 
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy netCDF4 pytest pip gdal
   - source activate test-environment
+  - pip install patool
   - python setup.py install
 
 # command to run tests
