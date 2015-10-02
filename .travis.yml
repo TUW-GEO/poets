@@ -1,9 +1,6 @@
 language: python
 python:
   - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
 # command to install dependencies
 install:
   # You may want to periodically update this, although the conda update
@@ -23,7 +20,7 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy pandas netCDF4 pytest pip gdal
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy pandas netCDF4 pytest pip gdal flask flask-cors
   - source activate test-environment
   - pip install patool
   - python setup.py install
