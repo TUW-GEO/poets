@@ -19,3 +19,11 @@ Documentation
 =============
 
 Please see the latest documentation including examples of how to install and use poets at http://geo.tuwien.ac.at/poets
+
+Build status
+============
+
+Master branch
+
+.. image:: https://travis-ci.org/TUW-GEO/poets.svg?branch=master
+    :target: https://travis-ci.org/TUW-GEO/poets
