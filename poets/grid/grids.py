@@ -38,7 +38,7 @@ import pygeogrids.grids as grids
 import numpy as np
 import pandas as pd
 import math
-from shapely.geometry import Point
+from shapely.geometry import Point, MultiPoint
 from poets.shape.shapes import Shape
 from poets.image.imagefile import dateline_country
 
@@ -301,16 +301,23 @@ class ShapeGrid(grids.BasicGrid):
                                         self.shp.bbox[0], self.shp.bbox[2])
         poly = self.shp.polygon  # MultiPolygon
 
-        lons = []
-        lats = []
         pts = []
 
+        points = []
         for gpi in box:
-            lon, lat = self.gpi2lonlat(gpi)
-            if poly.contains(Point(lon, lat)):
-                    pts.append(gpi)
-                    lons.append(lon)
-                    lats.append(lat)
+            points.append(self.gpi2lonlat(gpi))
+
+        mp = MultiPoint(points)
+
+        intersect_points = np.array(poly.intersection(mp))
+        lons = intersect_points[:, 0].tolist()
+        lats = intersect_points[:, 1].tolist()
+
+        ipoints = intersect_points.tolist()
+
+        for i, p in enumerate(points):
+            if list(p) in ipoints:
+                pts.append(i)
 
         points = pd.DataFrame({'lon': lons, 'lat': lats}, pts)
 
