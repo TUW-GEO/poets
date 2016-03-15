@@ -942,7 +942,8 @@ class BasicSource(object):
                 ts = np.swapaxes(ts, 1, 0)
 
                 for idx, gp in enumerate(gpis):
-                    df['gpi_' + str(gp)] = ts[idx, :]
+                    df['gpi_' + str(gp)] = np.NAN
+                    df['gpi_' + str(gp)][begin:end + 1] = ts[idx, :]
 
                 if nc.variables[ncv]._FillValue is not None:
                     df = df.replace(nc.variables[ncv]._FillValue, np.NAN)
