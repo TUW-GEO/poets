@@ -419,10 +419,9 @@ def get_properties(src_file):
         for dim in dimensions:
             variables.remove(dim)
 
-    if 'gpi' in variables:
-        variables.remove('gpi')
-    if 'subset_flag' in variables:
-        variables.remove('subset_flag')
+    for var in ['gpi', 'subset_flag', 'crs']:
+        if var in variables:
+            variables.remove(var)
 
     return variables, dimensions, period
 
