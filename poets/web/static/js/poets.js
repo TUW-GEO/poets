@@ -96,14 +96,13 @@ poetsViewer.prototype.initDownLink = function(anom, avg) {
     
     if(avg == true) {
 		var sel_reg = $("#subregion").val()
-		link = '/_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+sel_var;
+		link = '_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+sel_var;
 	} else {
 		var sel_reg = $("#region").val()
 		link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
 	}
     
     var div = "#download"
-    
     
     if(anom == true) {
     	link += '&anom';

@@ -408,7 +408,8 @@ def download_ts(**kwargs):
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    filename = region + '_' + variable + '_' + loc[0][:6] + '_' + loc[1][:6]
+    filename = (region.replace(" ", "-") + '_' + variable.replace(" ", "-") +
+                '_' + loc[0][:6] + '_' + loc[1][:6] + ".csv")
 
     df = p.read_timeseries(source.name, lonlat, region, variable)
 
@@ -422,7 +423,7 @@ def download_ts(**kwargs):
 
     response = make_response(csv)
     response.headers["Content-Disposition"] = ("attachment; filename=" +
-                                               filename + ".csv")
+                                               filename)
 
     return response
 
@@ -453,11 +454,12 @@ def download_ts_avg(**kwargs):
     df.to_csv(output)
     csv = output.getvalue()
 
-    filename = region + '_' + variable
+    filename = (region.replace(" ", "-") + '_' +
+                variable.replace(" ", "-") + ".csv")
 
     response = make_response(csv)
     response.headers["Content-Disposition"] = ("attachment; filename=" +
-                                               filename + ".csv")
+                                               filename)
 
     return response
 
