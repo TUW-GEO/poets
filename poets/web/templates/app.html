@@ -97,9 +97,8 @@ $(document).ready(function () {
 	
 	ts.setVarSelect();
 	ts.enableButtons({{max}}, {{max}});
-	
 
-    ts.initLink('/_download_nc'+path, 'ncdown')
+    ts.initLink(path, 'ncdown')
 	
 	// LOAD IMAGE =============================================================
 	function loadImg() {
@@ -184,13 +183,13 @@ $(document).ready(function () {
     $("#region").change(function() {
     	ts.setVarSelect();
         ts.initLink(path, 'go');
-        ts.initLink('/_download_nc'+path, 'ncdown')
+        ts.initLink(path, 'ncdown')
         ts.enableGo();
     });
     
     $("#dataset").change(function() {
         ts.initLink(path, 'go');
-        ts.initLink('/_download_nc'+path, 'ncdown')
+        ts.initLink(path, 'ncdown')
         ts.enableGo();
     });
 

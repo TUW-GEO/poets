@@ -13,6 +13,10 @@ poetsViewer.prototype.initLink = function(path, target) {
     	sel_var = $("#variable").val();
     }
     link = sel_reg+"&"+sel_var
+    
+    if(target=='ncdown') {
+    	link = '_download_nc/'+link
+    }
 
     segments = path.split("/");
     
