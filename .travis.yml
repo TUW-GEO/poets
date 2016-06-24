@@ -1,5 +1,12 @@
 language: python
 sudo: false
+addons:
+  apt:
+    packages:
+      - gfortran
+      - gcc
+notifications:
+  email: false
 python:
   - "2.7"
 # command to install dependencies
