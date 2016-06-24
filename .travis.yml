@@ -8,7 +8,10 @@ addons:
 notifications:
   email: false
 python:
+  # We don't actually use the Travis Python, but this keeps it organized.
   - "2.7"
+  - "3.4"
+  - "3.5"
 # command to install dependencies
 install:
   # You may want to periodically update this, although the conda update
