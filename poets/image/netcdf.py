@@ -261,23 +261,21 @@ def read_image(source_file, variables=None):
         lat = np.copy(nc.variables['lat'])
 
         ncvars = nc.variables.keys()
-        if 'gpi' in ncvars:
-            ncvars.remove('gpi')
-        if 'lat' in ncvars:
-            ncvars.remove('lat')
-        if 'lon' in ncvars:
-            ncvars.remove('lon')
-        if 'time' in ncvars:
-            ncvars.remove('time')
-        if 'subset_flag' in ncvars:
-            ncvars.remove('subset_flag')
+
+        # do not read variables that are not data variables.
+        irrelevant_vars = ['gpi', 'lat',
+                           'lon', 'time',
+                           'subset_flag', 'crs']
+        for var in irrelevant_vars:
+            if var in ncvars:
+                ncvars.remove(var)
 
         data = {}
         metadata = {}
 
         for var in ncvars:
             if ((variables is not None and var in variables)
-                or variables is None):
+                    or variables is None):
                 dat = nc.variables[var][:][0]
                 data[var] = dat[:]
                 metadata[str(var)] = {}
@@ -424,4 +422,3 @@ def get_properties(src_file):
             variables.remove(var)
 
     return variables, dimensions, period
-
