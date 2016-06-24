@@ -73,7 +73,7 @@ class Shape(object):
     """
 
     def __init__(self, code, shapefile=None):
-        self.code = code
+        self.code = str(code)
         if shapefile is None:
             self.shpfile = os.path.join(os.path.dirname(__file__),
                                         'ancillary',

@@ -35,8 +35,9 @@
 from cStringIO import StringIO
 import os
 import json
-from flask import Flask, render_template, jsonify, make_response
+from flask import Flask, render_template, jsonify, make_response, send_from_directory
 from flask.ext.cors import CORS
+from netCDF4 import Dataset
 import numpy as np
 import pandas as pd
 from poets.timedate.dateindex import get_dtindex
@@ -407,7 +408,8 @@ def download_ts(**kwargs):
     loc = loc.split(',')
     lonlat = (float(loc[0]), float(loc[1]))
 
-    filename = region + '_' + variable + '_' + loc[0][:6] + '_' + loc[1][:6]
+    filename = (region.replace(" ", "-") + '_' + variable.replace(" ", "-") +
+                '_' + loc[0][:6] + '_' + loc[1][:6] + ".csv")
 
     df = p.read_timeseries(source.name, lonlat, region, variable)
 
@@ -421,7 +423,7 @@ def download_ts(**kwargs):
 
     response = make_response(csv)
     response.headers["Content-Disposition"] = ("attachment; filename=" +
-                                               filename + ".csv")
+                                               filename)
 
     return response
 
@@ -452,11 +454,45 @@ def download_ts_avg(**kwargs):
     df.to_csv(output)
     csv = output.getvalue()
 
-    filename = region + '_' + variable
+    filename = (region.replace(" ", "-") + '_' +
+                variable.replace(" ", "-") + ".csv")
 
     response = make_response(csv)
     response.headers["Content-Disposition"] = ("attachment; filename=" +
-                                               filename + ".csv")
+                                               filename)
+
+    return response
+
+
+@app.route('/_download_nc/<reg>&<var>', methods=['GET', 'POST'])
+def download_nc(**kwargs):
+    if 'reg' in kwargs:
+        region = kwargs['reg']
+    else:
+        region = p.regions[0]
+
+    if 'var' in kwargs:
+        variable = kwargs['var']
+        for src in p.sources.keys():
+            if variable in p.sources[src].get_variables():
+                source = p.sources[src]
+    else:
+        source = p.sources.keys()[0]
+        variable = src.get_variables()[0]
+
+    src_file = source.src_file[region]
+
+    fname = os.path.split(src_file)[1]
+
+    statinfo = os.stat(src_file)
+
+    response = make_response(open(src_file).read())
+    response.headers['Content-Description'] = 'File Transfer'
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['Content-Type'] = 'application/octet-stream'
+    response.headers['Content-Disposition'] = 'attachment; filename=%s' % fname
+    response.headers['Content-Length'] = statinfo.st_size
+    response.headers['X-Accel-Redirect'] = src_file
 
     return response
 

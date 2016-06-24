@@ -1,7 +1,17 @@
 language: python
 sudo: false
+addons:
+  apt:
+    packages:
+      - gfortran
+      - gcc
+notifications:
+  email: false
 python:
+  # We don't actually use the Travis Python, but this keeps it organized.
   - "2.7"
+  - "3.4"
+  - "3.5"
 # command to install dependencies
 install:
   # You may want to periodically update this, although the conda update
@@ -9,9 +19,9 @@ install:
   # conditionally because it saves us some downloading if the version is
   # the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
     else
-      wget http://repo.continuum.io/miniconda/Miniconda3-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -21,11 +31,8 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy pandas netCDF4 pytest pip gdal paramiko matplotlib pillow shapely statsmodels h5py
-  - source activate test-environment
-  - pip install patool
-  - pip install coverage
-  - python setup.py install
+  - conda env create -f environment.yml
+  - source activate poets
 
 # command to run tests
 script: 

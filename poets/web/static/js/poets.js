@@ -6,13 +6,17 @@ function poetsViewer(div, host, port, url) {
 	}
 }
 
-poetsViewer.prototype.initLink = function(path) {
+poetsViewer.prototype.initLink = function(path, target) {
     sel_reg = $("#region").val();
     sel_var = $("#dataset").val();
     if(sel_var == null) {
     	sel_var = $("#variable").val();
     }
     link = sel_reg+"&"+sel_var
+    
+    if(target=='ncdown') {
+    	link = '_download_nc/'+link
+    }
 
     segments = path.split("/");
     
@@ -26,8 +30,7 @@ poetsViewer.prototype.initLink = function(path) {
     	}
     	url += segments[i]+"/"
     }
-    $("#go").attr('href', url+link);
-    
+    $("#"+target).attr('href', url+link);
 }
 
 poetsViewer.prototype.trimSlash = function(str) {
@@ -40,11 +43,14 @@ poetsViewer.prototype.trimSlash = function(str) {
 poetsViewer.prototype.enableGo = function() {
     if ($("#region").val() == '') {
         $("#go").attr('disabled', 'disabled');
+        $("#ncdown").attr('disabled', 'disabled');
     }
     else if ($("#dataset").val() == '') {
     	$("#go").attr('disabled', 'disabled');
+    	$("#ncdown").attr('disabled', 'disabled');
     } else {
         $("#go").removeAttr('disabled');
+        $("#ncdown").removeAttr('disabled');
     }
 }
 
@@ -90,14 +96,13 @@ poetsViewer.prototype.initDownLink = function(anom, avg) {
     
     if(avg == true) {
 		var sel_reg = $("#subregion").val()
-		link = '/_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+sel_var;
+		link = '_tsdown_avg/'+sel_reg+'&'+sel_src+'&'+sel_var;
 	} else {
 		var sel_reg = $("#region").val()
 		link = "_tsdown/"+sel_reg+"&"+sel_src+"&"+sel_var+"&"+sel_lon+","+sel_lat;
 	}
     
     var div = "#download"
-    
     
     if(anom == true) {
     	link += '&anom';

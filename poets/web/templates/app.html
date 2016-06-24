@@ -97,6 +97,8 @@ $(document).ready(function () {
 	
 	ts.setVarSelect();
 	ts.enableButtons({{max}}, {{max}});
+
+    ts.initLink(path, 'ncdown')
 	
 	// LOAD IMAGE =============================================================
 	function loadImg() {
@@ -180,12 +182,14 @@ $(document).ready(function () {
 	
     $("#region").change(function() {
     	ts.setVarSelect();
-        ts.initLink(path);
+        ts.initLink(path, 'go');
+        ts.initLink(path, 'ncdown')
         ts.enableGo();
     });
     
     $("#dataset").change(function() {
-        ts.initLink(path);
+        ts.initLink(path, 'go');
+        ts.initLink(path, 'ncdown')
         ts.enableGo();
     });
 
@@ -231,11 +235,18 @@ $(document).ready(function () {
 	        <a href='' class='btn btn-primary' id="go">
 	           <span class="glyphicon glyphicon-chevron-right"></span> GO
 	        </a>
+	        <div class="form-group">
+	           <a href='' id="ncdown" class="btn btn-info">
+	               <span class="glyphicon glyphicon-download-alt"> </span> Download dataset
+	           </a>
+	        </div>
 	        <input id="source" type="hidden" value="{{ source }}" />
 	        <input id="lon" type="hidden" />
 	        <input id="lat" type="hidden" />
 	        {% if subregions != None %}
-		        <div class="form-group" style="float:right;">
+	           <div class="form-group">&nbsp;&nbsp;
+	           </div>
+		        <div class="form-group">
 	                <label for="subregion">average timeseries for region</label>
 	                <select class="form-control" id="subregion">
 	                   {% for sreg in subregions %}

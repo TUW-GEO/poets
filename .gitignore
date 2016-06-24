@@ -58,3 +58,6 @@ docs/_build/
 
 # Condrac
 .condrac.swp
+
+# Config files
+config.ini

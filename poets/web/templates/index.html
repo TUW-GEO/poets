@@ -20,11 +20,11 @@ $(document).ready(function () {
     
     $("#region").change(function() {
     	ts.setVarSelect();
-        ts.initLink(path);
+        ts.initLink(path, 'go');
         enableGo();
     });
     $("#dataset").change(function() {
-        ts.initLink(path);
+        ts.initLink(path, 'go');
         enableGo();
     });
     
