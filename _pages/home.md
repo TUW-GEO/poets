@@ -10,14 +10,11 @@ header:
 excerpt: 'Python Open Earth Observation Tools'
 ---
 
-Test text
+Poets° is a collection of Python packages for the downloading, reading,
+conversion and comparison of geospatial data. The included packages cover the
+following broad features:
 
-Aliquam erat volutpat. Nunc eleifend leo vitae magna. In id erat non orci
-commodo lobortis. Proin neque massa, cursus ut, gravida ut, lobortis eget,
-lacus. Sed diam. Praesent fermentum tempor tellus. Nullam tempus. Mauris ac
-felis vel velit tristique imperdiet. Donec at pede. Etiam vel neque nec dui
-dignissim bibendum. Vivamus id enim. Phasellus neque orci, porta a, aliquet
-quis, semper a, massa. Phasellus purus. Pellentesque tristique imperdiet tortor.
-Nam euismod tellus id erat.
-
-
+- Automated downloading of supported products.
+- Conversion of image/swath based products into time series based formats.
+- Reading of the resulting geospatial time series dataset.
+- Comparison or Validation of multiple geospatial time series datasets.
