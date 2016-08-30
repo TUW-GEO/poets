@@ -47,6 +47,7 @@
   white-space: nowrap;
 
   &--lg {
+    font-family: $header-font-family;
     padding-right: 2em;
     font-weight: 700;
   }

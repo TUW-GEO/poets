@@ -7,9 +7,9 @@
 
 # Site Settings
 locale                   : "en"
-title                    : "Poets - Python Open Earth Observation Tools."
+title                    : "Poets°"
 title_separator          : "-"
-name                     : "Poets"
+name                     : "Poets°"
 description              : "Website about the Poets project."
 url                      : "https://tuw-geo.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : "/poets" # the subpath of your site, e.g. "/blog"

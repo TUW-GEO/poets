@@ -4,10 +4,10 @@ permalink: /
 header:
   overlay_color: "#000000"
   overlay_image: earth-banner.JPG
-  cta_label: "<i class='fa fa-download'></i> Install Now"
+  cta_label: "<i class='fa fa-play-circle'></i> Getting Started"
   cta_url: "/docs/quick-start-guide/"
   caption: Image courtesy of the Earth Science and Remote Sensing Unit, NASA Johnson Space Center
-excerpt: 'Download, convert and compare remote sensing datasets.'
+excerpt: 'Python Open Earth Observation Tools'
 ---
 
 Test text
