@@ -22,7 +22,7 @@ following broad features:
 The Python packages that form Poets° can be used as standalone libraries or in
 combination. The packages are:
 
-- [pygeobase](https://github.com/tuw-geo/pygeobase) contains the abstract
+- [`pygeobase`](https://github.com/tuw-geo/pygeobase) contains the abstract
   base classes that define the interfaces for reading and writing supported
   datasets. These base classes ensure a consistent interface to all datasets.
 - `pygeogrids` is a package for working with discrete global grids
