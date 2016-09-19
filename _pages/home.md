@@ -46,6 +46,4 @@ combination. The packages are:
 - [`pytesmo`](https://github.com/tuw-geo/pytesmo) is the Python Toolbox for the Evaluation of Soil Moisture
   Observations and contains the validation framework, implementations of common
   metrics and readers for the data from the International Soil Moisture Network
-  (ISMN). The `pytesmo` validation framework implements the processing model
-  shown in Fig.2 in a generic way so that any number of geospatial timeseries
-  products can be compared to each other.
+  (ISMN). 
