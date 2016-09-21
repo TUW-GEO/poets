@@ -2,3 +2,5 @@
 main:
   - title: "Contact"
     url: https://tuw-geo.github.io/poets/contact
+  - title: "Newsletter"
+    url: https://tuw-geo.github.io/poets/newsletter
