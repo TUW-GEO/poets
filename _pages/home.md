@@ -38,8 +38,8 @@ combination. The packages are:
   conversion to time series of SMAP data.
 - [`ascat`](https://github.com/tuw-geo/ascat) is a package that supports reading of ASCAT Level 2 and
   H-SAF soil moisture products based on the ASCAT sensor.
-- the `gldas` package supports downloading, reading and conversion
-  of GLDAS Noah data.
+- the [`gldas`](https://github.com/tuw-geo/gldas) package supports downloading,
+  reading and conversion of GLDAS Noah data.
 - [`ecmwf_models`](https://github.com/tuw-geo/ecmwf_models) is a Python package for downloading, reading and
   conversion of ERA Interim data.
 - [`pytesmo`](https://github.com/tuw-geo/pytesmo) is the Python Toolbox for the Evaluation of Soil Moisture
