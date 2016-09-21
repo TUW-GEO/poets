@@ -4,6 +4,7 @@ permalink: /
 header:
   overlay_color: "#000000"
   overlay_image: earth-banner.JPG
+  cta_url: "/quick_start_guide"
   cta_label: "<i class='fa fa-play-circle'></i> Getting Started"
   caption: Image courtesy of the Earth Science and Remote Sensing Unit, NASA Johnson Space Center
 excerpt: 'Python Open Earth Observation Tools'
