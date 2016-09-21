@@ -12,12 +12,12 @@ excerpt: 'Python Open Earth Observation Tools'
 
 Poets° is a collection of Python packages for the downloading, reading,
 conversion and comparison of geospatial data with a focus on soil moisture. The
-included packages cover the following broad features:
+included packages cover the following use cases:
 
 - Automated downloading of supported products.
 - Conversion of image/swath based products into time series based formats.
 - Reading of the resulting geospatial time series dataset.
-- Comparison or Validation of multiple geospatial time series datasets.
+- Comparison/Validation of multiple geospatial time series datasets.
 
 The Python packages that form Poets° can be used as standalone libraries or in
 combination.
