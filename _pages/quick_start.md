@@ -2,8 +2,8 @@
 layout: splash
 permalink: /quick_start_guide
 header:
-  overlay_color: "#000000"
-excerpt: 'Introduction to Poets°'
+  overlay_color: "#006699"
+excerpt: 'Quick Start Guide'
 ---
 
 # Downloading and conversion of data

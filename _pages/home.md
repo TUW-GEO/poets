@@ -11,8 +11,8 @@ excerpt: 'Python Open Earth Observation Tools'
 ---
 
 Poets° is a collection of Python packages for the downloading, reading,
-conversion and comparison of geospatial data. The included packages cover the
-following broad features:
+conversion and comparison of geospatial data with a focus on soil moisture. The
+included packages cover the following broad features:
 
 - Automated downloading of supported products.
 - Conversion of image/swath based products into time series based formats.
@@ -20,7 +20,9 @@ following broad features:
 - Comparison or Validation of multiple geospatial time series datasets.
 
 The Python packages that form Poets° can be used as standalone libraries or in
-combination. The packages are:
+combination.
+
+## List of packages
 
 - [`pygeobase`](https://github.com/tuw-geo/pygeobase) contains the abstract
   base classes that define the interfaces for reading and writing supported
@@ -47,3 +49,6 @@ combination. The packages are:
   Observations and contains the validation framework, implementations of common
   metrics and readers for the data from the International Soil Moisture Network
   (ISMN). 
+
+For a quick introduction on how to use these packages together check out our
+[Quick Start Guide]({{ site.url }}/poets/quick_start_guide).
